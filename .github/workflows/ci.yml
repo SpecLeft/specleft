@@ -1,0 +1,250 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # Allow manual triggers
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Code Quality Checks
+  code-quality:
+    name: Code Quality (Black, Ruff, MyPy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black ruff mypy
+          pip install -e ".[dev]"
+
+      - name: Check formatting with Black
+        run: |
+          black --check --diff src/ tests/
+        continue-on-error: false
+
+      - name: Lint with Ruff
+        run: |
+          ruff check src/ tests/ --output-format=github
+        continue-on-error: false
+
+      - name: Type check with MyPy
+        run: |
+          mypy src/ --strict --pretty --show-error-codes
+        continue-on-error: false
+
+  # Job 2: Security Scanning
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit[toml]
+          pip install -e .
+
+      - name: Check dependencies for known vulnerabilities (Safety)
+        run: |
+          safety check --json || true
+        continue-on-error: true  # Don't fail on vulnerabilities in beta
+
+      - name: Security analysis with Bandit
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ -f screen
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+
+  # Job 3: Test Suite (Multi-Python)
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        include:
+          # Also test on macOS and Windows with one Python version
+          - os: macos-latest
+            python-version: '3.11'
+          - os: windows-latest
+            python-version: '3.11'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests with pytest
+        run: |
+          pytest tests/ \
+            --cov=src/specleft \
+            --cov-fail-under=88 \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-report=html \
+            --junit-xml=pytest-report.xml \
+            --verbose
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: |
+            pytest-report.xml
+            htmlcov/
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 88
+          MINIMUM_ORANGE: 70
+
+  # Job 4: Build Package
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package with twine
+        run: twine check dist/*
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+  # Job 5: Integration Tests (Optional - if you have them)
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run integration tests
+        run: |
+          # Run only tests marked with @pytest.mark.integration
+          pytest tests/ -m integration --verbose
+        continue-on-error: true  # Don't fail CI if no integration tests exist yet
+
+  # Job 6: Documentation Check (Optional)
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check README
+        run: |
+          # Ensure README.md exists and is not empty
+          test -f README.md
+          test -s README.md
+
+      - name: Validate pyproject.toml
+        run: |
+          python -m pip install --upgrade pip
+          pip install validate-pyproject
+          validate-pyproject pyproject.toml
+
+  # Final Status Check
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, test, build]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          if [ "${{ needs.code-quality.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ]; then
+            echo "One or more required jobs failed"
+            exit 1
+          fi
+          echo "All required jobs passed!"
