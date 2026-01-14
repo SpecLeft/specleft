@@ -1,3 +1,10 @@
+# SpecLeft specifc
+.specleft/
+CLAUDE.md
+PROGRESS.md
+*report.html
+.llm/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
