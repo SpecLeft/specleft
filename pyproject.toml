@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spec-left"
+version = "0.1.0"
+description = "Code-driven test case management for pytest"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "pytest>=7.0.0",
+    "pydantic>=2.0.0",
+    "click>=8.0.0",
+    "jinja2>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-cov",
+    "pytest-subtests",
+    "black",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+specleft = "specleft.cli.main:cli"
+
+[project.entry-points.pytest11]
+specleft = "specleft.pytest_plugin"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/spec-left"
+Documentation = "https://spec-left.readthedocs.io"
+Repository = "https://github.com/yourusername/spec-left"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true

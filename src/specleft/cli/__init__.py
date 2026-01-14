@@ -1,0 +1,1 @@
+"""SpecLeft CLI package."""
