@@ -24,7 +24,7 @@ from specleft import specleft
         ('100g', 'g'),  # Grams
     ],
 )
-def test_extract_unit_valid(input_str, expected):
+def test_extract_unit_valid(_input_str, _expected):
     """Extract unit from valid input
 
     Parser correctly extracts unit suffixes from measurement strings
@@ -66,7 +66,7 @@ def test_extract_unit_invalid():
         ('50kg123', 'kg'),  # Mixed characters
     ],
 )
-def test_extract_unit_edge_cases(input_str, expected):
+def test_extract_unit_edge_cases(_input_str, _expected):
     """Extract unit from edge case inputs
 
     Parser handles edge cases like spaces and mixed characters
@@ -79,5 +79,3 @@ def test_extract_unit_edge_cases(input_str, expected):
 
     with specleft.step("Then unit should be '{expected}'"):
         pass  # TODO: Implement step logic
-
-

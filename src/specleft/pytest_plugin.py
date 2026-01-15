@@ -35,12 +35,12 @@ def pytest_configure(config: Config) -> None:
     config._specleft_features_config = None  # type: ignore[attr-defined]
 
     # Register custom markers
-    config.addinivalue_line(
-        "markers", "specleft: mark test as a SpecLeft managed test"
-    )
+    config.addinivalue_line("markers", "specleft: mark test as a SpecLeft managed test")
 
 
-def _load_features_config(config: Config) -> dict[tuple[str, str], dict[str, Any]] | None:
+def _load_features_config(
+    config: Config,
+) -> dict[tuple[str, str], dict[str, Any]] | None:
     """Load features.json and build a lookup of valid scenarios.
 
     Args:
@@ -56,8 +56,8 @@ def _load_features_config(config: Config) -> dict[tuple[str, str], dict[str, Any
     search_paths = [
         Path("features.json"),
         Path("examples/features.json"),
-        config.rootdir / "features.json",
-        config.rootdir / "examples" / "features.json",
+        config.rootpath / "features.json",
+        config.rootpath / "examples" / "features.json",
     ]
 
     features_file = None

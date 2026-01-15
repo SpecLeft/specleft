@@ -224,9 +224,8 @@ class TestStepContextManager:
 
     def test_step_records_failed_status_on_exception(self) -> None:
         """Test that step with exception has failed status."""
-        with pytest.raises(ValueError):
-            with step("Failing step"):
-                raise ValueError("Test error")
+        with pytest.raises(ValueError), step("Failing step"):
+            raise ValueError("Test error")
 
         steps = get_current_steps()
         assert steps[0].status == "failed"
@@ -244,9 +243,11 @@ class TestStepContextManager:
 
     def test_step_reraises_exception(self) -> None:
         """Test that step re-raises the original exception."""
-        with pytest.raises(RuntimeError, match="Original error"):
-            with step("Step that fails"):
-                raise RuntimeError("Original error")
+        with (
+            pytest.raises(RuntimeError, match="Original error"),
+            step("Step that fails"),
+        ):
+            raise RuntimeError("Original error")
 
     def test_multiple_steps_recorded_in_order(self) -> None:
         """Test that multiple steps are recorded in execution order."""
@@ -280,9 +281,8 @@ class TestStepContextManager:
 
     def test_nested_steps(self) -> None:
         """Test that nested steps are all recorded."""
-        with step("Outer step"):
-            with step("Inner step"):
-                pass
+        with step("Outer step"), step("Inner step"):
+            pass
 
         steps = get_current_steps()
         # Both steps should be recorded (inner first due to exit order)

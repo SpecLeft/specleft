@@ -141,9 +141,7 @@ class FeatureMetadata(BaseModel):
     priority: Priority = Field(
         default=Priority.MEDIUM, description="Default priority for all scenarios"
     )
-    tags: list[str] = Field(
-        default_factory=list, description="Tags for categorization"
-    )
+    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
     external_references: list[ExternalReference] = Field(
         default_factory=list, description="Links to external tracking systems"
     )
@@ -211,9 +209,7 @@ class Scenario(BaseModel):
     metadata: ScenarioMetadata | None = Field(
         default=None, description="Optional scenario-level metadata"
     )
-    steps: list[TestStep] = Field(
-        ..., min_length=1, description="List of test steps"
-    )
+    steps: list[TestStep] = Field(..., min_length=1, description="List of test steps")
     test_data: list[TestDataRow] = Field(
         default_factory=list, description="Test data for parameterization"
     )
@@ -261,9 +257,7 @@ class FeaturesConfig(BaseModel):
     """
 
     version: str = Field(default="1.0", description="Schema version")
-    features: list[Feature] = Field(
-        ..., min_length=1, description="List of features"
-    )
+    features: list[Feature] = Field(..., min_length=1, description="List of features")
 
     @model_validator(mode="after")
     def validate_unique_feature_ids(self) -> FeaturesConfig:

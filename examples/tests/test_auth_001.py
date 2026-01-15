@@ -23,7 +23,7 @@ from specleft import specleft
         ('user', 'password'),  # Standard user account
     ],
 )
-def test_login_success(username, password):
+def test_login_success(_username, _password):
     """Successful login with valid credentials
 
     User can log in with correct username and password
@@ -61,5 +61,3 @@ def test_login_invalid_credentials():
 
     with specleft.step("Then login fails with error message"):
         pass  # TODO: Implement step logic
-
-

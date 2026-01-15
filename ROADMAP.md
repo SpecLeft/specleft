@@ -16,6 +16,8 @@
 - 🤖 **AI-Generated Tests** — Let SpecLeft generate test implementations from your feature specs using LLMs. Reduce boilerplate even further.
 - 🔗 **CI/CD Integration** — Native integrations with GitHub Actions, GitLab CI, Jenkins, and other CI platforms for seamless reporting and result tracking.
 - 🌐 **Distributed Test Execution** — Run tests across multiple machines and aggregate results in real-time.
+- 🔌 **3rd Party Plugin for Syncing Features** - Sync feature specifications with external platforms like Jira and Azure DevOps to maintain alignment between requirements and automated tests.
+- 🔔 **Notifications** - Get real-time updates on test execution and results via Slack, Microsoft Teams, Discord, and other messaging platforms.
 
 ## Community & Contributions
 
