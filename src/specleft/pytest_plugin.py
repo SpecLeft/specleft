@@ -113,7 +113,7 @@ def _sanitize_marker_name(tag: str) -> str:
 
 
 def pytest_collection_modifyitems(
-    _session: Session, config: Config, items: list[Item]
+    session: Session, config: Config, items: list[Item]
 ) -> None:
     """Hook called after test collection to extract SpecLeft metadata.
 
@@ -188,7 +188,7 @@ def pytest_collection_modifyitems(
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: Item, _call: Any) -> Any:
+def pytest_runtest_makereport(item: Item, call: Any) -> Any:
     """Capture test results and steps after test execution.
 
     This is a hookwrapper that intercepts test reports to collect
@@ -234,7 +234,7 @@ def pytest_runtest_makereport(item: Item, _call: Any) -> Any:
     item.config._specleft_results.append(result)  # type: ignore[attr-defined]
 
 
-def pytest_sessionfinish(session: Session, _exitstatus: int) -> None:
+def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
     """Save results to disk after test session completes.
 
     Called after all tests have run and before pytest exits.
