@@ -56,8 +56,8 @@ def _load_features_config(config: Config) -> dict[tuple[str, str], dict[str, Any
     search_paths = [
         Path("features.json"),
         Path("examples/features.json"),
-        config.rootdir / "features.json",
-        config.rootdir / "examples" / "features.json",
+        config.rootpath / "features.json",
+        config.rootpath / "examples" / "features.json",
     ]
 
     features_file = None
