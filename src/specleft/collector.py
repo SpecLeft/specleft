@@ -53,12 +53,8 @@ class ResultCollector:
 
             for scenario_id, executions in scenarios_data.items():
                 # Calculate scenario summary
-                scenario_passed = sum(
-                    1 for e in executions if e["status"] == "passed"
-                )
-                scenario_failed = sum(
-                    1 for e in executions if e["status"] == "failed"
-                )
+                scenario_passed = sum(1 for e in executions if e["status"] == "passed")
+                scenario_failed = sum(1 for e in executions if e["status"] == "failed")
                 scenario_skipped = sum(
                     1 for e in executions if e["status"] == "skipped"
                 )

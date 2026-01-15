@@ -143,9 +143,7 @@ def test_skeleton(features_file: str, output_dir: str, single_file: bool) -> Non
     is_flag=True,
     help="Open the report in the default web browser.",
 )
-def test_report(
-    results_file: str | None, output: str, open_browser: bool
-) -> None:
+def test_report(results_file: str | None, output: str, open_browser: bool) -> None:
     """Generate HTML report from test results.
 
     Reads the test results JSON and generates a static HTML report
@@ -157,7 +155,9 @@ def test_report(
     if results_file:
         results_path = Path(results_file)
         if not results_path.exists():
-            click.secho(f"Error: Results file not found: {results_file}", fg="red", err=True)
+            click.secho(
+                f"Error: Results file not found: {results_file}", fg="red", err=True
+            )
             sys.exit(1)
     else:
         # Find latest results file
