@@ -23,7 +23,7 @@ from specleft import specleft
         ('user', 'password'),  # Standard user account
     ],
 )
-def test_login_success(username, password):
+def test_login_success(_username, _password):
     """Successful login with valid credentials
 
     User can log in with correct username and password

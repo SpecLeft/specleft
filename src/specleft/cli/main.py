@@ -7,7 +7,6 @@ import re
 import sys
 import webbrowser
 from pathlib import Path
-from typing import Optional
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -145,7 +144,7 @@ def test_skeleton(features_file: str, output_dir: str, single_file: bool) -> Non
     help="Open the report in the default web browser.",
 )
 def test_report(
-    results_file: Optional[str], output: str, open_browser: bool
+    results_file: str | None, output: str, open_browser: bool
 ) -> None:
     """Generate HTML report from test results.
 

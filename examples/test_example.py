@@ -14,7 +14,6 @@ import pytest
 
 from specleft import reusable_step, specleft
 
-
 # =============================================================================
 # Helper functions (simulating application code)
 # =============================================================================
