@@ -12,6 +12,8 @@ from specleft.schema import (
     StepType,
     StorySpec,
 )
+from specleft.spec_differ import SpecDiffer, StepDiff
+from specleft.test_revisor import RevisionPlan, TestFunctionRevisor
 
 __version__ = "0.2.0"
 __all__ = [
@@ -22,9 +24,13 @@ __all__ = [
     "SpecDataRow",
     "SpecStep",
     "SpecsConfig",
+    "RevisionPlan",
+    "SpecDiffer",
+    "StepDiff",
     "StepResult",
     "StepType",
     "StorySpec",
+    "TestFunctionRevisor",
     "reusable_step",
     "specleft",
     "step",

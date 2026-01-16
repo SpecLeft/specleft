@@ -148,6 +148,7 @@ class TestTestGroup:
         assert result.exit_code == 0
         assert "skeleton" in result.output
         assert "report" in result.output
+        assert "sync" in result.output
 
 
 class TestSkeletonCommand:
@@ -487,7 +488,6 @@ class TestReportCommand:
         """Test report command generates HTML file."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            # Create results directory and file
             results_dir = Path(".specleft/results")
             results_dir.mkdir(parents=True)
             results_file = results_dir / "results_20250113_100000.json"
@@ -497,10 +497,8 @@ class TestReportCommand:
             assert result.exit_code == 0
             assert "Report generated" in result.output
 
-            # Check HTML file exists
             assert Path("report.html").exists()
 
-            # Check HTML content
             content = Path("report.html").read_text()
             assert "SpecLeft Test Report" in content
             assert "TEST-001" in content
@@ -510,7 +508,6 @@ class TestReportCommand:
         """Test report command with custom output path."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            # Create results
             results_dir = Path(".specleft/results")
             results_dir.mkdir(parents=True)
             results_file = results_dir / "results_20250113_100000.json"
@@ -524,7 +521,6 @@ class TestReportCommand:
         """Test report command with specific results file."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            # Create specific results file
             Path("my_results.json").write_text(json.dumps(sample_results))
 
             result = runner.invoke(cli, ["test", "report", "-r", "my_results.json"])
@@ -553,16 +549,13 @@ class TestReportCommand:
         """Test report command uses the latest results file when multiple exist."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            # Create results directory with multiple files
             results_dir = Path(".specleft/results")
             results_dir.mkdir(parents=True)
 
-            # Older file
             (results_dir / "results_20250101_100000.json").write_text(
                 json.dumps({**sample_results, "run_id": "old-run"})
             )
 
-            # Newer file
             (results_dir / "results_20250113_100000.json").write_text(
                 json.dumps({**sample_results, "run_id": "new-run"})
             )
@@ -570,6 +563,103 @@ class TestReportCommand:
             result = runner.invoke(cli, ["test", "report"])
             assert result.exit_code == 0
 
-            # Check it used the newer file
             content = Path("report.html").read_text()
             assert "new-run" in content
+
+
+class TestSyncCommand:
+    """Tests for 'specleft test sync' command."""
+
+    def test_sync_missing_features_dir(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["test", "sync"])
+            assert result.exit_code == 1
+            assert "not found" in result.output
+
+    def test_sync_missing_tests_dir(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            result = runner.invoke(cli, ["test", "sync", "--tests-dir", "missing"])
+            assert result.exit_code == 1
+            assert "not found" in result.output
+
+    def test_sync_no_test_files(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            Path("tests").mkdir()
+            result = runner.invoke(cli, ["test", "sync"])
+            assert result.exit_code == 1
+            assert "No test files" in result.output
+
+    def test_sync_no_changes(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            Path("tests").mkdir()
+            test_file = Path("tests/test_auth.py")
+            test_file.write_text(
+                """
+                from specleft import specleft
+
+                @specleft(feature_id=\"auth\", scenario_id=\"login-success\")
+                def test_login():
+                    with specleft.step(\"Given a user exists\"):
+                        pass
+                    with specleft.step(\"When the user logs in\"):
+                        pass
+                    with specleft.step(\"Then access is granted\"):
+                        pass
+                """.strip()
+            )
+
+            result = runner.invoke(cli, ["test", "sync", "--dry-run"])
+            assert result.exit_code == 0
+            assert "No changes needed" in result.output
+
+    def test_sync_dry_run_detects_changes(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            Path("tests").mkdir()
+            test_file = Path("tests/test_auth.py")
+            test_file.write_text(
+                """
+                from specleft import specleft
+
+                @specleft(feature_id=\"auth\", scenario_id=\"login-success\")
+                def test_login():
+                    with specleft.step(\"Given a user exists\"):
+                        pass
+                    with specleft.step(\"When the user logs in\"):
+                        pass
+                """.strip()
+            )
+
+            result = runner.invoke(cli, ["test", "sync", "--dry-run"])
+            assert result.exit_code == 0
+            assert "Updating" in result.output
+            assert "Dry run complete" in result.output
+            assert not Path("tests/test_auth.py.bak").exists()

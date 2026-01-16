@@ -14,7 +14,7 @@ Phase tracking is managed in GitHub issues under the "Foundation v2" milestone. 
 - Phase 3: Decorators & Steps (`https://github.com/SpecLeft/spec-left/issues/18`) - Complete
 - Phase 4: Pytest Plugin & Collector (`https://github.com/SpecLeft/spec-left/issues/19`) - Complete (filter selection + report metadata refinements)
 - Phase 5: CLI Test Ops (`https://github.com/SpecLeft/spec-left/issues/20`) - Complete
-- Phase 6: Test Revision System (`https://github.com/SpecLeft/spec-left/issues/21`) - Not started
+- Phase 6: Test Revision System (`https://github.com/SpecLeft/spec-left/issues/21`) - Complete (spec differ + test sync)
 - Phase 7: Docs & Examples (`https://github.com/SpecLeft/spec-left/issues/22`) - Not started
 
 Use `.llm/SpecLeft-v2-iteration.md` only for detailed reference when needed.
