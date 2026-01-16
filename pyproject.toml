@@ -133,6 +133,14 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
+# SpecLeft filter options (all repeatable)
+specleft_features_dir = "features"
+specleft_output_dir = ".specleft"
+specleft_tag = []
+specleft_priority = []
+specleft_feature = []
+specleft_scenario = []
+
 [tool.coverage.run]
 source = ["src"]
 omit = [

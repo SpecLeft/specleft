@@ -22,8 +22,8 @@ Thank you for your interest in contributing to SpecLeft SDK! This document provi
 2. **Create a virtual environment (recommended):**
 
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install pinned dependencies and the package in development mode:**
@@ -81,6 +81,30 @@ pytest -k "test_specleft"
 
 ```bash
 pytest -v
+```
+
+### Run SpecLeft Filtered Tests
+
+```bash
+# Filter by scenario tag or priority
+pytest --specleft-tag smoke
+pytest --specleft-priority high
+
+# Filter by feature or scenario id
+pytest --specleft-feature auth
+pytest --specleft-scenario login-success
+```
+
+### Configure SpecLeft Defaults
+
+```toml
+[tool.pytest.ini_options]
+specleft_features_dir = "features"
+specleft_output_dir = ".specleft"
+specleft_tag = []
+specleft_priority = []
+specleft_feature = []
+specleft_scenario = []
 ```
 
 ## Code Style Guidelines

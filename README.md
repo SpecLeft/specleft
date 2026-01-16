@@ -24,7 +24,7 @@ SpecLeft enables truly **Shift Left** testing by making it trivially easy to go 
 
 - 📊 **Self-Hosted Test Reports**: Generate beautiful, interactive HTML reports from test execution results. No third-party vendor, no subscriptions, no data leaving your infrastructure.
 
-- 🎯 **Dynamic Pytest Markers**: Scenario tags are automatically injected as pytest markers, so you can slice and dice test execution with `pytest -m "smoke"` or `pytest -m "critical"`. Filter tests like a pro.
+- 🎯 **SpecLeft Filters**: Filter SpecLeft tests by scenario tag, priority, feature, or scenario with `--specleft-*` options for deterministic selection.
 
 - ⚡ **Zero-Config Pytest Integration**: Installs as a pytest plugin. No complex setup, no configuration files to debug. Just `pip install specleft`, run your tests, and watch the magic happen.
 
@@ -253,19 +253,37 @@ Options:
   --dir PATH   Path to features directory (default: features)
 ```
 
-## Filtering Tests by Tags
+## Filtering SpecLeft Tests
 
-Scenario tags are automatically injected as pytest markers at runtime (from Markdown specs):
+Use SpecLeft selection flags for deterministic filtering:
 
 ```bash
 # Run only smoke tests
-pytest -m smoke
+pytest --specleft-tag smoke
 
-# Run authentication tests
-pytest -m authentication
+# Run only high priority scenarios
+pytest --specleft-priority high
 
-# Combine markers
-pytest -m "smoke and authentication"
+# Run only a specific feature or scenario
+pytest --specleft-feature auth
+pytest --specleft-scenario login-success
+
+# Combine filters (AND semantics across categories)
+pytest --specleft-tag smoke --specleft-priority high
+```
+
+Scenario tags and priority values are still injected as markers for reporting, but selection should use the SpecLeft flags.
+
+Optional defaults can be configured in `pyproject.toml`:
+
+```toml
+[tool.pytest.ini_options]
+specleft_features_dir = "features"
+specleft_output_dir = ".specleft"
+specleft_tag = []
+specleft_priority = []
+specleft_feature = []
+specleft_scenario = []
 ```
 
 ## Auto-Skip Orphaned Tests

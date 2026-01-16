@@ -1,272 +1,270 @@
-"""Pytest plugin for SpecLeft test collection and result capture.
-
-This plugin provides:
-- Automatic collection of @specleft decorated tests
-- Auto-skip for tests whose scenarios are removed from specs
-- Runtime marker injection from scenario tags
-- Step-by-step result capture
-- Result persistence to .specleft/results/
-"""
+"""SpecLeft Pytest Plugin."""
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any, Optional
 
 import pytest
 
 from specleft.decorators import get_current_steps
 
-if TYPE_CHECKING:
-    from pytest import Config, Item, Session
 
-logger = logging.getLogger(__name__)
-
-
-def pytest_configure(config: Config) -> None:
-    """Register the SpecLeft plugin and initialize result collection.
-
-    Called after command line options are parsed and all plugins are loaded.
-    """
-    config._specleft_results = []  # type: ignore[attr-defined]
-    config._specleft_start_time = datetime.now()  # type: ignore[attr-defined]
-    config._specleft_specs_config = None  # type: ignore[attr-defined]
-
-    # Register custom markers
-    config.addinivalue_line("markers", "specleft: mark test as a SpecLeft managed test")
-
-
-def _load_specs_config(
-    config: Config,
-) -> dict[tuple[str, str], dict[str, Any]] | None:
-    """Load Markdown specs and build a lookup of valid scenarios.
-
-    Args:
-        config: Pytest config object.
-
-    Returns:
-        Dictionary mapping (feature_id, scenario_id) to scenario info,
-        or None if specs are not found or invalid.
-    """
-    try:
-        from specleft.validator import load_specs_directory
-    except ImportError:
-        logger.warning("Spec parser not available; skipping specs validation.")
-        return None
-
-    # Try multiple potential locations for specs
-    search_paths = [
-        Path("features"),
-        Path("examples/features"),
-        config.rootpath / "features",
-        config.rootpath / "examples" / "features",
-    ]
-
-    specs_dir = None
-    for path in search_paths:
-        if path.exists():
-            specs_dir = path
-            break
-
-    if specs_dir is None:
-        logger.warning(
-            "Specs directory not found. Running all @specleft tests without validation. "
-            "Create a features directory to enable scenario validation and marker injection."
-        )
-        return None
-
-    try:
-        specs_config = load_specs_directory(specs_dir)
-        config._specleft_specs_config = specs_config  # type: ignore[attr-defined]
-
-        # Build lookup of valid (feature_id, scenario_id) pairs and their info
-        valid_scenarios: dict[tuple[str, str], dict[str, Any]] = {}
-        for feature in specs_config.features:
-            for story in feature.stories:
-                for scenario in story.scenarios:
-                    key = (feature.feature_id, scenario.scenario_id)
-                    valid_scenarios[key] = {
-                        "tags": scenario.tags,
-                        "feature_name": feature.name,
-                        "scenario_name": scenario.name,
-                        "priority": scenario.priority.value,
-                    }
-        return valid_scenarios
-    except FileNotFoundError:
-        logger.warning(
-            "Specs directory not found. Running all @specleft tests without validation."
-        )
-        return None
-    except ValueError as e:
-        logger.error(f"Error loading specs: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error loading specs: {e}")
-        return None
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addini(
+        "specleft_features_dir",
+        "Directory containing SpecLeft specs",
+        default="features",
+    )
+    parser.addini(
+        "specleft_output_dir",
+        "Output directory for SpecLeft results",
+        default=".specleft",
+    )
+    parser.addini(
+        "specleft_tag",
+        "Default SpecLeft tag filters",
+        default=[],
+        type="args",
+    )
+    parser.addini(
+        "specleft_priority",
+        "Default SpecLeft priority filters",
+        default=[],
+        type="args",
+    )
+    parser.addini(
+        "specleft_feature",
+        "Default SpecLeft feature filters",
+        default=[],
+        type="args",
+    )
+    parser.addini(
+        "specleft_scenario",
+        "Default SpecLeft scenario filters",
+        default=[],
+        type="args",
+    )
+    parser.addoption(
+        "--specleft-tag",
+        action="append",
+        default=[],
+        dest="specleft_tags",
+        help="Filter SpecLeft tests by scenario tag (repeatable)",
+    )
+    parser.addoption(
+        "--specleft-priority",
+        action="append",
+        default=[],
+        dest="specleft_priorities",
+        help="Filter SpecLeft tests by scenario priority (repeatable)",
+    )
+    parser.addoption(
+        "--specleft-feature",
+        action="append",
+        default=[],
+        dest="specleft_features",
+        help="Filter SpecLeft tests by feature_id (repeatable)",
+    )
+    parser.addoption(
+        "--specleft-scenario",
+        action="append",
+        default=[],
+        dest="specleft_scenarios",
+        help="Filter SpecLeft tests by scenario_id (repeatable)",
+    )
 
 
-def _sanitize_marker_name(tag: str) -> str:
-    """Sanitize a tag name to be a valid pytest marker.
+def pytest_configure(config: pytest.Config) -> None:
+    config._specleft_results: list[dict[str, Any]] = []
+    config._specleft_start_time = datetime.now()
+    config._specleft_specs_config: Optional[Any] = None
 
-    Args:
-        tag: The tag name to sanitize.
+    config.addinivalue_line(
+        "markers",
+        "specleft(feature_id, scenario_id): Mark test with SpecLeft metadata",
+    )
 
-    Returns:
-        A valid pytest marker name.
-    """
-    # Replace hyphens and spaces with underscores
-    return tag.replace("-", "_").replace(" ", "_")
+    features_dir = config.getini("specleft_features_dir") or "features"
+    features_path = Path(features_dir)
+    if not features_path.is_absolute():
+        features_path = config.rootpath / features_path
+
+    if features_path.exists():
+        try:
+            from specleft.schema import SpecsConfig
+
+            config._specleft_specs_config = SpecsConfig.from_directory(features_path)
+        except Exception:
+            pass
 
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(
-    session: Session, config: Config, items: list[Item]
+    session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
 ) -> None:
-    """Hook called after test collection to extract SpecLeft metadata.
-
-    Identifies tests decorated with @specleft and extracts their metadata
-    for later result collection. Also handles:
-    - Auto-skip for tests whose scenarios are removed from specs
-    - Runtime marker injection from scenario tags
-    """
-    # Load specs once for validation and marker injection
-    valid_scenarios = _load_specs_config(config)
+    specs_config = getattr(config, "_specleft_specs_config", None)
+    tag_filters = {
+        tag.strip()
+        for tag in (config.getini("specleft_tag") or [])
+        + (config.getoption("specleft_tags") or [])
+    }
+    priority_filters = {
+        priority.strip().lower()
+        for priority in (config.getini("specleft_priority") or [])
+        + (config.getoption("specleft_priorities") or [])
+    }
+    feature_filters = {
+        feature.strip()
+        for feature in (config.getini("specleft_feature") or [])
+        + (config.getoption("specleft_features") or [])
+    }
+    scenario_filters = {
+        scenario.strip()
+        for scenario in (config.getini("specleft_scenario") or [])
+        + (config.getoption("specleft_scenarios") or [])
+    }
+    use_filters = any(
+        (tag_filters, priority_filters, feature_filters, scenario_filters)
+    )
 
     for item in items:
-        # Get the original function (unwrap any wrappers)
         func = getattr(item, "function", None)
         if func is None:
             continue
 
-        # Check if this test has SpecLeft metadata
         feature_id = getattr(func, "_specleft_feature_id", None)
         scenario_id = getattr(func, "_specleft_scenario_id", None)
 
-        if feature_id is not None and scenario_id is not None:
-            # Extract metadata
-            metadata: dict[str, Any] = {
-                "feature_id": feature_id,
-                "scenario_id": scenario_id,
-                "test_name": item.name,
-                "original_name": (
-                    item.originalname if hasattr(item, "originalname") else item.name
-                ),
-                "nodeid": item.nodeid,
-            }
+        if feature_id is None or scenario_id is None:
+            continue
 
-            # Extract parameters if parameterized
-            if hasattr(item, "callspec"):
-                metadata["parameters"] = dict(item.callspec.params)
-                metadata["is_parameterized"] = True
-            else:
-                metadata["parameters"] = {}
-                metadata["is_parameterized"] = False
+        item._specleft_metadata = {
+            "feature_id": feature_id,
+            "scenario_id": scenario_id,
+            "test_name": item.name,
+            "original_name": getattr(item, "originalname", item.name),
+            "nodeid": item.nodeid,
+            "is_parameterized": hasattr(item, "callspec"),
+            "parameters": dict(item.callspec.params)
+            if hasattr(item, "callspec")
+            else {},
+        }
 
-            # Store metadata on the item for later access
-            item._specleft_metadata = metadata  # type: ignore[attr-defined]
+        scenario = None
+        if specs_config:
+            scenario = specs_config.get_scenario(scenario_id)
+            if scenario:
+                for tag in scenario.tags:
+                    marker_name = _sanitize_marker_name(tag)
+                    item.add_marker(getattr(pytest.mark, marker_name))
+                priority_marker = f"priority_{scenario.priority.value}"
+                item.add_marker(getattr(pytest.mark, priority_marker))
 
-            # Add the specleft marker
-            item.add_marker(pytest.mark.specleft)
+        if use_filters:
+            if not _matches_filters(
+                feature_id=feature_id,
+                scenario_id=scenario_id,
+                scenario=scenario,
+                tag_filters=tag_filters,
+                priority_filters=priority_filters,
+                feature_filters=feature_filters,
+                scenario_filters=scenario_filters,
+            ):
+                item.add_marker(
+                    pytest.mark.skip(reason="Filtered by SpecLeft selection")
+                )
 
-            # Auto-skip and marker injection (only if specs were loaded)
-            if valid_scenarios is not None:
-                scenario_key = (feature_id, scenario_id)
 
-                if scenario_key not in valid_scenarios:
-                    # Auto-skip: Scenario not found in specs
-                    skip_marker = pytest.mark.skip(
-                        reason=(
-                            f"Scenario '{scenario_id}' (feature: {feature_id}) not found "
-                            f"in specs. This test is orphaned and should be removed "
-                            f"or the scenario should be re-added."
-                        )
-                    )
-                    item.add_marker(skip_marker)
-                    logger.warning(f"Skipping {item.nodeid}: scenario not in specs")
-                else:
-                    # Runtime marker injection from tags
-                    scenario_info = valid_scenarios[scenario_key]
-                    for tag in scenario_info["tags"]:
-                        marker_name = _sanitize_marker_name(tag)
-                        marker = getattr(pytest.mark, marker_name)
-                        item.add_marker(marker)
+def _sanitize_marker_name(tag: str) -> str:
+    """Sanitize a tag name to be a valid pytest marker."""
+    return tag.replace("-", "_")
+
+
+def _matches_filters(
+    feature_id: str,
+    scenario_id: str,
+    scenario: Optional[Any],
+    tag_filters: set[str],
+    priority_filters: set[str],
+    feature_filters: set[str],
+    scenario_filters: set[str],
+) -> bool:
+    if feature_filters and feature_id not in feature_filters:
+        return False
+    if scenario_filters and scenario_id not in scenario_filters:
+        return False
+
+    if scenario is None:
+        return not tag_filters and not priority_filters
+
+    scenario_tags = {_sanitize_marker_name(tag) for tag in scenario.tags}
+    scenario_priority = scenario.priority.value.lower()
+
+    if tag_filters and not scenario_tags.intersection(tag_filters):
+        return False
+    if priority_filters and scenario_priority not in priority_filters:
+        return False
+
+    return True
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: Item, call: Any) -> Any:
-    """Capture test results and steps after test execution.
-
-    This is a hookwrapper that intercepts test reports to collect
-    SpecLeft-specific data including step results.
-    """
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> Any:
     outcome = yield
     report = outcome.get_result()
 
-    # Only collect results from the test call phase (not setup/teardown)
     if report.when != "call":
         return
 
-    # Check if this is a SpecLeft test
     metadata = getattr(item, "_specleft_metadata", None)
     if metadata is None:
         return
 
-    # Get steps from thread-local storage
     steps = get_current_steps()
 
-    # Build the result record
-    result: dict[str, Any] = {
+    result = {
         **metadata,
-        "status": report.outcome,  # "passed", "failed", "skipped"
+        "status": report.outcome,
         "duration": report.duration,
         "error": str(report.longrepr) if report.failed else None,
         "steps": [
             {
                 "description": step.description,
                 "status": step.status,
-                "duration": (
-                    (step.end_time - step.start_time).total_seconds()
-                    if step.end_time
-                    else 0
-                ),
+                "duration": step.duration,
                 "error": step.error,
+                "skipped_reason": step.skipped_reason,
             }
             for step in steps
         ],
     }
-
-    # Store result in config for later collection
-    item.config._specleft_results.append(result)  # type: ignore[attr-defined]
+    item.config._specleft_results.append(result)
 
 
-def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
-    """Save results to disk after test session completes.
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    config = session.config
+    results = getattr(config, "_specleft_results", [])
 
-    Called after all tests have run and before pytest exits.
-    """
-    results = getattr(session.config, "_specleft_results", [])
-
-    # Only process if there are SpecLeft results
     if not results:
         return
 
-    # Import here to avoid circular imports
     from specleft.collector import ResultCollector
 
-    collector = ResultCollector()
+    output_dir = config.getini("specleft_output_dir") or ".specleft"
+    collector = ResultCollector(output_dir=f"{output_dir}/results")
+
     results_data = collector.collect(results)
     filepath = collector.write(results_data)
 
-    # Print summary to console
     summary = results_data["summary"]
-    print(f"\n{'=' * 60}")
+    print(f"\n{'═' * 60}")
     print("SpecLeft Test Results")
-    print(f"{'=' * 60}")
+    print(f"{'═' * 60}")
     print(f"Total Executions: {summary['total_executions']}")
     print(f"Passed: {summary['passed']}")
     print(f"Failed: {summary['failed']}")
-    print(f"Skipped: {summary['skipped']}")
     print(f"Duration: {summary['duration']:.2f}s")
     print(f"\nResults saved to: {filepath}")
-    print(f"{'=' * 60}\n")
+    print(f"{'═' * 60}\n")
