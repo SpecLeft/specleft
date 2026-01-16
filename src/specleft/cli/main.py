@@ -372,7 +372,7 @@ def features_validate(features_dir: str) -> None:
     try:
         config = load_specs_directory(features_dir)
         stats = collect_spec_stats(config)
-        click.secho(f"✓ {features_dir} is valid", fg="green")
+        click.secho(f"✓ Features directory '{features_dir}/' is valid", fg="green")
         click.echo(f"  Features: {stats.feature_count}")
         click.echo(f"  Stories: {stats.story_count}")
         click.echo(f"  Scenarios: {stats.scenario_count}")

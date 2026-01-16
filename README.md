@@ -1,6 +1,6 @@
 # SpecLeft SDK
 
-A test management SDK for pytest that enables structured test metadata, step-by-step result tracking, and automated test generation from JSON specifications.
+A test management SDK for pytest that enables structured test metadata, step-by-step result tracking, and automated test generation from Markdown specifications.
 
 ## What is SpecLeft?
 
@@ -12,7 +12,7 @@ SpecLeft wraps around pytest to inject structure, visibility, and traceability i
 
 The philosophy is straightforward: **steal the best ideas from Behaviour Driven Development (BDD)**, **keep the pragmatism of Test Driven Development (TDD)**, and **drop all the ceremonial overhead**. The result? A framework that actually lets developers, QAs, and product teams speak the same language about what the software should do—without the ceremony, the bloat, or the spreadsheets.
 
-SpecLeft enables truly **Shift Left** testing by making it trivially easy to go from "what should we build?" to "here's the test skeleton" to "here's what actually happened"—all in code, all under version control, all without leaving your IDE.
+SpecLeft enables truly **shift-left** testing by making it trivially easy to go from "what should we build?" to "here's the test skeleton" to "here's what actually happened"—all in code, all under version control, all without leaving your IDE.
 
 ## Features
 
@@ -20,7 +20,7 @@ SpecLeft enables truly **Shift Left** testing by making it trivially easy to go 
 
 - 🔍 **Step-by-Step Tracing**: Record individual test steps with timing, pass/fail status, and parameter interpolation. Watch exactly where your tests succeed—or crash—with surgical precision.
 
-- 🏗️ **Skeleton Test Generation**: Write a simple JSON file describing your features and scenarios. SpecLeft generates fully-formed test skeletons with proper decorators, parameterization, and step placeholders. Stop writing boilerplate; start writing behavior.
+- 🏗️ **Skeleton Test Generation**: Write simple Markdown specs describing your features and scenarios. SpecLeft generates fully-formed test skeletons with proper decorators, parameterization, and step placeholders. Stop writing boilerplate; start writing behavior.
 
 - 📊 **Self-Hosted Test Reports**: Generate beautiful, interactive HTML reports from test execution results. No third-party vendor, no subscriptions, no data leaving your infrastructure.
 
@@ -155,6 +155,8 @@ pytest
 
 Results are automatically saved to `.specleft/results/`.
 
+See `docs/getting-started.md` for a longer walkthrough.
+
 ### 5. Generate Report
 
 ```bash
@@ -193,6 +195,8 @@ def test_login_success(auth_service):
 ```
 
 ## CLI Reference
+
+Full command reference: `docs/cli-reference.md`.
 
 ### `specleft test skeleton`
 
@@ -253,6 +257,20 @@ Options:
   --dir PATH   Path to features directory (default: features)
 ```
 
+### `specleft test sync`
+
+Synchronize tests with spec changes.
+
+```bash
+specleft test sync [OPTIONS]
+
+Options:
+  -f, --features-dir PATH   Path to features directory (default: features)
+  -t, --tests-dir PATH      Path to tests directory (default: tests)
+  --dry-run                 Preview changes without modifying files
+  --backup / --no-backup    Backup files before modifying (default: --backup)
+```
+
 ## Filtering SpecLeft Tests
 
 Use SpecLeft selection flags for deterministic filtering:
@@ -297,6 +315,8 @@ SKIPPED [1] test_auth.py: Scenario 'old-scenario' (feature: AUTH-001) not found 
 This helps identify tests that need to be removed or updated.
 
 ## Schema Reference
+
+See `docs/spec-format.md` for the full Markdown spec format.
 
 ### Markdown Specs Structure
 
@@ -397,6 +417,11 @@ mypy src/
 ```
 
 ## Project Structure
+
+Additional docs:
+- `docs/getting-started.md`
+- `docs/spec-format.md`
+- `docs/cli-reference.md`
 
 ```
 spec-left/
