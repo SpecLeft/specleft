@@ -86,25 +86,13 @@ def pytest_configure(config: pytest.Config) -> None:
         "specleft(feature_id, scenario_id): Mark test with SpecLeft metadata",
     )
 
-    features_dir = config.getini("specleft_features_dir") or "features"
-    features_path = Path(features_dir)
-    if not features_path.is_absolute():
-        features_path = config.rootpath / features_path
-
-    if features_path.exists():
-        try:
-            from specleft.schema import SpecsConfig
-
-            config._specleft_specs_config = SpecsConfig.from_directory(features_path)
-        except Exception:
-            pass
+    config._specleft_specs_config = _load_specs_config(config)
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(
     session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
 ) -> None:
-    specs_config = getattr(config, "_specleft_specs_config", None)
     tag_filters = {
         tag.strip()
         for tag in (config.getini("specleft_tag") or [])
@@ -125,6 +113,30 @@ def pytest_collection_modifyitems(
         for scenario in (config.getini("specleft_scenario") or [])
         + (config.getoption("specleft_scenarios") or [])
     }
+    use_filters = any(
+        (tag_filters, priority_filters, feature_filters, scenario_filters)
+    )
+
+    specs_config = _load_specs_config(config)
+    config._specleft_specs_config = specs_config
+
+    if not specs_config and use_filters:
+        for item in items:
+            func = getattr(item, "function", None)
+            if func is None:
+                continue
+            feature_id = getattr(func, "_specleft_feature_id", None)
+            scenario_id = getattr(func, "_specleft_scenario_id", None)
+            if feature_id is None or scenario_id is None:
+                continue
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=(
+                        "SpecLeft filters require specs. " "No specs directory found."
+                    )
+                )
+            )
+        return
     use_filters = any(
         (tag_filters, priority_filters, feature_filters, scenario_filters)
     )
@@ -153,8 +165,9 @@ def pytest_collection_modifyitems(
         }
 
         scenario = None
+        feature = None
         if specs_config:
-            scenario = specs_config.get_scenario(scenario_id)
+            scenario, feature = _find_scenario(specs_config, scenario_id)
             if scenario:
                 for tag in scenario.tags:
                     marker_name = _sanitize_marker_name(tag)
@@ -176,10 +189,71 @@ def pytest_collection_modifyitems(
                     pytest.mark.skip(reason="Filtered by SpecLeft selection")
                 )
 
+        if specs_config and scenario is None:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=(
+                        "Scenario '{scenario_id}' (feature: {feature_id}) "
+                        "not found in specs."
+                    ).format(scenario_id=scenario_id, feature_id=feature_id)
+                )
+            )
+        else:
+            item._specleft_metadata.update(
+                {
+                    "feature_name": feature.name if feature else None,
+                    "scenario_name": scenario.name if scenario else None,
+                }
+            )
+
 
 def _sanitize_marker_name(tag: str) -> str:
     """Sanitize a tag name to be a valid pytest marker."""
     return tag.replace("-", "_")
+
+
+def _load_specs_config(config: pytest.Config) -> Optional[Any]:
+    features_dir = config.getini("specleft_features_dir") or "features"
+    search_roots = [
+        Path(str(config.rootpath)),
+        Path.cwd(),
+        Path(__file__).resolve().parent.parent.parent,
+    ]
+
+    for root in search_roots:
+        root_path = Path(str(root))
+        features_path = Path(features_dir)
+        if not features_path.is_absolute():
+            features_path = root_path / features_path
+
+        if not features_path.exists():
+            continue
+
+        try:
+            from specleft.validator import load_specs_directory
+
+            return load_specs_directory(features_path)
+        except Exception:
+            try:
+                from specleft.schema import SpecsConfig
+
+                parsed = SpecsConfig.from_directory(features_path)
+                return parsed if parsed.features else None
+            except Exception:
+                continue
+
+    return None
+
+
+def _find_scenario(
+    specs_config: Any, scenario_id: str
+) -> tuple[Optional[Any], Optional[Any]]:
+    for feature in specs_config.features:
+        for story in feature.stories:
+            for scenario in story.scenarios:
+                if scenario.scenario_id == scenario_id:
+                    return scenario, feature
+    return None, None
 
 
 def _matches_filters(

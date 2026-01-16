@@ -80,15 +80,18 @@ class TestResultCollectorCollect:
 
         feature = result["features"][0]
         assert feature["feature_id"] == "AUTH-001"
+        assert feature["feature_name"] is None
         assert len(feature["scenarios"]) == 1
 
         scenario = feature["scenarios"][0]
         assert scenario["scenario_id"] == "login-success"
+        assert scenario["scenario_name"] is None
         assert scenario["is_parameterized"] is False
         assert len(scenario["executions"]) == 1
         assert scenario["summary"]["total"] == 1
         assert scenario["summary"]["passed"] == 1
         assert scenario["summary"]["failed"] == 0
+        assert scenario["summary"]["skipped"] == 0
 
     def test_multiple_features(self) -> None:
         """Test collecting multiple features."""
@@ -184,6 +187,7 @@ class TestResultCollectorCollect:
         assert scenario["summary"]["total"] == 3
         assert scenario["summary"]["passed"] == 2
         assert scenario["summary"]["failed"] == 1
+        assert scenario["summary"]["skipped"] == 0
 
     def test_skipped_results_counted(self) -> None:
         """Test collecting results with skipped status."""
@@ -205,6 +209,9 @@ class TestResultCollectorCollect:
 
         assert result["summary"]["skipped"] == 1
         assert result["summary"]["total_executions"] == 1
+
+        scenario = result["features"][0]["scenarios"][0]
+        assert scenario["summary"]["skipped"] == 1
 
     def test_run_id_is_iso_format(self) -> None:
         """Test that run_id is in ISO datetime format."""

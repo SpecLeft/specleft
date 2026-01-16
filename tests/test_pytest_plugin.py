@@ -305,6 +305,11 @@ class TestResultPersistence:
         results_data = json.loads(json_files[0].read_text())
         assert "summary" in results_data
         assert results_data["summary"]["passed"] == 1
+        assert results_data["features"][0]["feature_name"] == "User Authentication"
+        assert (
+            results_data["features"][0]["scenarios"][0]["scenario_name"]
+            == "Successful login"
+        )
 
 
 class TestSanitizeMarkerName:

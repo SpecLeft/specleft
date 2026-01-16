@@ -17,12 +17,15 @@ class ResultCollector:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def collect(self, pytest_results: list[dict[str, Any]]) -> dict[str, Any]:
-        features_map: dict[str, dict[str, list[dict]]] = defaultdict(
+        features_map: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(
             lambda: defaultdict(list)
         )
+        feature_names: dict[str, str | None] = {}
 
         for result in pytest_results:
-            features_map[result["feature_id"]][result["scenario_id"]].append(result)
+            feature_id = result["feature_id"]
+            features_map[feature_id][result["scenario_id"]].append(result)
+            feature_names.setdefault(feature_id, result.get("feature_name"))
 
         features_list = []
         total_executions = total_passed = total_failed = total_skipped = 0
@@ -32,6 +35,7 @@ class ResultCollector:
             scenarios_list = []
             for scenario_id in sorted(features_map[feature_id].keys()):
                 executions = features_map[feature_id][scenario_id]
+                scenario_name = executions[0].get("scenario_name")
                 scenario_passed = sum(1 for e in executions if e["status"] == "passed")
                 scenario_failed = sum(1 for e in executions if e["status"] == "failed")
                 scenario_skipped = sum(
@@ -41,6 +45,7 @@ class ResultCollector:
                 scenarios_list.append(
                     {
                         "scenario_id": scenario_id,
+                        "scenario_name": scenario_name,
                         "is_parameterized": executions[0].get(
                             "is_parameterized", False
                         ),
@@ -49,6 +54,7 @@ class ResultCollector:
                             "total": len(executions),
                             "passed": scenario_passed,
                             "failed": scenario_failed,
+                            "skipped": scenario_skipped,
                         },
                     }
                 )
@@ -60,7 +66,11 @@ class ResultCollector:
                 total_duration += sum(e.get("duration", 0) for e in executions)
 
             features_list.append(
-                {"feature_id": feature_id, "scenarios": scenarios_list}
+                {
+                    "feature_id": feature_id,
+                    "feature_name": feature_names.get(feature_id),
+                    "scenarios": scenarios_list,
+                }
             )
 
         return {
