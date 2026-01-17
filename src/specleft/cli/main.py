@@ -241,8 +241,8 @@ def report(results_file: str | None, output: str, open_browser: bool) -> None:
 )
 def sync(features_dir: str, tests_dir: str, dry_run: bool, backup: bool) -> None:
     """Synchronize tests with spec changes."""
-    from specleft.spec_differ import SpecDiffer
     from specleft.skeleton_revisor import TestFunctionRevisor
+    from specleft.spec_differ import SpecDiffer
 
     try:
         config = load_specs_directory(features_dir)

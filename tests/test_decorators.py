@@ -8,7 +8,6 @@ import time
 from datetime import datetime
 
 import pytest
-
 from specleft.decorators import (
     StepResult,
     _get_context,

@@ -7,13 +7,13 @@ from specleft.schema import (
     Priority,
     ScenarioSpec,
     SpecDataRow,
-    SpecStep,
     SpecsConfig,
+    SpecStep,
     StepType,
     StorySpec,
 )
-from specleft.spec_differ import SpecDiffer, StepDiff
 from specleft.skeleton_revisor import RevisionPlan, TestFunctionRevisor
+from specleft.spec_differ import SpecDiffer, StepDiff
 
 __version__ = "0.2.0"
 __all__ = [

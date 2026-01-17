@@ -11,7 +11,6 @@ This file shows how to use:
 import re
 
 import pytest
-
 from specleft import reusable_step, specleft
 
 # =============================================================================

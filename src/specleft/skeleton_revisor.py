@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import re
-from typing import Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 from specleft.spec_differ import StepDiff
 

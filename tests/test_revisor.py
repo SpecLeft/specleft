@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from specleft.spec_differ import StepDiff
 from specleft.skeleton_revisor import TestFunctionRevisor
+from specleft.spec_differ import StepDiff
 
 
 def _build_source(steps: list[str]) -> str:

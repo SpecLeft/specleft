@@ -8,10 +8,11 @@ from __future__ import annotations
 import functools
 import inspect
 import threading
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Generator, Optional, TypeVar
+from typing import Any, TypeVar
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -23,9 +24,9 @@ class StepResult:
     description: str
     status: str = "passed"
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
-    error: Optional[str] = None
-    skipped_reason: Optional[str] = None
+    end_time: datetime | None = None
+    error: str | None = None
+    skipped_reason: str | None = None
 
     @property
     def duration(self) -> float:
@@ -71,7 +72,7 @@ def clear_steps() -> None:
     _get_context()["steps"] = []
 
 
-def get_current_metadata() -> dict[str, Optional[str]]:
+def get_current_metadata() -> dict[str, str | None]:
     """Return current feature/scenario metadata."""
     ctx = _get_context()
     return {
@@ -114,7 +115,7 @@ class SpecleftDecorator:
     def step(
         description: str,
         skip: bool = False,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> Generator[None, None, None]:
         """Context manager for test steps."""
         ctx = _get_context()

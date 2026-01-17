@@ -5,10 +5,9 @@ Parses feature specifications from Markdown files with YAML frontmatter.
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import frontmatter
 
@@ -17,8 +16,8 @@ from specleft.schema import (
     FeatureSpec,
     Priority,
     ScenarioSpec,
-    SpecsConfig,
     SpecDataRow,
+    SpecsConfig,
     SpecStep,
     StepType,
     StorySpec,
@@ -51,7 +50,7 @@ class SpecParser:
 
         return SpecsConfig(features=features)
 
-    def _parse_feature_dir(self, feature_dir: Path) -> Optional[FeatureSpec]:
+    def _parse_feature_dir(self, feature_dir: Path) -> FeatureSpec | None:
         """Parse a feature directory."""
         feature_file = feature_dir / self.FEATURE_FILE
 
@@ -73,7 +72,7 @@ class SpecParser:
 
         return feature if feature.stories else None
 
-    def _parse_story_dir(self, story_dir: Path) -> Optional[StorySpec]:
+    def _parse_story_dir(self, story_dir: Path) -> StorySpec | None:
         """Parse a story directory."""
         story_file = story_dir / self.STORY_FILE
 
@@ -148,7 +147,7 @@ class SpecParser:
             source_file=filepath,
         )
 
-    def _extract_title(self, content: str) -> Optional[str]:
+    def _extract_title(self, content: str) -> str | None:
         """Extract the first H1 title from Markdown content."""
         match = re.search(
             r"^#\s+(?:Scenario:|Story:|Feature:)?\s*(.+)$",
@@ -157,7 +156,7 @@ class SpecParser:
         )
         return match.group(1).strip() if match else None
 
-    def _extract_description(self, content: str) -> Optional[str]:
+    def _extract_description(self, content: str) -> str | None:
         """Extract description (first paragraph after title)."""
         lines = content.split("\n")
         in_description = False
@@ -229,7 +228,7 @@ class SpecParser:
             params: dict[str, Any] = {}
             description = None
 
-            for header, value in zip(headers, values):
+            for header, value in zip(headers, values, strict=False):
                 if header.lower() == "description":
                     description = value
                 else:

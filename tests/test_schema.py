@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import pytest
 from pydantic import ValidationError
-
 from specleft.schema import (
     ExecutionTime,
     FeatureSpec,
     Priority,
     ScenarioSpec,
     SpecDataRow,
-    SpecStep,
     SpecsConfig,
+    SpecStep,
     StepType,
     StorySpec,
 )

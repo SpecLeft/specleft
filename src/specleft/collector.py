@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class ResultCollector:
@@ -87,7 +87,7 @@ class ResultCollector:
             "features": features_list,
         }
 
-    def write(self, data: dict[str, Any], filename: Optional[str] = None) -> Path:
+    def write(self, data: dict[str, Any], filename: str | None = None) -> Path:
         if filename is None:
             filename = f"results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = self.output_dir / filename
@@ -95,7 +95,7 @@ class ResultCollector:
             json.dump(data, file_obj, indent=2, default=str)
         return filepath
 
-    def get_latest_results(self) -> Optional[dict[str, Any]]:
+    def get_latest_results(self) -> dict[str, Any] | None:
         json_files = sorted(self.output_dir.glob("results_*.json"))
         if not json_files:
             return None

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 
@@ -79,7 +79,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 def pytest_configure(config: pytest.Config) -> None:
     config._specleft_results: list[dict[str, Any]] = []
     config._specleft_start_time = datetime.now()
-    config._specleft_specs_config: Optional[Any] = None
+    config._specleft_specs_config: Any | None = None
 
     config.addinivalue_line(
         "markers",
@@ -193,9 +193,9 @@ def pytest_collection_modifyitems(
             item.add_marker(
                 pytest.mark.skip(
                     reason=(
-                        "Scenario '{scenario_id}' (feature: {feature_id}) "
+                        f"Scenario '{scenario_id}' (feature: {feature_id}) "
                         "not found in specs."
-                    ).format(scenario_id=scenario_id, feature_id=feature_id)
+                    )
                 )
             )
         else:
@@ -212,7 +212,7 @@ def _sanitize_marker_name(tag: str) -> str:
     return tag.replace("-", "_")
 
 
-def _load_specs_config(config: pytest.Config) -> Optional[Any]:
+def _load_specs_config(config: pytest.Config) -> Any | None:
     features_dir = config.getini("specleft_features_dir") or "features"
     search_roots = [
         Path(str(config.rootpath)),
@@ -247,7 +247,7 @@ def _load_specs_config(config: pytest.Config) -> Optional[Any]:
 
 def _find_scenario(
     specs_config: Any, scenario_id: str
-) -> tuple[Optional[Any], Optional[Any]]:
+) -> tuple[Any | None, Any | None]:
     for feature in specs_config.features:
         for story in feature.stories:
             for scenario in story.scenarios:
@@ -259,7 +259,7 @@ def _find_scenario(
 def _matches_filters(
     feature_id: str,
     scenario_id: str,
-    scenario: Optional[Any],
+    scenario: Any | None,
     tag_filters: set[str],
     priority_filters: set[str],
     feature_filters: set[str],

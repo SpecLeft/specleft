@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -56,7 +56,7 @@ class SpecDataRow(BaseModel):
     """Single row of test data for parameterization."""
 
     params: dict[str, Any]
-    description: Optional[str] = None
+    description: str | None = None
 
     @field_validator("params")
     @classmethod
@@ -71,13 +71,13 @@ class ScenarioSpec(BaseModel):
 
     scenario_id: str = Field(pattern=r"^[a-z0-9-]+$")
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     priority: Priority = Priority.MEDIUM
     tags: list[str] = Field(default_factory=list)
     execution_time: ExecutionTime = ExecutionTime.FAST
     steps: list[SpecStep] = Field(default_factory=list)
     test_data: list[SpecDataRow] = Field(default_factory=list)
-    source_file: Optional[Path] = None
+    source_file: Path | None = None
 
     @property
     def is_parameterized(self) -> bool:
@@ -93,11 +93,11 @@ class StorySpec(BaseModel):
 
     story_id: str = Field(pattern=r"^[a-z0-9-]+$")
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     priority: Priority = Priority.MEDIUM
     tags: list[str] = Field(default_factory=list)
     scenarios: list[ScenarioSpec] = Field(default_factory=list)
-    source_dir: Optional[Path] = None
+    source_dir: Path | None = None
 
 
 class FeatureSpec(BaseModel):
@@ -105,13 +105,13 @@ class FeatureSpec(BaseModel):
 
     feature_id: str = Field(pattern=r"^[a-z0-9-]+$")
     name: str
-    description: Optional[str] = None
-    component: Optional[str] = None
-    owner: Optional[str] = None
+    description: str | None = None
+    component: str | None = None
+    owner: str | None = None
     priority: Priority = Priority.MEDIUM
     tags: list[str] = Field(default_factory=list)
     stories: list[StorySpec] = Field(default_factory=list)
-    source_dir: Optional[Path] = None
+    source_dir: Path | None = None
 
     @property
     def all_scenarios(self) -> list[ScenarioSpec]:
@@ -128,7 +128,7 @@ class SpecsConfig(BaseModel):
     features: list[FeatureSpec] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_unique_ids(self) -> "SpecsConfig":
+    def validate_unique_ids(self) -> SpecsConfig:
         seen_scenario_ids: set[str] = set()
         for feature in self.features:
             for story in feature.stories:
@@ -141,13 +141,13 @@ class SpecsConfig(BaseModel):
         return self
 
     @classmethod
-    def from_directory(cls, features_dir: str | Path) -> "SpecsConfig":
+    def from_directory(cls, features_dir: str | Path) -> SpecsConfig:
         from specleft.parser import SpecParser
 
         parser = SpecParser()
         return parser.parse_directory(Path(features_dir))
 
-    def get_scenario(self, scenario_id: str) -> Optional[ScenarioSpec]:
+    def get_scenario(self, scenario_id: str) -> ScenarioSpec | None:
         for feature in self.features:
             for story in feature.stories:
                 for scenario in story.scenarios:
