@@ -89,7 +89,13 @@ def is_in_specleft_test() -> bool:
 class SpecleftDecorator:
     """Main decorator class for marking tests with SpecLeft metadata."""
 
-    def __call__(self, feature_id: str, scenario_id: str) -> Callable[[F], F]:
+    def __call__(
+        self,
+        feature_id: str,
+        scenario_id: str,
+        skip: bool = False,
+        reason: str | None = None,
+    ) -> Callable[[F], F]:
         def decorator(func: F) -> F:
             func._specleft_feature_id = feature_id  # type: ignore[attr-defined]
             func._specleft_scenario_id = scenario_id  # type: ignore[attr-defined]
@@ -105,6 +111,12 @@ class SpecleftDecorator:
                     return func(*args, **kwargs)
                 finally:
                     ctx["in_specleft_test"] = False
+
+            if skip:
+                skip_reason = reason or "SpecLeft test skipped"
+                import pytest
+
+                return pytest.mark.skip(reason=skip_reason)(wrapper)  # type: ignore[return-value]
 
             return wrapper  # type: ignore[return-value]
 

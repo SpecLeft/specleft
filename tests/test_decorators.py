@@ -200,6 +200,35 @@ class TestSpecleftDecorator:
         result = test_with_args(1, "hello", c=2.5)
         assert result == (1, "hello", 2.5)
 
+    def test_decorator_skip_adds_marker(self) -> None:
+        """Test that skip=True applies pytest skip marker."""
+
+        @specleft(
+            feature_id="AUTH-001",
+            scenario_id="login",
+            skip=True,
+            reason="Not implemented",
+        )
+        def test_skipped() -> None:
+            pass
+
+        marks = getattr(test_skipped, "pytestmark", [])
+        skip_marks = [mark for mark in marks if mark.name == "skip"]
+        assert skip_marks
+        assert skip_marks[0].kwargs.get("reason") == "Not implemented"
+
+    def test_decorator_skip_uses_default_reason(self) -> None:
+        """Test skip uses default reason when omitted."""
+
+        @specleft(feature_id="AUTH-001", scenario_id="login", skip=True)
+        def test_skipped_default() -> None:
+            pass
+
+        marks = getattr(test_skipped_default, "pytestmark", [])
+        skip_marks = [mark for mark in marks if mark.name == "skip"]
+        assert skip_marks
+        assert skip_marks[0].kwargs.get("reason") == "SpecLeft test skipped"
+
 
 class TestStepContextManager:
     """Tests for specleft.step() context manager."""

@@ -26,7 +26,12 @@ from specleft import specleft
 {% endif %}
 
 {% for scenario in story.scenarios | sort(attribute='scenario_id') %}
-@specleft(feature_id="{{ feature.feature_id }}", scenario_id="{{ scenario.scenario_id }}")
+@specleft(
+    feature_id="{{ feature.feature_id }}",
+    scenario_id="{{ scenario.scenario_id }}",
+    skip=True,
+    reason="Skeleton test - not yet implemented",
+)
 {% if scenario.test_data %}
 @pytest.mark.parametrize(
     "{{ scenario.test_data[0].params.keys() | list | join(', ') }}",
@@ -51,7 +56,7 @@ def test_{{ scenario.scenario_id | snake_case }}({% if scenario.test_data %}{{ s
     """
 {% for step in scenario.steps %}
     with specleft.step({% if '{' in step.description or '}' in step.description %}f{% endif %}{{ (step.type.value | capitalize ~ ' ' ~ step.description) | repr }}):
-        assert not True  # TODO: Skeleton step - Implement logic here
+        pass
 
 {% endfor %}
 
