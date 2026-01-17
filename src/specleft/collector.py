@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class ResultCollector:
@@ -100,4 +100,4 @@ class ResultCollector:
         if not json_files:
             return None
         with json_files[-1].open() as file_obj:
-            return json.load(file_obj)
+            return cast(dict[str, Any], json.load(file_obj))

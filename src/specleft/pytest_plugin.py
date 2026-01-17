@@ -77,16 +77,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    config._specleft_results: list[dict[str, Any]] = []
-    config._specleft_start_time = datetime.now()
-    config._specleft_specs_config: Any | None = None
+    config._specleft_results = []  # type: ignore[attr-defined]
+    config._specleft_start_time = datetime.now()  # type: ignore[attr-defined]
+    config._specleft_specs_config = None  # type: ignore[attr-defined]
 
     config.addinivalue_line(
         "markers",
         "specleft(feature_id, scenario_id): Mark test with SpecLeft metadata",
     )
 
-    config._specleft_specs_config = _load_specs_config(config)
+    config._specleft_specs_config = _load_specs_config(config)  # type: ignore[attr-defined]
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -118,7 +118,7 @@ def pytest_collection_modifyitems(
     )
 
     specs_config = _load_specs_config(config)
-    config._specleft_specs_config = specs_config
+    config._specleft_specs_config = specs_config  # type: ignore[attr-defined]
 
     if not specs_config and use_filters:
         for item in items:
@@ -152,16 +152,16 @@ def pytest_collection_modifyitems(
         if feature_id is None or scenario_id is None:
             continue
 
-        item._specleft_metadata = {
+        item._specleft_metadata = {  # type: ignore[attr-defined]
             "feature_id": feature_id,
             "scenario_id": scenario_id,
             "test_name": item.name,
             "original_name": getattr(item, "originalname", item.name),
             "nodeid": item.nodeid,
             "is_parameterized": hasattr(item, "callspec"),
-            "parameters": dict(item.callspec.params)
-            if hasattr(item, "callspec")
-            else {},
+            "parameters": (
+                dict(item.callspec.params) if hasattr(item, "callspec") else {}
+            ),
         }
 
         scenario = None
@@ -175,19 +175,16 @@ def pytest_collection_modifyitems(
                 priority_marker = f"priority_{scenario.priority.value}"
                 item.add_marker(getattr(pytest.mark, priority_marker))
 
-        if use_filters:
-            if not _matches_filters(
-                feature_id=feature_id,
-                scenario_id=scenario_id,
-                scenario=scenario,
-                tag_filters=tag_filters,
-                priority_filters=priority_filters,
-                feature_filters=feature_filters,
-                scenario_filters=scenario_filters,
-            ):
-                item.add_marker(
-                    pytest.mark.skip(reason="Filtered by SpecLeft selection")
-                )
+        if use_filters and not _matches_filters(
+            feature_id=feature_id,
+            scenario_id=scenario_id,
+            scenario=scenario,
+            tag_filters=tag_filters,
+            priority_filters=priority_filters,
+            feature_filters=feature_filters,
+            scenario_filters=scenario_filters,
+        ):
+            item.add_marker(pytest.mark.skip(reason="Filtered by SpecLeft selection"))
 
         if specs_config and scenario is None:
             item.add_marker(
@@ -199,7 +196,7 @@ def pytest_collection_modifyitems(
                 )
             )
         else:
-            item._specleft_metadata.update(
+            item._specleft_metadata.update(  # type: ignore[attr-defined]
                 {
                     "feature_name": feature.name if feature else None,
                     "scenario_name": scenario.name if scenario else None,
@@ -278,10 +275,7 @@ def _matches_filters(
 
     if tag_filters and not scenario_tags.intersection(tag_filters):
         return False
-    if priority_filters and scenario_priority not in priority_filters:
-        return False
-
-    return True
+    return not (priority_filters and scenario_priority not in priority_filters)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -314,7 +308,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
             for step in steps
         ],
     }
-    item.config._specleft_results.append(result)
+    item.config._specleft_results.append(result)  # type: ignore[attr-defined]
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:

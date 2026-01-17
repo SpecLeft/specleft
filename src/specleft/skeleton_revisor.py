@@ -200,7 +200,7 @@ class TestFunctionRevisor:
         addition = StepBlock(
             description=description,
             lines=[
-                f'{indent}{line}',
+                f"{indent}{line}",
                 f"{indent}    assert not True  # TODO: Skeleton step - Implement logic here",
                 "",
             ],
@@ -255,9 +255,7 @@ class TestFunctionRevisor:
         return blocks
 
     @classmethod
-    def _find_block_index(
-        cls, blocks: list[StepBlock], diff: StepDiff
-    ) -> int | None:
+    def _find_block_index(cls, blocks: list[StepBlock], diff: StepDiff) -> int | None:
         if diff.old_index is not None:
             for index, block in enumerate(blocks):
                 if block.original_index == diff.old_index:
@@ -304,7 +302,7 @@ class TestFunctionRevisor:
     def _active_positions(blocks: list[StepBlock]) -> list[int]:
         positions: list[int] = []
         for index, block in enumerate(blocks):
-            if block.lines and "reason=\"Removed from spec\"" in block.lines[0]:
+            if block.lines and 'reason="Removed from spec"' in block.lines[0]:
                 continue
             positions.append(index)
         return positions

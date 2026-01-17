@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import frontmatter
+import frontmatter  # type: ignore[import-untyped]
 
 from specleft.schema import (
     ExecutionTime,

@@ -12,7 +12,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -47,7 +47,7 @@ def _get_context() -> dict[str, Any]:
             "scenario_id": None,
             "in_specleft_test": False,
         }
-    return _test_context.data
+    return cast(dict[str, Any], _test_context.data)
 
 
 def _reset_context() -> None:
@@ -64,7 +64,7 @@ def get_current_steps() -> list[StepResult]:
     ctx = _get_context()
     if "steps" not in ctx:
         ctx["steps"] = []
-    return ctx["steps"]
+    return cast(list[StepResult], ctx["steps"])
 
 
 def clear_steps() -> None:

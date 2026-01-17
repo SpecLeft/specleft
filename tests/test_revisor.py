@@ -43,7 +43,10 @@ def test_revisor_skips_removed_step() -> None:
     )
 
     updated = revisor.revise_test_file(plan)
-    assert 'with specleft.step("When two", skip=True, reason="Removed from spec"):' in updated
+    assert (
+        'with specleft.step("When two", skip=True, reason="Removed from spec"):'
+        in updated
+    )
 
 
 def test_revisor_marks_modified_step() -> None:

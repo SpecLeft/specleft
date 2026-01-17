@@ -83,7 +83,10 @@ class SpecDiffer:
             unmatched_test_by_desc.setdefault(step, []).append(index)
 
         for spec_index, spec_step in enumerate(spec_steps):
-            if spec_index in matched_spec_indices or spec_index in modified_spec_indices:
+            if (
+                spec_index in matched_spec_indices
+                or spec_index in modified_spec_indices
+            ):
                 continue
             available = unmatched_test_by_desc.get(spec_step)
             if available:
