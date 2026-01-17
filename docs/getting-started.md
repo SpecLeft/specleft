@@ -31,9 +31,3 @@ pytest
 ```bash
 specleft test report --open-browser
 ```
-
-## Sync Tests with Spec Changes
-
-```bash
-specleft test sync --dry-run
-```
