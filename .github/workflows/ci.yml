@@ -87,7 +87,7 @@ jobs:
 
   # Job 3: Test Suite (Multi-Python)
   test:
-    name: Tests (Python ${{ matrix.python-version }})
+    name: Tests (Python ${{ matrix.python-version }} [${{ matrix.os }}])
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
