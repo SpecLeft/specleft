@@ -12,7 +12,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, TypedDict, TypeVar
+from typing import Any, TypedDict, TypeVar, cast
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -128,9 +128,9 @@ class SpecleftDecorator:
                 skip_reason = reason or "SpecLeft test skipped"
                 import pytest
 
-                return pytest.mark.skip(reason=skip_reason)(wrapper)  # type: ignore[return-value]
+                return cast(F, pytest.mark.skip(reason=skip_reason)(wrapper))
 
-            return wrapper  # type: ignore[return-value]
+            return cast(F, wrapper)
 
         return decorator
 

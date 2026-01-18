@@ -215,7 +215,10 @@ class TestSkeletonCommand:
             assert "from specleft import specleft" in content
             assert 'feature_id="payments"' in content
             assert 'scenario_id="card-charge"' in content
-            assert "Create this test file (tests/payments/test_charge.py)?" in result.output
+            assert (
+                "Create this test file (tests/payments/test_charge.py)?"
+                in result.output
+            )
 
     def test_skeleton_custom_output_dir(self) -> None:
         """Test skeleton command with custom output directory."""
@@ -257,7 +260,10 @@ class TestSkeletonCommand:
             )
             assert result.exit_code == 0
             assert Path("tests/support/test_tickets.py").exists()
-            assert "Create this test file (tests/support/test_tickets.py)?" in result.output
+            assert (
+                "Create this test file (tests/support/test_tickets.py)?"
+                in result.output
+            )
 
     def test_skeleton_with_parameterized_tests(self) -> None:
         """Test skeleton command generates parameterized tests correctly."""
@@ -364,7 +370,9 @@ class TestSkeletonCommand:
 
             second_run = runner.invoke(cli, ["test", "skeleton"], input="y\n")
             assert second_run.exit_code == 0
-            assert "Skipped existing file: tests/auth/test_login.py" in second_run.output
+            assert (
+                "Skipped existing file: tests/auth/test_login.py" in second_run.output
+            )
             assert "No new skeleton tests to generate." in second_run.output
             assert "Create this test file" not in second_run.output
             assert generated_file.read_text() == initial_content
