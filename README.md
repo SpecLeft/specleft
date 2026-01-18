@@ -5,8 +5,8 @@
 
 It lets teams go from *“this is how the system should behave”* to *executable, traceable test skeletons* in a way that is predictable, incremental, and fully under developer control.
 
-SpecLeft does **not** replace pytest.  
-It does **not** reinterpret your tests.  
+SpecLeft does **not** replace pytest.
+It does **not** reinterpret your tests.
 It does **not** mutate your code unless you explicitly say yes.
 
 ---
@@ -20,9 +20,9 @@ Most teams already have:
 
 What they *don’t* have is **alignment**.
 
-Specs drift.  
-Tests drift.  
-Coverage becomes guesswork.  
+Specs drift.
+Tests drift.
+Coverage becomes guesswork.
 New contributors find it hard to know what behaviour is *expected* vs *accidental*.
 
 SpecLeft closes that gap by making feature intent **visible, executable, and version-controlled**, without forcing you into BDD frameworks or heavyweight process.
@@ -90,7 +90,7 @@ In short:
 | Heavy ceremony | Incremental adoption |
 | All-in or nothing | Opt-in per test |
 
-SpecLeft is not “BDD without Gherkin Given/When/Then”.  
+SpecLeft is not “BDD without Gherkin Given/When/Then”.
 It’s **TDD with better alignment and visibility**.
 
 ---
@@ -112,7 +112,7 @@ SpecLeft is designed to be **boringly predictable**.
 pip install specleft
 ```
 
-No config files required.  
+No config files required.
 No test changes required.
 
 ---
