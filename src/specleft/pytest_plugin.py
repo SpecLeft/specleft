@@ -86,7 +86,28 @@ def pytest_configure(config: pytest.Config) -> None:
         "specleft(feature_id, scenario_id): Mark test with SpecLeft metadata",
     )
 
-    config._specleft_specs_config = _load_specs_config(config)  # type: ignore[attr-defined]
+    # Load specs and register dynamic markers from scenario tags
+    specs_config = _load_specs_config(config)
+    config._specleft_specs_config = specs_config  # type: ignore[attr-defined]
+
+    if specs_config:
+        # Register tag-based markers from scenarios
+        for tag in _collect_all_tags(specs_config):
+            marker_name = _sanitize_marker_name(tag)
+            config.addinivalue_line(
+                "markers",
+                f"{marker_name}: SpecLeft scenario tag '{tag}'",
+            )
+
+        # Register priority markers
+        from specleft.schema import Priority
+
+        for priority in Priority:
+            marker_name = f"priority_{priority.value}"
+            config.addinivalue_line(
+                "markers",
+                f"{marker_name}: SpecLeft priority level '{priority.value}'",
+            )
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -200,6 +221,7 @@ def pytest_collection_modifyitems(
                 {
                     "feature_name": feature.name if feature else None,
                     "scenario_name": scenario.name if scenario else None,
+                    "tags": list(scenario.tags) if scenario else [],
                 }
             )
 
@@ -207,6 +229,16 @@ def pytest_collection_modifyitems(
 def _sanitize_marker_name(tag: str) -> str:
     """Sanitize a tag name to be a valid pytest marker."""
     return tag.replace("-", "_")
+
+
+def _collect_all_tags(specs_config: Any) -> set[str]:
+    """Collect all unique tags from all scenarios in specs."""
+    tags: set[str] = set()
+    for feature in specs_config.features:
+        for story in feature.stories:
+            for scenario in story.scenarios:
+                tags.update(scenario.tags)
+    return tags
 
 
 def _load_specs_config(config: pytest.Config) -> Any | None:
@@ -283,11 +315,31 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     outcome = yield
     report = outcome.get_result()
 
-    if report.when != "call":
-        return
-
     metadata = getattr(item, "_specleft_metadata", None)
     if metadata is None:
+        return
+
+    # Capture skipped tests during setup phase
+    if report.when == "setup" and report.skipped:
+        skip_reason = None
+        if report.longrepr and isinstance(report.longrepr, tuple):
+            skip_reason = str(report.longrepr[2]) if len(report.longrepr) > 2 else None
+        elif report.longrepr:
+            skip_reason = str(report.longrepr)
+
+        result = {
+            **metadata,
+            "status": "skipped",
+            "duration": report.duration,
+            "error": None,
+            "skip_reason": skip_reason,
+            "steps": [],
+        }
+        item.config._specleft_results.append(result)  # type: ignore[attr-defined]
+        return
+
+    # Capture passed/failed tests during call phase
+    if report.when != "call":
         return
 
     steps = get_current_steps()
