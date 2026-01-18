@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol, TypedDict, cast
+import sys
 
 import pytest
 
@@ -418,12 +419,15 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     filepath = collector.write(results_data)
 
     summary = results_data["summary"]
-    print(f"\n{'═' * 60}")
+    encoding = (sys.stdout.encoding or "utf-8").lower()
+    line_char = "═" if "utf" in encoding else "-"
+    line = line_char * 60
+    print(f"\n{line}")
     print("SpecLeft Test Results")
-    print(f"{'═' * 60}")
+    print(line)
     print(f"Total Executions: {summary['total_executions']}")
     print(f"Passed: {summary['passed']}")
     print(f"Failed: {summary['failed']}")
     print(f"Duration: {summary['duration']:.2f}s")
     print(f"\nResults saved to: {filepath}")
-    print(f"{'═' * 60}\n")
+    print(f"{line}\n")
