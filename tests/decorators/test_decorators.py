@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import concurrent.futures
+import importlib
 import threading
 import time
 from datetime import datetime
 
 import pytest
+import specleft.decorators as decorators
 from specleft.decorators import (
     StepResult,
     _get_context,
+    _reset_context,
     clear_steps,
     get_current_metadata,
     get_current_steps,
@@ -92,6 +95,12 @@ class TestContextHelpers:
         assert steps == []
         assert "steps" in _get_context()
 
+    def test_get_current_steps_returns_existing_list(self) -> None:
+        """Test that get_current_steps returns existing list instance."""
+        steps = [StepResult("step", start_time=datetime.now())]
+        _get_context()["steps"] = steps
+        assert get_current_steps() is steps
+
     def test_get_current_metadata_returns_values(self) -> None:
         """Test metadata helper returns current ids."""
         _get_context()["feature_id"] = "feat"
@@ -104,6 +113,20 @@ class TestContextHelpers:
     def test_is_in_specleft_test_default_false(self) -> None:
         """Test that is_in_specleft_test returns False by default."""
         assert is_in_specleft_test() is False
+
+    def test_reset_context_reinitializes(self) -> None:
+        """Test reset context rebuilds defaults."""
+        _get_context()["steps"] = [StepResult("step", start_time=datetime.now())]
+        _get_context()["feature_id"] = "feat"
+        _get_context()["scenario_id"] = "scenario"
+        _get_context()["in_specleft_test"] = True
+
+        _reset_context()
+        ctx = _get_context()
+        assert ctx["steps"] == []
+        assert ctx["feature_id"] is None
+        assert ctx["scenario_id"] is None
+        assert ctx["in_specleft_test"] is False
 
 
 class TestSpecleftDecorator:
@@ -423,6 +446,70 @@ class TestReusableStepDecorator:
 
         steps = get_current_steps()
         assert steps[0].description == "User does {nonexistent_param}"
+
+    def test_reusable_step_no_args_fallback(self) -> None:
+        """Test shared_step fallback when no parameters are provided."""
+
+        @shared_step("User performs {action}")
+        def do_action() -> None:
+            pass
+
+        @specleft(feature_id="TEST-002", scenario_id="fallback")
+        def test_action() -> None:
+            do_action()
+
+        test_action()
+
+        steps = get_current_steps()
+        assert steps[0].description == "User performs {action}"
+
+    def test_reusable_step_records_duration(self) -> None:
+        """Test shared_step records duration and ends timing."""
+
+        @shared_step("Quick action")
+        def do_action() -> None:
+            time.sleep(0.01)
+
+        @specleft(feature_id="TEST-003", scenario_id="timed")
+        def test_action() -> None:
+            do_action()
+
+        test_action()
+
+        steps = get_current_steps()
+        assert steps[0].duration >= 0
+
+
+class TestContextInitialization:
+    """Tests for module initialization behavior."""
+
+    def test_context_initialized_on_first_call(self) -> None:
+        """Test _get_context initializes thread-local data."""
+        _reset_context()
+        context = _get_context()
+        assert context["steps"] == []
+        assert context["feature_id"] is None
+        assert context["scenario_id"] is None
+        assert context["in_specleft_test"] is False
+
+    def test_get_context_rebuilds_when_missing(self) -> None:
+        """Test _get_context rebuilds when data missing."""
+        original = decorators._test_context
+        decorators._test_context = decorators._SpecleftThreadContext()
+        try:
+            assert not hasattr(decorators._test_context, "data")
+            context = decorators._get_context()
+            assert context["steps"] == []
+            assert context["feature_id"] is None
+        finally:
+            decorators._test_context = original
+
+    def test_module_reload_resets_exports(self) -> None:
+        """Test reloading module reinitializes exports."""
+        module = importlib.reload(decorators)
+        assert module.specleft
+        assert module.step
+        assert module.shared_step
 
     def test_reusable_step_preserves_function_name(self) -> None:
         """Test that shared_step preserves original function name."""

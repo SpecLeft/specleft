@@ -100,6 +100,35 @@ class TestMissingSpecsDirectory:
         result = pytester.runpytest("-v")
         result.assert_outcomes(passed=1)
 
+    def test_metadata_defaults_when_no_specs(self, pytester: Pytester) -> None:
+        """Test metadata defaults when specs are missing."""
+        features_dir = pytester.path / "features"
+        if features_dir.exists():
+            for path in features_dir.rglob("*"):
+                if path.is_file():
+                    path.unlink()
+
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="any-feature", scenario_id="any-scenario")
+            def test_without_metadata():
+                pass
+            """
+        )
+        pytester.makeconftest(
+            """
+            def pytest_runtest_call(item):
+                metadata = item._specleft_metadata
+                assert metadata.get('feature_name') is None
+                assert metadata.get('scenario_name') is None
+                assert metadata.get('tags') == []
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1)
+
 
 class TestMarkerInjection:
     """Tests for runtime marker injection from scenario tags."""
@@ -115,6 +144,17 @@ class TestMarkerInjection:
             @specleft(feature_id="auth", scenario_id="login-success")
             def test_login():
                 pass
+            """
+        )
+        pytester.makeconftest(
+            """
+            def pytest_collection_modifyitems(session, config, items):
+                for item in items:
+                    if hasattr(item, '_specleft_metadata'):
+                        metadata = item._specleft_metadata
+                        assert metadata['feature_name'] == 'User Authentication'
+                        assert metadata['scenario_name'] == 'Successful login'
+                        assert 'smoke' in metadata['tags']
             """
         )
         result = pytester.runpytest("-v")
@@ -570,3 +610,118 @@ tags: []
         execution = notags_feature["scenarios"][0]["executions"][0]
         assert "tags" in execution
         assert execution["tags"] == []
+
+
+class TestFilterBehavior:
+    """Tests for SpecLeft filter handling."""
+
+    def test_filters_skip_without_specs(self, pytester: Pytester) -> None:
+        """Test that filters skip tests when specs are missing."""
+        features_dir = pytester.path / "features"
+        if features_dir.exists():
+            for path in features_dir.rglob("*"):
+                if path.is_file():
+                    path.unlink()
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="auth", scenario_id="login-success")
+            def test_filtered():
+                pass
+            """
+        )
+        result = pytester.runpytest("-v", "--specleft-tag", "smoke")
+        result.assert_outcomes(skipped=1)
+
+    def test_filters_skip_when_tag_missing(
+        self, pytester: Pytester, create_specs_tree
+    ) -> None:
+        """Test that tag filters skip non-matching scenarios."""
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="auth", scenario_id="login-success")
+            def test_filtered():
+                pass
+            """
+        )
+        result = pytester.runpytest("-v", "--specleft-tag", "missing")
+        result.assert_outcomes(skipped=1)
+
+    def test_filters_allow_matching_priority(
+        self, pytester: Pytester, create_specs_tree
+    ) -> None:
+        """Test that priority filters keep matching scenarios."""
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="auth", scenario_id="login-success")
+            def test_high():
+                pass
+            """
+        )
+        result = pytester.runpytest("-v", "--specleft-priority", "high")
+        result.assert_outcomes(passed=1)
+
+    def test_filters_skip_unknown_scenario(
+        self, pytester: Pytester, create_specs_tree
+    ) -> None:
+        """Test that unknown scenarios are skipped when specs exist."""
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="auth", scenario_id="unknown")
+            def test_unknown():
+                pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(skipped=1)
+
+    def test_load_specs_config_uses_rootpath(self, pytester: Pytester) -> None:
+        """Test that specs are found via config rootpath."""
+        features_dir = pytester.path / "features"
+        story_dir = features_dir / "auth" / "login"
+        story_dir.mkdir(parents=True, exist_ok=True)
+        (features_dir / "auth" / "_feature.md").write_text(
+            """
+---
+feature_id: auth
+---
+
+# Feature: Auth
+""".strip()
+        )
+        (story_dir / "_story.md").write_text(
+            """
+---
+story_id: login
+---
+
+# Story: Login
+""".strip()
+        )
+        (story_dir / "login_success.md").write_text(
+            """
+---
+scenario_id: login-success
+---
+
+# Scenario: Login Success
+""".strip()
+        )
+        pytester.makepyfile(
+            """
+            from specleft import specleft
+
+            @specleft(feature_id="auth", scenario_id="login-success")
+            def test_login():
+                pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1)

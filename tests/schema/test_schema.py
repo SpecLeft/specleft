@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import importlib
 import pytest
+import specleft.schema as schema
 from pydantic import ValidationError
 from specleft.schema import (
     ExecutionTime,
@@ -42,6 +44,7 @@ class TestStepType:
         """Test that StepType is a str enum."""
         assert isinstance(StepType.GIVEN, str)
         assert StepType.GIVEN == "given"
+        assert StepType.GIVEN.name == "GIVEN"
 
     def test_step_type_invalid_value(self) -> None:
         """Test that invalid step type raises ValueError."""
@@ -70,6 +73,7 @@ class TestPriority:
         """Test that Priority is a str enum."""
         assert isinstance(Priority.HIGH, str)
         assert Priority.HIGH == "high"
+        assert Priority.HIGH.name == "HIGH"
 
     def test_priority_invalid_value(self) -> None:
         """Test that invalid priority raises ValueError."""
@@ -96,6 +100,7 @@ class TestExecutionTime:
         """Test that ExecutionTime is a str enum."""
         assert isinstance(ExecutionTime.FAST, str)
         assert ExecutionTime.FAST == "fast"
+        assert ExecutionTime.FAST.name == "FAST"
 
     def test_execution_time_invalid_value(self) -> None:
         """Test that invalid execution time raises ValueError."""
@@ -112,6 +117,7 @@ class TestSpecStep:
         assert step.type == StepType.GIVEN
         assert step.description == "user logs in"
         assert step.data == {}
+        assert SpecStep.model_fields["data"].default_factory is not None
 
     def test_step_with_data(self) -> None:
         """Test creating step with data."""
@@ -223,6 +229,7 @@ class TestScenarioSpec:
         assert scenario.test_data == []
         assert scenario.source_file is None
         assert scenario.raw_metadata == {}
+        assert ScenarioSpec.model_fields["raw_metadata"].default_factory is not None
 
     def test_scenario_with_all_fields(self) -> None:
         """Test creating scenario with all fields."""
@@ -235,6 +242,7 @@ class TestScenarioSpec:
             name="Full Scenario",
             description="A complete scenario",
             priority=Priority.HIGH,
+            priority_raw=Priority.LOW,
             tags=["smoke", "regression"],
             execution_time=ExecutionTime.SLOW,
             steps=[step],
@@ -246,6 +254,7 @@ class TestScenarioSpec:
         assert scenario.name == "Full Scenario"
         assert scenario.description == "A complete scenario"
         assert scenario.priority == Priority.HIGH
+        assert scenario.priority_raw == Priority.LOW
         assert scenario.tags == ["smoke", "regression"]
         assert scenario.execution_time == ExecutionTime.SLOW
         assert scenario.steps == [step]
@@ -360,6 +369,7 @@ class TestStorySpec:
         assert story.tags == ["epic", "mvp"]
         assert story.scenarios == [scenario]
         assert story.source_dir == source
+        assert StorySpec.model_fields["tags"].default_factory is not None
 
     def test_story_with_multiple_scenarios(self) -> None:
         """Test story with multiple scenarios."""
@@ -414,6 +424,10 @@ class TestFeatureSpec:
             tags=["v1", "release"],
             stories=[story],
             source_dir=source,
+            confidence="high",
+            source="docs",
+            assumptions=["assumption"],
+            open_questions=["question"],
         )
 
         assert feature.feature_id == "full-feature"
@@ -425,6 +439,10 @@ class TestFeatureSpec:
         assert feature.tags == ["v1", "release"]
         assert feature.stories == [story]
         assert feature.source_dir == source
+        assert feature.confidence == "high"
+        assert feature.source == "docs"
+        assert feature.assumptions == ["assumption"]
+        assert feature.open_questions == ["question"]
 
     def test_all_scenarios_empty(self) -> None:
         """Test all_scenarios with no stories."""
@@ -474,6 +492,7 @@ class TestSpecsConfig:
         config = SpecsConfig()
         assert config.version == "2.0"
         assert config.features == []
+        assert SpecsConfig.model_fields["features"].default_factory is not None
 
     def test_config_with_custom_version(self) -> None:
         """Test config with custom version."""
@@ -678,3 +697,33 @@ class TestSpecsConfig:
         assert config.features[0].feature_id == "test-feature"
         assert len(config.features[0].stories) == 1
         assert config.features[0].stories[0].story_id == "test-story"
+
+    def test_feature_raw_metadata_defaults(self) -> None:
+        """Test raw_metadata default for FeatureSpec."""
+        feature = FeatureSpec(feature_id="feature", name="Feature")
+        assert feature.raw_metadata == {}
+
+    def test_scenario_raw_metadata_defaults(self) -> None:
+        """Test raw_metadata default for ScenarioSpec."""
+        scenario = ScenarioSpec(scenario_id="scenario", name="Scenario")
+        assert scenario.raw_metadata == {}
+
+    def test_story_tags_default_factory(self) -> None:
+        """Test tags default factory on StorySpec."""
+        story = StorySpec(story_id="story", name="Story")
+        assert story.tags == []
+        assert StorySpec.model_fields["tags"].default_factory is not None
+
+    def test_story_description_defaults(self) -> None:
+        """Test StorySpec description defaults to None."""
+        story = StorySpec(story_id="story", name="Story")
+        assert story.description is None
+
+
+class TestSchemaModuleReload:
+    """Tests for module-level execution coverage."""
+
+    def test_schema_module_reload(self) -> None:
+        """Test module reload executes top-level definitions."""
+        module = importlib.reload(schema)
+        assert module.StepType.GIVEN.value == "given"
