@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import click
 
-def get_cli():
+
+def get_cli() -> click.Group:
     from specleft.cli.main import cli
 
     return cli

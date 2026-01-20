@@ -6,6 +6,7 @@ import json
 import sys
 import textwrap
 from pathlib import Path
+from typing import cast
 
 import click
 
@@ -73,7 +74,7 @@ def _prompt_init_action(features_dir: Path) -> str:
     click.echo("  2. Merge with existing (add example alongside)")
     click.echo("  3. Cancel")
     choice = click.prompt("Choice", default="1", type=click.Choice(["1", "2", "3"]))
-    return choice
+    return cast(str, choice)
 
 
 def _print_init_dry_run(directories: list[Path], files: list[tuple[Path, str]]) -> None:
@@ -124,7 +125,8 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     if example and blank:
         message = "Choose either --example or --blank, not both."
         if format_type == "json":
-            click.echo(json.dumps({"status": "error", "message": message}, indent=2))
+            payload = {"status": "error", "message": message}
+            click.echo(json.dumps(payload, indent=2))
         else:
             click.secho(message, fg="red", err=True)
         sys.exit(1)
@@ -138,11 +140,11 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     features_dir = Path("features")
     if features_dir.exists():
         if format_type == "json":
-            payload = {
+            payload_cancelled = {
                 "status": "cancelled",
                 "message": "Initialization cancelled; existing features directory requires confirmation.",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(payload_cancelled, indent=2))
             sys.exit(2)
         choice = _prompt_init_action(features_dir)
         if choice == "3":
@@ -155,7 +157,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     directories, files = _init_plan(example=example)
     if dry_run:
         if format_type == "json":
-            payload = {
+            payload_dry_run = {
                 "status": "ok",
                 "dry_run": True,
                 "example": example,
@@ -166,7 +168,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
                     "directories": len(directories),
                 },
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(payload_dry_run, indent=2))
             return
         click.echo(
             "Creating SpecLeft example project..."
@@ -178,11 +180,11 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         return
 
     if format_type == "json" and not dry_run:
-        payload = {
+        payload_error = {
             "status": "error",
             "message": "JSON output requires --dry-run to avoid interactive prompts.",
         }
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json.dumps(payload_error, indent=2))
         sys.exit(1)
 
     click.echo(

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import textwrap
 from pathlib import Path
+from typing import cast
 
 
 def write_text_file(path: Path, content: str) -> None:
@@ -56,6 +57,6 @@ def load_json_output(raw_output: str, *, allow_preamble: bool = False) -> object
         if lines and lines[0].strip() == "Running contract tests...":
             payload = "\n".join(lines[1:])
     try:
-        return json.loads(payload)
+        return cast(object, json.loads(payload))
     except json.JSONDecodeError:
         return None

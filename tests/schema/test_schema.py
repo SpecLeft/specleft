@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
-import importlib
 import pytest
 import specleft.schema as schema
 from pydantic import ValidationError

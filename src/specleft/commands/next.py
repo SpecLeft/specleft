@@ -85,9 +85,9 @@ def _build_next_json(
             "scenario_name": entry.scenario.name,
             "priority": get_priority_value(entry.scenario),
             "tags": entry.scenario.tags,
-            "spec_file": str(entry.scenario.source_file)
-            if entry.scenario.source_file
-            else None,
+            "spec_file": (
+                str(entry.scenario.source_file) if entry.scenario.source_file else None
+            ),
             "test_file": entry.test_file,
             "test_function": entry.test_function,
             "steps": [

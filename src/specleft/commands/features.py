@@ -10,11 +10,13 @@ from typing import Any, cast
 
 import click
 
+from specleft.schema import SpecsConfig
 from specleft.utils.structure import warn_if_nested_structure
-from specleft.utils.test_discovery import discover_pytest_tests
+from specleft.utils.test_discovery import TestDiscoveryResult, discover_pytest_tests
+from specleft.validator import SpecStats
 
 
-def _build_features_list_json(config) -> dict[str, object]:
+def _build_features_list_json(config: SpecsConfig) -> dict[str, object]:
     from specleft.commands.formatters import build_feature_json
 
     features_payload: list[dict[str, object]] = []
@@ -41,9 +43,9 @@ def _build_features_stats_json(
     *,
     features_dir: str,
     tests_dir: str,
-    stats: object | None,
+    stats: SpecStats | None,
     spec_scenario_ids: set[str],
-    test_discovery,
+    test_discovery: TestDiscoveryResult,
 ) -> dict[str, object]:
     coverage_payload: dict[str, object] = {
         "scenarios_with_tests": 0,
@@ -241,31 +243,31 @@ def features_list(features_dir: str, format_type: str) -> None:
         config = load_specs_directory(features_dir)
     except FileNotFoundError:
         if format_type == "json":
-            payload = {
+            error_payload = {
                 "status": "error",
                 "message": f"Directory not found: {features_dir}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Directory not found: {features_dir}", fg="red", err=True)
         sys.exit(1)
     except ValueError as e:
         if format_type == "json":
-            payload = {
+            error_payload = {
                 "status": "error",
                 "message": f"Unable to load specs: {e}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
         sys.exit(1)
     except Exception as e:
         if format_type == "json":
-            payload = {
+            error_payload = {
                 "status": "error",
                 "message": f"Unexpected error loading specs: {e}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
         sys.exit(1)
@@ -325,11 +327,11 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
                     spec_scenario_ids.add(scenario.scenario_id)
     except FileNotFoundError:
         if format_type == "json":
-            payload = {
+            error_payload = {
                 "status": "error",
                 "message": f"Directory not found: {features_dir}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Directory not found: {features_dir}", fg="red", err=True)
         sys.exit(1)
@@ -342,21 +344,21 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
             stats = None
         else:
             if format_type == "json":
-                payload = {
+                error_payload = {
                     "status": "error",
                     "message": f"Unable to load specs: {e}",
                 }
-                click.echo(json.dumps(payload, indent=2))
+                click.echo(json.dumps(error_payload, indent=2))
             else:
                 click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
             sys.exit(1)
     except Exception as e:
         if format_type == "json":
-            payload = {
+            error_payload = {
                 "status": "error",
                 "message": f"Unexpected error loading specs: {e}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
         sys.exit(1)

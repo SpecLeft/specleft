@@ -11,6 +11,7 @@ from pathlib import Path
 import click
 from jinja2 import Environment, FileSystemLoader, Template
 
+from specleft.commands.formatters import get_priority_value
 from specleft.commands.types import (
     ScenarioPlan,
     SkeletonPlan,
@@ -19,7 +20,6 @@ from specleft.commands.types import (
     SkeletonSkipPlan,
     SkeletonSummary,
 )
-from specleft.commands.formatters import get_priority_value
 from specleft.schema import FeatureSpec, SpecsConfig, StorySpec
 from specleft.utils.structure import detect_features_layout, warn_if_nested_structure
 from specleft.utils.text import to_snake_case
@@ -300,14 +300,14 @@ def _flatten_skeleton_entries(
                     overwrites=plan.overwrites,
                 )
             )
-    for plan in plan_result.skipped_plans:
-        for scenario in plan.scenarios:
+    for skipped_plan in plan_result.skipped_plans:
+        for scenario in skipped_plan.scenarios:
             entries.append(
                 SkeletonScenarioEntry(
                     scenario=scenario,
-                    output_path=plan.output_path,
+                    output_path=skipped_plan.output_path,
                     overwrites=False,
-                    skip_reason=plan.reason,
+                    skip_reason=skipped_plan.reason,
                 )
             )
     return entries
@@ -540,10 +540,9 @@ def skeleton(
         click.secho("No new skeleton tests to generate.", fg="magenta")
         return
 
-    if not force:
-        if not click.confirm("Confirm creation?", default=False):
-            click.echo("Cancelled")
-            sys.exit(2)
+    if not force and not click.confirm("Confirm creation?", default=False):
+        click.echo("Cancelled")
+        sys.exit(2)
 
     for plan in plan_result.plans:
         plan.output_path.parent.mkdir(parents=True, exist_ok=True)

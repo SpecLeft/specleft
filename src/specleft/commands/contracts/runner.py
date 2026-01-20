@@ -65,9 +65,9 @@ def run_contract_tests(
                     category="safety",
                     name="no_implicit_writes",
                     status="pass" if cancel_pass else "fail",
-                    message=None
-                    if cancel_pass
-                    else "Skeleton wrote without confirmation",
+                    message=(
+                        None if cancel_pass else "Skeleton wrote without confirmation"
+                    ),
                 )
             )
 
@@ -78,12 +78,16 @@ def run_contract_tests(
                 ContractCheckResult(
                     category="execution",
                     name="skeletons_skipped_by_default",
-                    status="pass"
-                    if created and "skip=True" in generated_file.read_text()
-                    else "fail",
-                    message=None
-                    if created and "skip=True" in generated_file.read_text()
-                    else "Skeleton tests are not skipped",
+                    status=(
+                        "pass"
+                        if created and "skip=True" in generated_file.read_text()
+                        else "fail"
+                    ),
+                    message=(
+                        None
+                        if created and "skip=True" in generated_file.read_text()
+                        else "Skeleton tests are not skipped"
+                    ),
                 )
             )
 
@@ -101,9 +105,11 @@ def run_contract_tests(
                     category="safety",
                     name="existing_tests_not_modified_by_default",
                     status="pass" if unchanged else "fail",
-                    message=None
-                    if unchanged
-                    else "Existing tests were modified without --force",
+                    message=(
+                        None
+                        if unchanged
+                        else "Existing tests were modified without --force"
+                    ),
                 )
             )
 
@@ -149,9 +155,9 @@ def run_contract_tests(
                     category="determinism",
                     name="deterministic_for_same_inputs",
                     status="pass" if deterministic_pass else "fail",
-                    message=None
-                    if deterministic_pass
-                    else "Outputs differed between runs",
+                    message=(
+                        None if deterministic_pass else "Outputs differed between runs"
+                    ),
                 )
             )
 
@@ -162,9 +168,9 @@ def run_contract_tests(
                     category="determinism",
                     name="safe_for_retries",
                     status="pass" if safe_retry_pass else "fail",
-                    message=None
-                    if safe_retry_pass
-                    else "Retry introduced side effects",
+                    message=(
+                        None if safe_retry_pass else "Retry introduced side effects"
+                    ),
                 )
             )
 
@@ -205,9 +211,11 @@ def run_contract_tests(
                     category="cli_api",
                     name="json_supported_globally",
                     status="pass" if json_pass else "fail",
-                    message=None
-                    if json_pass
-                    else f"JSON format unsupported: {', '.join(json_failures)}",
+                    message=(
+                        None
+                        if json_pass
+                        else f"JSON format unsupported: {', '.join(json_failures)}"
+                    ),
                 )
             )
 
@@ -225,9 +233,9 @@ def run_contract_tests(
                     category="cli_api",
                     name="json_schema_valid",
                     status="pass" if schema_pass else "fail",
-                    message=None
-                    if schema_pass
-                    else "Contract JSON missing required keys",
+                    message=(
+                        None if schema_pass else "Contract JSON missing required keys"
+                    ),
                 )
             )
 

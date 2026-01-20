@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from specleft.cli.main import cli
+
 from tests.helpers.specs import create_feature_specs, create_single_file_feature_spec
 
 

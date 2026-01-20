@@ -65,7 +65,6 @@ def _build_status_table_rows(entries: list[ScenarioStatusEntry]) -> list[str]:
 
 def _determine_scenario_status(
     *,
-    scenario_id: str,
     test_file_path: str,
     test_info: dict[str, object] | None,
 ) -> ScenarioStatus:
@@ -125,7 +124,6 @@ def build_status_entries(
             for scenario in story.scenarios:
                 info = scenario_map.get(scenario.scenario_id)
                 status = _determine_scenario_status(
-                    scenario_id=scenario.scenario_id,
                     test_file_path=str(test_file),
                     test_info=info,
                 )

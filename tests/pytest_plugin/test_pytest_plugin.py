@@ -18,7 +18,6 @@ import pytest
 
 from tests.helpers.specs import write_specs_tree
 
-
 if TYPE_CHECKING:
     from pytest import Pytester
 
