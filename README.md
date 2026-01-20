@@ -252,9 +252,9 @@ The goal of this license is to:
 - Prevent direct commercial competition with SpecLeft
 
 ### 📄 Full license text
-See the full license in the [`LICENSE`](./LICENSE) file or at:  
+See the full license in the [`LICENSE`](./LICENSE) file or at:
 https://polyformproject.org/licenses/shield/1.0.0/
 
 ### Quick rule of thumb
-> If you’re using SpecLeft **to build software**, you’re fine.  
+> If you’re using SpecLeft **to build software**, you’re fine.
 > If you’re using SpecLeft **to sell SpecLeft**, you need permission.
