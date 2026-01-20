@@ -30,15 +30,15 @@ This document tracks the implementation progress of the SpecLeft SDK. v1 is comp
 
 ---
 
-### Phase 3: CLI Enhancements (JSON + Contract) 🚧 IN PROGRESS
+### Phase 3: CLI Enhancements (JSON + Contract) ✅ COMPLETE
 
 **Goal:** Add JSON output across remaining commands and implement agent contract checks.
 
-**In progress:**
-- Adding `--format json` for `specleft features list`, `features stats`, `features validate`, and `test report`
-- Implementing `specleft contract` and `specleft contract test`
-- Updating CLI tests for new JSON outputs and contract commands
-- Refactoring CLI into `src/specleft/commands/` modules with shared logic moved to `src/specleft/utils/` (in progress: created `commands/` and `utils/` packages; started contract command extraction)
+**Implemented:**
+- Added `--format json` for `specleft features list`, `features stats`, `features validate`, `test report`, and `init`
+- Implemented `specleft contract` and `specleft contract test`
+- Updated CLI tests for JSON outputs and contract commands
+- Completed CLI refactor into `src/specleft/commands/` modules with shared logic in `src/specleft/utils/`
 
 ---
 
@@ -61,9 +61,8 @@ This document tracks the implementation progress of the SpecLeft SDK. v1 is comp
 - Contract payload moved to `commands/contracts/payloads.py` and aligned with original schema (exit codes, docs path). `commands/contract.py` now wires `contract` and `contract test`.
 - `commands/formatters.py` still shows an LSP "(" warning; re-check if tooling complains.
 - `commands/contracts/runner.py` now calls `get_cli()` from `commands/cli_access.py` and uses helpers from `commands/contracts/utils.py`.
-- Remaining work: split `cli/main.py` into modules for `features`, `test`, `status`, `next`, `coverage`, `doctor`, `init`; update imports in `tests/test_cli.py` (to use `specleft.utils.text.to_snake_case`); rewire `cli/main.py` to attach groups from `specleft.commands`.
-- After moving code, update references to `_format_*` helpers to use `commands/formatters.py` and align contract table lookups with payload schema.
-- Run `pytest` after wiring to confirm CLI still works.
+- Phase 3 refactor complete; run `pytest` to confirm CLI still works.
+- Docs to update: `docs/cli-reference.md`, `docs/ai-agents-main.md`, `docs/getting-started.md`, `README.md`.
 
 ## Next Steps
 

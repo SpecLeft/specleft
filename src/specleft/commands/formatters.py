@@ -28,6 +28,14 @@ def format_execution_time_value(execution_time: str | ExecutionTime) -> str:
     return value.capitalize()
 
 
+def format_execution_time_key(execution_time: str | ExecutionTime) -> str:
+    return (
+        execution_time.value
+        if isinstance(execution_time, ExecutionTime)
+        else str(execution_time)
+    )
+
+
 def badge_color(coverage: float | None) -> str:
     if coverage is None:
         return "#9f9f9f"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import click
 
@@ -11,11 +11,11 @@ from specleft.commands.contracts.types import ContractCheckResult
 
 
 def print_contract_table(payload: dict[str, object]) -> None:
-    guarantees = payload.get("guarantees", {})
-    safety = guarantees.get("safety", {})
-    execution = guarantees.get("execution", {})
-    determinism = guarantees.get("determinism", {})
-    cli_api = guarantees.get("cli_api", {})
+    guarantees = cast(dict[str, Any], payload.get("guarantees", {}))
+    safety = cast(dict[str, Any], guarantees.get("safety", {}))
+    execution = cast(dict[str, Any], guarantees.get("execution", {}))
+    determinism = cast(dict[str, Any], guarantees.get("determinism", {}))
+    cli_api = cast(dict[str, Any], guarantees.get("cli_api", {}))
     click.echo("SpecLeft Agent Contract")
     click.echo("─" * 40)
     click.echo(f"Contract version: {payload.get('contract_version')}")
@@ -29,7 +29,7 @@ def print_contract_table(payload: dict[str, object]) -> None:
     )
     click.echo(
         "  - --dry-run never writes to disk"
-        if safety.get("dry_run_no_writes")
+        if safety.get("dry_run_never_writes")
         else "  - --dry-run guarantee missing"
     )
     click.echo(

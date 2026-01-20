@@ -55,7 +55,6 @@ def contract(ctx: click.Context, format_type: str) -> None:
 def contract_test(format_type: str, verbose: bool) -> None:
     """Verify SpecLeft Agent Contract guarantees."""
     if format_type == "json":
-        click.echo("Running contract tests...")
         passed, checks, errors = run_contract_tests(verbose=verbose)
         payload = build_contract_test_payload(
             passed=passed, checks=checks, errors=errors

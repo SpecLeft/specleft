@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from specleft.cli.main import cli, to_snake_case
+from specleft.cli.main import cli
+from specleft.utils.text import to_snake_case
 
 
 def _write_file(path: Path, content: str) -> None:
@@ -156,9 +157,7 @@ class TestContractCommand:
         runner = CliRunner()
         result = runner.invoke(cli, ["contract", "test", "--format", "json"])
         assert result.exit_code == 0
-        output_lines = result.output.splitlines()
-        assert output_lines[0] == "Running contract tests..."
-        payload = json.loads("\n".join(output_lines[1:]))
+        payload = json.loads(result.output)
         assert payload["contract_version"] == "1.0"
         assert payload["specleft_version"] == "0.2.0"
         assert payload["passed"] is True
@@ -1022,6 +1021,23 @@ class TestReportCommand:
             payload = json.loads(result.output)
             assert payload["status"] == "ok"
             assert payload["summary"]["total_features"] == 1
+
+    def test_init_json_dry_run(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init", "--dry-run", "--format", "json"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["dry_run"] is True
+            assert payload["summary"]["directories"] == 3
+
+    def test_init_json_requires_dry_run(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init", "--format", "json"])
+            assert result.exit_code == 1
+            payload = json.loads(result.output)
+            assert payload["status"] == "error"
 
     def test_report_no_results(self) -> None:
         """Test report command when no results exist."""

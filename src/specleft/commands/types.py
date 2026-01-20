@@ -9,24 +9,6 @@ from specleft.schema import FeatureSpec, ScenarioSpec, StorySpec
 
 
 @dataclass(frozen=True)
-class TestDiscoveryResult:
-    """Result of pytest test discovery."""
-
-    total_tests: int
-    specleft_tests: int
-    specleft_scenario_ids: frozenset[str]
-    error: str | None = None
-
-
-@dataclass(frozen=True)
-class FileSpecleftResult:
-    """Result of finding @specleft tests in a file."""
-
-    count: int
-    scenario_ids: frozenset[str]
-
-
-@dataclass(frozen=True)
 class ScenarioPlan:
     """Metadata for a planned scenario output."""
 

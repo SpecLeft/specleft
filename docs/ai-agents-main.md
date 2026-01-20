@@ -154,16 +154,12 @@ def verify_specleft_installation():
 def check_project_status():
     """Check current state of project tests."""
     result = subprocess.run(
-        ["specleft", "features", "stats"],
+        ["specleft", "features", "stats", "--format", "json"],
         capture_output=True,
         text=True
     )
     
     print(result.stdout)
-    # Example output:
-    # Discovered 87 pytest tests
-    # 0 linked to feature specs
-    # 87 unlinked tests
 ```
 
 ---
@@ -182,45 +178,84 @@ from pathlib import Path
 def initialize_specleft_project():
     """Initialize SpecLeft with example specs."""
     
-    # 1. Create example structure
+    # 1. Review agent contract
+    contract_result = subprocess.run(
+        ["specleft", "contract", "--format", "json"],
+        capture_output=True,
+        text=True
+    )
+    contract = json.loads(contract_result.stdout)
+    print(f"✓ Contract version {contract['version']}")
+
+    # 2. Check project fit
+    stats_result = subprocess.run(
+        ["specleft", "features", "stats", "--format", "json"],
+        capture_output=True,
+        text=True
+    )
+    stats = json.loads(stats_result.stdout)
+    print(f"✓ Found {stats['summary']['features']} features")
+
+    # 3. Preview example structure
+    preview_result = subprocess.run(
+        ["specleft", "init", "--example", "--dry-run", "--format", "json"],
+        capture_output=True,
+        text=True
+    )
+    preview = json.loads(preview_result.stdout)
+    print(f"✓ Would create {preview['summary']['files']} files")
+
+    # 4. Create example structure
     result = subprocess.run(
         ["specleft", "init", "--example"],
         capture_output=True,
         text=True
     )
-    
+
     if result.returncode != 0:
         raise RuntimeError(f"Init failed: {result.stderr}")
-    
+
     print("✓ Example project created")
-    
-    # 2. Validate the example
+
+    # 5. Validate the example
     result = subprocess.run(
         ["specleft", "features", "validate", "--format", "json"],
         capture_output=True,
         text=True
     )
-    
+
     validation = json.loads(result.stdout)
-    
+
     if not validation["valid"]:
         print("Example validation failed:")
         for error in validation["errors"]:
             print(f"  {error['file']}: {error['message']}")
         return False
-    
+
     print(f"✓ Example validated ({validation['scenarios']} scenarios)")
-    
-    # 3. Preview what tests would be created
+
+    # 6. Preview what tests would be created
     result = subprocess.run(
         ["specleft", "test", "skeleton", "--dry-run", "--format", "json"],
         capture_output=True,
         text=True
     )
-    
+
     plan = json.loads(result.stdout)
     print(f"✓ Would create {len(plan['would_create'])} test files")
-    
+
+    # 7. Generate test skeletons
+    result = subprocess.run(
+        ["specleft", "test", "skeleton"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Skeleton generation failed: {result.stderr}")
+
+    print("✓ Test skeletons generated")
+
     return True
 ```
 
@@ -638,7 +673,7 @@ def workflow_retrofit_existing_tests():
 
 ## Programmatic API
 
-All SpecLeft commands support `--format json` for programmatic access. Here are helper functions for common operations:
+All SpecLeft commands support `--format json` for programmatic access. Use `specleft init --dry-run --format json` for non-interactive init previews and `specleft contract --format json` for contract metadata.
 
 ### Core Helper Functions
 
@@ -729,6 +764,16 @@ class SpecLeftAPI:
             text=True
         )
         return json.loads(result.stdout)
+
+    @staticmethod
+    def contract() -> dict:
+        """Fetch the SpecLeft Agent Contract."""
+        result = subprocess.run(
+            ["specleft", "contract", "--format", "json"],
+            capture_output=True,
+            text=True
+        )
+        return json.loads(result.stdout)
     
     @staticmethod
     def skeleton_generate(confirm: bool = True) -> bool:
@@ -810,10 +855,18 @@ def safe_specleft_adoption(project_dir: Path):
         print("Installation verification failed")
         return False
     
-    # 4. Initialize
+    # 4. Preview init plan
+    preview = subprocess.run(
+        ["specleft", "init", "--example", "--dry-run", "--format", "json"],
+        capture_output=True,
+        text=True,
+    )
+    print(json.loads(preview.stdout))
+    
+    # 5. Initialize
     result = subprocess.run(["specleft", "init", "--example"])
     
-    # 5. Validate
+    # 6. Validate
     api = SpecLeftAPI()
     validation = api.validate()
     

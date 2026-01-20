@@ -213,13 +213,17 @@ If you're an AI agent setting up SpecLeft:
 # Full automated workflow
 pip install specleft
 specleft doctor --format json  # Verify installation
+specleft contract --format json  # Review agent contract
+specleft features stats --format json  # Check project fit
+specleft init --dry-run --format json  # Preview initialization plan
 
 # Create example specs (or extract from requirements)
 # ... create feature/story/scenario .md files ...
 
 specleft features validate --format json  # Validate specs
-specleft test skeleton                     # Generate skeletons
-specleft next --limit 3 --format json      # Get next tests to implement
+specleft test skeleton --dry-run --format json  # Preview skeleton plan
+specleft test skeleton  # Generate skeletons
+specleft next --limit 3 --format json  # Get next tests to implement
 
 # Implement each test (remove skip=True, add test logic)
 # ... implementation loop ...
@@ -245,4 +249,4 @@ implement_test(next_test["test_file"], next_test["scenario_id"])
 subprocess.run(["pytest", next_test["test_file"]])
 ```
 
-See [AI Agents Guide](docs/ai-agents.md) for complete workflows.
+See [AI Agents Guide](docs/ai-agents-main.md) for complete workflows.

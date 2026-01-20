@@ -166,10 +166,16 @@ If you're an AI agent evaluating SpecLeft for a project:
 pip install specleft
 specleft doctor --format json
 
-# 2. Check if appropriate for this project
-specleft features stats  # Shows existing test structure
+# 2. Review the agent contract
+specleft contract --format json
 
-# 3. Create a single feature spec
+# 3. Check if appropriate for this project
+specleft features stats --format json
+
+# 4. Preview initialization plan (no files written)
+specleft init --dry-run --format json
+
+# 5. Create a single feature spec
 mkdir -p features/auth/login
 cat > features/auth/_feature.md << EOF
 ---
@@ -197,23 +203,26 @@ priority: high
 - **Then** user is authenticated
 EOF
 
-# 4. Validate
+# 6. Validate
 specleft features validate --format json
 
-# 5. Generate test skeleton
+# 7. Preview test skeleton plan (no files written)
+specleft test skeleton --dry-run --format json
+
+# 8. Generate test skeleton
 specleft test skeleton
 
-# 6. Check what needs implementing
+# 9. Check what needs implementing
 specleft next --format json
 
-# 7. Implement test (remove skip=True, add logic)
+# 10. Implement test (remove skip=True, add logic)
 # ... your test implementation ...
 
-# 8. Track progress
+# 11. Track progress
 specleft status --format json
 ```
 
-**For detailed agent workflows, see [AI Agents Guide](docs/ai-agents.md)**
+**For detailed agent workflows, see [AI Agents Guide](docs/ai-agents-main.md)**
 ---
 
 ## License

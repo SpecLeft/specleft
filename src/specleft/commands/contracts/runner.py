@@ -42,7 +42,7 @@ def run_contract_tests(
 
     with tempfile.TemporaryDirectory() as temp_dir:
         root = Path(temp_dir)
-        _create_contract_specs(root)
+        create_contract_specs(root)
 
         with working_directory(root):
             dry_run_result = runner.invoke(
@@ -179,6 +179,7 @@ def run_contract_tests(
                 ("report", ["test", "report", "--format", "json"]),
                 ("contract", ["contract", "--format", "json"]),
                 ("contract_test", ["contract", "test", "--format", "json"]),
+                ("init", ["init", "--dry-run", "--format", "json"]),
                 (
                     "skeleton",
                     ["test", "skeleton", "--dry-run", "--format", "json"],

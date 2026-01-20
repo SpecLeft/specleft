@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Callable
 
-import click
-
-
-def get_cli() -> Callable[..., click.Command]:
+def get_cli():
     from specleft.cli.main import cli
 
     return cli

@@ -7,7 +7,7 @@
 - [CLI Reference](cli-reference.md) - All available commands
 
 ## For AI Agents 🤖
-- **[AI Agents Guide](ai-agents.md)** - Optimized for programmatic adoption
+- **[AI Agents Guide](ai-agents-main.md)** - Optimized for programmatic adoption
   - Installation verification
   - Common workflows
   - Programmatic API

@@ -1,13 +1,19 @@
-"""Utility helpers for contract checks."""
+"""Shared helpers for contract commands."""
 
 from __future__ import annotations
 
 import json
+import textwrap
 from pathlib import Path
 
 
+def write_text_file(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(textwrap.dedent(content).strip())
+
+
 def create_contract_specs(root: Path) -> None:
-    _write_text_file(
+    write_text_file(
         root / "features" / "auth" / "_feature.md",
         """
         ---
@@ -17,7 +23,7 @@ def create_contract_specs(root: Path) -> None:
         # Feature: Auth
         """,
     )
-    _write_text_file(
+    write_text_file(
         root / "features" / "auth" / "login" / "_story.md",
         """
         ---
@@ -26,7 +32,7 @@ def create_contract_specs(root: Path) -> None:
         # Story: Login
         """,
     )
-    _write_text_file(
+    write_text_file(
         root / "features" / "auth" / "login" / "login-success.md",
         """
         ---
@@ -53,8 +59,3 @@ def load_json_output(raw_output: str, *, allow_preamble: bool = False) -> object
         return json.loads(payload)
     except json.JSONDecodeError:
         return None
-
-
-def _write_text_file(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content.strip())
