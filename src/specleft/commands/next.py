@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import click
 
+from specleft.commands.formatters import get_priority_value
 from specleft.commands.status import build_status_entries
 from specleft.commands.types import ScenarioStatusEntry, StatusSummary
+from specleft.utils.structure import warn_if_nested_structure
 
 
 def _priority_sort_value(priority: str) -> int:
@@ -59,7 +61,7 @@ def _print_next_table(
         click.echo(
             f"- {entry.feature.feature_id}/{entry.story.story_id}/{entry.scenario.scenario_id}"
         )
-        click.echo(f"  Priority: {entry.scenario.priority.value}")
+        click.echo(f"  Priority: {get_priority_value(entry.scenario)}")
         click.echo(
             f"  Tags: {', '.join(entry.scenario.tags) if entry.scenario.tags else 'none'}"
         )
@@ -81,7 +83,7 @@ def _build_next_json(
             "story_name": entry.story.name,
             "scenario_id": entry.scenario.scenario_id,
             "scenario_name": entry.scenario.name,
-            "priority": entry.scenario.priority.value,
+            "priority": get_priority_value(entry.scenario),
             "tags": entry.scenario.tags,
             "spec_file": str(entry.scenario.source_file)
             if entry.scenario.source_file
@@ -97,7 +99,7 @@ def _build_next_json(
         tests.append(payload)
 
     output = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "tests": tests,
         "total_unimplemented": total_unimplemented,
         "showing": len(tests),
@@ -157,6 +159,10 @@ def next_command(
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
         sys.exit(1)
 
+    # Gentle nudge for nested structures (table output only)
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
+
     entries = build_status_entries(
         config,
         Path("tests"),
@@ -170,12 +176,12 @@ def next_command(
         unimplemented = [
             entry
             for entry in unimplemented
-            if entry.scenario.priority.value == priority_filter
+            if get_priority_value(entry.scenario) == priority_filter
         ]
 
     unimplemented.sort(
         key=lambda entry: (
-            _priority_sort_value(entry.scenario.priority.value),
+            _priority_sort_value(get_priority_value(entry.scenario)),
             entry.feature.feature_id,
             entry.story.story_id,
             entry.scenario.scenario_id,

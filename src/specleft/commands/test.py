@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sys
 import webbrowser
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -19,7 +19,9 @@ from specleft.commands.types import (
     SkeletonSkipPlan,
     SkeletonSummary,
 )
+from specleft.commands.formatters import get_priority_value
 from specleft.schema import FeatureSpec, SpecsConfig, StorySpec
+from specleft.utils.structure import detect_features_layout, warn_if_nested_structure
 from specleft.utils.text import to_snake_case
 from specleft.validator import load_specs_directory
 
@@ -40,6 +42,11 @@ def _story_output_path(output_path: Path, feature_id: str, story_id: str) -> Pat
     return output_path / feature_id / f"test_{story_id}.py"
 
 
+def _feature_output_path(output_path: Path, feature_id: str) -> Path:
+    """Output path for single-file features: tests/test_<feature_id>.py"""
+    return output_path / f"test_{feature_id}.py"
+
+
 def _feature_with_story(feature: FeatureSpec, story: StorySpec) -> FeatureSpec:
     return feature.model_copy(update={"stories": [story]})
 
@@ -50,9 +57,19 @@ def _plan_skeleton_generation(
     template: Template,
     single_file: bool,
     force: bool,
+    *,
+    features_dir: Path | None = None,
 ) -> SkeletonPlanResult:
+    """Plan skeleton test generation.
+
+    Auto-detects layout if features_dir is provided:
+    - single-file layout: generates tests/test_<feature>.py per feature
+    - nested layout: generates tests/<feature>/test_<story>.py per story
+    """
     plans: list[SkeletonPlan] = []
     skipped_plans: list[SkeletonSkipPlan] = []
+
+    # Handle explicit --single-file flag
     if single_file:
         target_path = output_path / "test_generated.py"
         if target_path.exists() and not force:
@@ -82,6 +99,22 @@ def _plan_skeleton_generation(
         )
         return SkeletonPlanResult(plans=plans, skipped_plans=skipped_plans)
 
+    # Auto-detect layout if features_dir provided
+    use_per_feature = False
+    if features_dir is not None:
+        layout = detect_features_layout(features_dir)
+        use_per_feature = layout in ("single-file", "mixed", "empty")
+
+    if use_per_feature:
+        # Single-file layout: one test file per feature
+        return _plan_per_feature_skeleton(
+            config=config,
+            output_path=output_path,
+            template=template,
+            force=force,
+        )
+
+    # Nested layout: one test file per story (existing behavior)
     for feature in config.features:
         for story in feature.stories:
             target_path = _story_output_path(
@@ -112,6 +145,49 @@ def _plan_skeleton_generation(
                     overwrites=target_path.exists(),
                 )
             )
+
+    return SkeletonPlanResult(plans=plans, skipped_plans=skipped_plans)
+
+
+def _plan_per_feature_skeleton(
+    config: SpecsConfig,
+    output_path: Path,
+    template: Template,
+    force: bool,
+) -> SkeletonPlanResult:
+    """Plan skeleton generation with one test file per feature."""
+    plans: list[SkeletonPlan] = []
+    skipped_plans: list[SkeletonSkipPlan] = []
+
+    for feature in config.features:
+        target_path = _feature_output_path(output_path, feature.feature_id)
+        scenario_plans = _build_scenario_plans([feature])
+
+        if target_path.exists() and not force:
+            skipped_plans.append(
+                SkeletonSkipPlan(
+                    scenarios=scenario_plans,
+                    output_path=target_path,
+                    reason="File already exists",
+                )
+            )
+            continue
+
+        content = template.render(features=[feature])
+        preview_content = _render_skeleton_preview_content(
+            template=template, scenarios=scenario_plans
+        )
+        plans.append(
+            SkeletonPlan(
+                feature=feature,
+                story=None,
+                scenarios=scenario_plans,
+                output_path=target_path,
+                content=content,
+                preview_content=preview_content,
+                overwrites=target_path.exists(),
+            )
+        )
 
     return SkeletonPlanResult(plans=plans, skipped_plans=skipped_plans)
 
@@ -258,13 +334,13 @@ def _build_skeleton_json(
             "test_file": str(entry.output_path),
             "test_function": scenario.test_function_name,
             "steps": len(scenario.steps),
-            "priority": scenario.priority.value,
+            "priority": get_priority_value(scenario),
             "preview": preview,
             "overwrites": entry.overwrites,
         }
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "dry_run": dry_run,
         "would_create": [_entry_payload(entry) for entry in would_create],
         "would_skip": [
@@ -307,7 +383,7 @@ def _print_skeleton_plan_table(
                 f"    Feature: {entry.scenario.feature_id} | Story: {entry.scenario.story_id} | Scenario: {scenario.scenario_id}"
             )
             click.echo(
-                f"    Steps: {len(scenario.steps)} | Priority: {scenario.priority.value}"
+                f"    Steps: {len(scenario.steps)} | Priority: {get_priority_value(scenario)}"
             )
             click.echo("")
     else:
@@ -420,6 +496,10 @@ def skeleton(
         )
         sys.exit(1)
 
+    # Gentle nudge for nested structures (table output only)
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
+
     template = _load_skeleton_template()
     output_path = Path(output_dir)
     plan_result = _plan_skeleton_generation(
@@ -428,6 +508,7 @@ def skeleton(
         template=template,
         single_file=single_file,
         force=force,
+        features_dir=Path(features_dir),
     )
 
     flattened = _flatten_skeleton_entries(plan_result)

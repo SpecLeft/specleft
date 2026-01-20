@@ -5,14 +5,16 @@ from __future__ import annotations
 import ast
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import click
 
+from specleft.commands.formatters import get_priority_value
 from specleft.commands.types import ScenarioStatus, ScenarioStatusEntry, StatusSummary
 from specleft.schema import SpecsConfig
+from specleft.utils.structure import warn_if_nested_structure
 from specleft.utils.test_discovery import extract_specleft_calls
 
 
@@ -113,9 +115,13 @@ def build_status_entries(
             if story_id and story.story_id != story_id:
                 continue
 
-            test_file = _story_output_path(
-                tests_dir, feature.feature_id, story.story_id
-            )
+            if _is_single_file_feature(feature):
+                test_file = _feature_output_path(tests_dir, feature.feature_id)
+            else:
+                test_file = _story_output_path(
+                    tests_dir, feature.feature_id, story.story_id
+                )
+
             for scenario in story.scenarios:
                 info = scenario_map.get(scenario.scenario_id)
                 status = _determine_scenario_status(
@@ -166,8 +172,10 @@ def build_status_json(
     *,
     include_execution_time: bool,
 ) -> dict[str, Any]:
+    from specleft.commands.formatters import build_feature_json
+
     summary = _summarize_status_entries(entries)
-    features: list[dict[str, object]] = []
+    features: list[dict[str, Any]] = []
 
     feature_groups: dict[str, list[ScenarioStatusEntry]] = {}
     for entry in entries:
@@ -176,72 +184,50 @@ def build_status_json(
     for feature_entries in feature_groups.values():
         feature_summary = _summarize_status_entries(feature_entries)
         feature = feature_entries[0].feature
-        feature_payload = {
-            "feature_id": feature.feature_id,
-            "feature_name": feature.name,
-            "feature_file": str(feature.source_dir / "_feature.md")
-            if feature.source_dir
-            else None,
-            "coverage_percent": feature_summary.coverage_percent,
-            "stories": [],
-            "summary": {
-                "total_scenarios": feature_summary.total_scenarios,
-                "implemented": feature_summary.implemented,
-                "skipped": feature_summary.skipped,
-            },
-        }
 
-        story_groups: dict[str, list[ScenarioStatusEntry]] = {}
+        # Build scenario status info to merge into canonical JSON
+        scenario_status: dict[str, dict[str, Any]] = {}
         for entry in feature_entries:
-            story_groups.setdefault(entry.story.story_id, []).append(entry)
-
-        for story_entries in story_groups.values():
-            story_summary = _summarize_status_entries(story_entries)
-            story = story_entries[0].story
-            scenarios_payload: list[dict[str, object]] = []
-            story_payload: dict[str, object] = {
-                "story_id": story.story_id,
-                "story_name": story.name,
-                "story_file": str(story.source_dir / "_story.md")
-                if story.source_dir
-                else None,
-                "coverage_percent": story_summary.coverage_percent,
-                "scenarios": scenarios_payload,
-                "summary": {
-                    "total": story_summary.total_scenarios,
-                    "implemented": story_summary.implemented,
-                    "skipped": story_summary.skipped,
-                },
+            status_info: dict[str, Any] = {
+                "status": entry.status,
+                "test_file": entry.test_file,
+                "test_function": entry.test_function,
             }
+            if include_execution_time:
+                status_info["execution_time"] = entry.scenario.execution_time.value
+            if entry.reason:
+                status_info["reason"] = entry.reason
+            scenario_status[entry.scenario.scenario_id] = status_info
 
-            for entry in story_entries:
-                scenario_payload: dict[str, object] = {
-                    "scenario_id": entry.scenario.scenario_id,
-                    "scenario_name": entry.scenario.name,
-                    "scenario_file": str(entry.scenario.source_file)
-                    if entry.scenario.source_file
-                    else None,
-                    "status": entry.status,
-                    "test_file": entry.test_file,
-                    "test_function": entry.test_function,
-                    "priority": entry.scenario.priority.value,
-                    "tags": entry.scenario.tags,
-                }
-                if include_execution_time:
-                    scenario_payload["execution_time"] = (
-                        entry.scenario.execution_time.value
-                    )
-                if entry.reason:
-                    scenario_payload["reason"] = entry.reason
+        # Get all scenarios from entries (flattened from stories)
+        scenarios = [entry.scenario for entry in feature_entries]
 
-                scenarios_payload.append(scenario_payload)
+        # Use canonical builder with status info
+        feature_payload = build_feature_json(
+            feature,
+            scenarios=scenarios,
+            include_status=scenario_status,
+        )
 
-            feature_payload["stories"].append(story_payload)
+        # Add status-specific fields
+        feature_payload["feature_file"] = (
+            str(feature.source_file)
+            if feature.source_file
+            else (
+                str(feature.source_dir / "_feature.md") if feature.source_dir else None
+            )
+        )
+        feature_payload["coverage_percent"] = feature_summary.coverage_percent
+        feature_payload["summary"] = {
+            "total_scenarios": feature_summary.total_scenarios,
+            "implemented": feature_summary.implemented,
+            "skipped": feature_summary.skipped,
+        }
 
         features.append(feature_payload)
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "features": features,
         "summary": {
             "total_features": summary.total_features,
@@ -276,7 +262,7 @@ def print_status_table(
             click.echo(f"⚠ {path}")
             click.echo(f"  → {entry.test_file}::{entry.test_function}")
             click.echo(
-                f"  Priority: {entry.scenario.priority.value} | Tags: {', '.join(entry.scenario.tags) if entry.scenario.tags else 'none'}"
+                f"  Priority: {get_priority_value(entry.scenario)} | Tags: {', '.join(entry.scenario.tags) if entry.scenario.tags else 'none'}"
             )
             if entry.reason:
                 click.echo(f"  Reason: {entry.reason}")
@@ -308,28 +294,36 @@ def print_status_table(
     if separator:
         click.echo(separator[0])
 
+    # Group by feature file for Phase 4 compliance
     feature_groups: dict[str, list[ScenarioStatusEntry]] = {}
     for entry in entries:
         feature_groups.setdefault(entry.feature.feature_id, []).append(entry)
 
     for feature_id, feature_entries in feature_groups.items():
+        feature = feature_entries[0].feature
         feature_summary = _summarize_status_entries(feature_entries)
-        click.echo(f"Feature: {feature_id} ({feature_summary.coverage_percent}%)")
-        story_groups: dict[str, list[ScenarioStatusEntry]] = {}
-        for entry in feature_entries:
-            story_groups.setdefault(entry.story.story_id, []).append(entry)
 
-        for story_id, story_entries in story_groups.items():
-            story_summary = _summarize_status_entries(story_entries)
-            click.echo(f"  Story: {story_id} ({story_summary.coverage_percent}%)")
-            for entry in story_entries:
-                marker = "✓" if entry.status == "implemented" else "⚠"
-                path = f"{entry.test_file}::{entry.test_function}"
-                suffix = "" if entry.status == "implemented" else " (skipped)"
-                click.echo(
-                    f"    {marker} {entry.scenario.scenario_id:<25} {path}{suffix}"
-                )
-            click.echo("")
+        # Display feature file path if available
+        feature_file = (
+            str(feature.source_file)
+            if feature.source_file
+            else (
+                str(feature.source_dir / "_feature.md")
+                if feature.source_dir
+                else f"features/{feature_id}.md"
+            )
+        )
+        click.echo(
+            f"Feature File: {feature_file} ({feature_summary.coverage_percent}%)"
+        )
+
+        # Show scenarios directly (flattened from stories)
+        for entry in feature_entries:
+            marker = "✓" if entry.status == "implemented" else "⚠"
+            path = f"{entry.test_file}::{entry.test_function}"
+            suffix = "" if entry.status == "implemented" else " (skipped)"
+            click.echo(f"  {marker} {entry.scenario.scenario_id:<25} {path}{suffix}")
+        click.echo("")
 
     click.echo(
         f"Overall: {summary.implemented}/{summary.total_scenarios} scenarios implemented ({summary.coverage_percent}%)"
@@ -340,6 +334,14 @@ def print_status_table(
 
 def _story_output_path(output_path: Path, feature_id: str, story_id: str) -> Path:
     return output_path / feature_id / f"test_{story_id}.py"
+
+
+def _feature_output_path(output_path: Path, feature_id: str) -> Path:
+    return output_path / f"test_{feature_id}.py"
+
+
+def _is_single_file_feature(feature: object) -> bool:
+    return getattr(feature, "source_file", None) is not None
 
 
 @click.command("status")
@@ -388,6 +390,10 @@ def status(
     except ValueError as exc:
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
         sys.exit(1)
+
+    # Gentle nudge for nested structures (table output only)
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
 
     if feature_id and not any(
         feature.feature_id == feature_id for feature in config.features

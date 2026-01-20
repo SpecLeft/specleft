@@ -8,9 +8,9 @@ from specleft.commands.doctor import doctor
 from specleft.commands.features import features
 from specleft.commands.init import init
 from specleft.commands.next import next_command
+from specleft.commands.plan import plan
 from specleft.commands.status import status
 from specleft.commands.test import test
-
 
 __all__ = [
     "contract",
@@ -19,6 +19,7 @@ __all__ = [
     "features",
     "init",
     "next_command",
+    "plan",
     "status",
     "test",
 ]

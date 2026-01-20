@@ -2,7 +2,19 @@
 
 from __future__ import annotations
 
-from specleft.schema import ExecutionTime
+from collections.abc import Iterable
+from typing import Any
+
+from specleft.schema import ExecutionTime, FeatureSpec, Priority, ScenarioSpec, SpecStep
+
+
+def get_priority_value(scenario: ScenarioSpec) -> str:
+    """Get priority value string, defaulting to 'medium' if not set."""
+    if scenario.priority_raw is not None:
+        return scenario.priority_raw.value
+    if scenario.priority is not None:
+        return scenario.priority.value
+    return Priority.MEDIUM.value
 
 
 def format_status_marker(status: str) -> str:
@@ -71,3 +83,48 @@ def render_badge_svg(label: str, message: str, color: str) -> str:
         "</g>"
         "</svg>"
     )
+
+
+def build_feature_json(
+    feature: FeatureSpec,
+    *,
+    scenarios: Iterable[ScenarioSpec] | None = None,
+    include_status: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    scenario_items = list(scenarios) if scenarios is not None else feature.all_scenarios
+    scenario_payloads: list[dict[str, Any]] = []
+
+    for scenario in scenario_items:
+        payload: dict[str, Any] = {
+            "id": scenario.scenario_id,
+            "title": scenario.name,
+            "priority": scenario.priority_raw.value if scenario.priority_raw else None,
+            "tags": scenario.tags or None,
+            "steps": _build_steps_payload(scenario.steps),
+        }
+        if include_status and scenario.scenario_id in include_status:
+            payload.update(include_status[scenario.scenario_id])
+        scenario_payloads.append(payload)
+
+    return {
+        "feature_id": feature.feature_id,
+        "title": feature.name,
+        "confidence": feature.confidence,
+        "source": feature.source,
+        "assumptions": feature.assumptions,
+        "open_questions": feature.open_questions,
+        "tags": feature.tags or None,
+        "owner": feature.owner,
+        "component": feature.component,
+        "scenarios": scenario_payloads,
+    }
+
+
+def _build_steps_payload(steps: list[SpecStep]) -> list[dict[str, str]]:
+    return [
+        {
+            "type": step.type.value,
+            "description": step.description,
+        }
+        for step in steps
+    ]

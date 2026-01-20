@@ -11,52 +11,48 @@ import click
 
 
 def _init_example_content() -> dict[str, str]:
+    """Generate single-file example feature using canonical template."""
     return {
-        "features/example/_feature.md": textwrap.dedent(
+        "features/example-feature.md": textwrap.dedent(
             """
-            ---
-            feature_id: example
-            priority: medium
-            tags: [demo, example]
-            ---
-
             # Feature: Example Feature
 
-            This is an example feature to demonstrate SpecLeft.
+            ## Scenarios
 
-            Replace this with your own features.
-            """
-        ).strip(),
-        "features/example/basic/_story.md": textwrap.dedent(
-            """
-            ---
-            story_id: basic
+            ### Scenario: User logs in successfully
+            priority: high
+
+            - Given a registered user with email "user@example.com"
+            - When the user submits valid credentials
+            - Then the user is redirected to the dashboard
+            - And the user sees a welcome message
+
+            ### Scenario: Invalid password rejected
             priority: medium
+
+            - Given a registered user with email "user@example.com"
+            - When the user submits an incorrect password
+            - Then an error message "Invalid credentials" is displayed
+            - And the user remains on the login page
+
             ---
-
-            # Story: Basic Example
-
-            A simple example story with one scenario.
-            """
-        ).strip(),
-        "features/example/basic/scenario1.md": textwrap.dedent(
-            """
+            confidence: low
+            source: example
+            assumptions:
+              - email/password authentication
+              - session-based login
+            open_questions:
+              - password complexity requirements?
+              - maximum login attempts before lockout?
+            tags:
+              - auth
+              - example
+            owner: dev-team
+            component: identity
             ---
-            scenario_id: scenario1
-            priority: medium
-            tags: [example]
-            ---
-
-            # Scenario: Example Scenario
-
-            This is an example scenario.
-
-            ## Steps
-            - **Given** a precondition
-            - **When** an action occurs
-            - **Then** an expected result
             """
-        ).strip(),
+        ).strip()
+        + "\n",
     }
 
 
@@ -207,7 +203,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         click.echo("Example project ready!")
         click.echo("")
         click.echo("Next steps:")
-        click.echo("  1. Review the example: cat features/example/basic/scenario1.md")
+        click.echo("  1. Review the example: cat features/example-feature.md")
         click.echo("  2. Generate tests: specleft test skeleton")
         click.echo("  3. Run tests: pytest")
         click.echo("  4. Check status: specleft status")
@@ -215,6 +211,6 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         click.echo("Directory structure ready!")
         click.echo("")
         click.echo("Next steps:")
-        click.echo("  1. Create your first feature: features/<feature-id>/_feature.md")
-        click.echo("  2. Add stories and scenarios")
+        click.echo("  1. Create your first feature: features/<feature-name>.md")
+        click.echo("  2. Add scenarios with Given/When/Then steps")
         click.echo("  3. Generate tests: specleft test skeleton")

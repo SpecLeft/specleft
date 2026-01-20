@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -23,6 +23,7 @@ from specleft.commands.types import (
     ScenarioStatusEntry,
 )
 from specleft.schema import ExecutionTime, Priority
+from specleft.utils.structure import warn_if_nested_structure
 
 
 def _coverage_summary(implemented: int, total: int) -> str:
@@ -41,7 +42,9 @@ def _summary_row(label: str, summary: CoverageTally) -> str:
     return f"  {label:<10} {percent:.1f}% ({summary.implemented}/{summary.total})"
 
 
-def _format_priority_key(priority: Priority) -> str:
+def _format_priority_key(priority: Priority | None) -> str:
+    if priority is None:
+        return Priority.MEDIUM.value
     return priority.value
 
 
@@ -127,7 +130,7 @@ def _build_coverage_json(entries: list[ScenarioStatusEntry]) -> dict[str, object
         return payload
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "coverage": {
             "overall": {
                 "total_scenarios": metrics.overall.total,
@@ -222,6 +225,10 @@ def coverage(
     except ValueError as exc:
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
         sys.exit(1)
+
+    # Gentle nudge for nested structures (table output only)
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
 
     entries = build_status_entries(config, Path("tests"))
     metrics = _build_coverage_metrics(entries)

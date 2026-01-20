@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from click.testing import CliRunner
 

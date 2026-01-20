@@ -4,47 +4,30 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 
 import click
 
+from specleft.utils.structure import warn_if_nested_structure
 from specleft.utils.test_discovery import discover_pytest_tests
 
 
 def _build_features_list_json(config) -> dict[str, object]:
+    from specleft.commands.formatters import build_feature_json
+
     features_payload: list[dict[str, object]] = []
     story_count = 0
     scenario_count = 0
+
     for feature in config.features:
-        stories_payload: list[dict[str, object]] = []
-        for story in feature.stories:
-            story_count += 1
-            scenarios_payload = [
-                {
-                    "scenario_id": scenario.scenario_id,
-                    "scenario_name": scenario.name,
-                }
-                for scenario in story.scenarios
-            ]
-            scenario_count += len(story.scenarios)
-            stories_payload.append(
-                {
-                    "story_id": story.story_id,
-                    "story_name": story.name,
-                    "scenarios": scenarios_payload,
-                }
-            )
-        features_payload.append(
-            {
-                "feature_id": feature.feature_id,
-                "feature_name": feature.name,
-                "stories": stories_payload,
-            }
-        )
+        story_count += len(feature.stories)
+        scenario_count += len(feature.all_scenarios)
+        features_payload.append(build_feature_json(feature))
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "features": features_payload,
         "summary": {
             "features": len(config.features),
@@ -99,7 +82,7 @@ def _build_features_stats_json(
             }
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "directories": {
             "features": f"{features_dir}/",
             "tests": f"{tests_dir}/",
@@ -148,10 +131,15 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
     try:
         config = load_specs_directory(features_dir)
         stats = collect_spec_stats(config)
+
+        # Gentle nudge for nested structures (table output only)
+        if format_type != "json":
+            warn_if_nested_structure(Path(features_dir))
+
         if format_type == "json":
             payload = {
                 "valid": True,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "features": stats.feature_count,
                 "stories": stats.story_count,
                 "scenarios": stats.scenario_count,
@@ -174,7 +162,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
         if format_type == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "features": 0,
                 "stories": 0,
                 "scenarios": 0,
@@ -194,7 +182,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
         if format_type == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "features": 0,
                 "stories": 0,
                 "scenarios": 0,
@@ -213,7 +201,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
         if format_type == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "features": 0,
                 "stories": 0,
                 "scenarios": 0,
@@ -286,6 +274,9 @@ def features_list(features_dir: str, format_type: str) -> None:
         payload = _build_features_list_json(config)
         click.echo(json.dumps(payload, indent=2))
         return
+
+    # Gentle nudge for nested structures
+    warn_if_nested_structure(Path(features_dir))
 
     click.echo(f"Features ({len(config.features)}):")
     for feature in config.features:
@@ -369,6 +360,10 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
         sys.exit(1)
+
+    # Gentle nudge for nested structures (table output only)
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
 
     test_discovery = discover_pytest_tests(tests_dir)
 

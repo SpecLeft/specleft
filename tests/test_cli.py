@@ -92,6 +92,36 @@ def _create_feature_specs(
     return features_dir
 
 
+def _create_single_file_feature_spec(
+    base_dir: Path,
+    *,
+    feature_id: str,
+    scenario_id: str,
+    features_dir_name: str = "features",
+    scenario_priority: str = "high",
+) -> Path:
+    features_dir = base_dir / features_dir_name
+    features_dir.mkdir(parents=True, exist_ok=True)
+
+    _write_file(
+        features_dir / f"{feature_id}.md",
+        f"""
+        # Feature: {feature_id.title()} Feature
+
+        ## Scenarios
+
+        ### Scenario: {scenario_id.replace('-', ' ').title()}
+        priority: {scenario_priority}
+
+        - Given a user exists
+        - When the user logs in
+        - Then access is granted
+        """,
+    )
+
+    return features_dir
+
+
 class TestToSnakeCase:
     """Tests for to_snake_case helper function."""
 
@@ -191,10 +221,9 @@ class TestSkeletonCommand:
         """Test skeleton command with --single-file flag."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="auth",
-                story_id="login",
                 scenario_id="login-success",
             )
 
@@ -221,14 +250,13 @@ class TestSkeletonCommand:
             assert "assert not True" not in content
             assert "Preview:" in result.output
 
-    def test_skeleton_generates_per_feature(self) -> None:
-        """Test skeleton command generates one file per feature."""
+    def test_skeleton_auto_detects_single_file_layout(self) -> None:
+        """Test skeleton command auto-detects single-file layout."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="payments",
-                story_id="charge",
                 scenario_id="card-charge",
             )
 
@@ -237,7 +265,7 @@ class TestSkeletonCommand:
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
 
-            generated_file = Path("tests/payments/test_charge.py")
+            generated_file = Path("tests/test_payments.py")
             assert generated_file.exists()
 
             content = generated_file.read_text()
@@ -245,14 +273,32 @@ class TestSkeletonCommand:
             assert 'feature_id="payments"' in content
             assert 'scenario_id="card-charge"' in content
 
-    def test_skeleton_custom_output_dir(self) -> None:
-        """Test skeleton command with custom output directory."""
+    def test_skeleton_auto_detects_nested_layout(self) -> None:
+        """Test skeleton command auto-detects nested layout."""
         runner = CliRunner()
         with runner.isolated_filesystem():
             _create_feature_specs(
                 Path("."),
+                feature_id="legacy",
+                story_id="billing",
+                scenario_id="legacy-charge",
+            )
+
+            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            assert result.exit_code == 0
+            assert "Confirm creation?" in result.output
+            assert "✓ Created 1 test files" in result.output
+
+            generated_file = Path("tests/legacy/test_billing.py")
+            assert generated_file.exists()
+
+    def test_skeleton_custom_output_dir(self) -> None:
+        """Test skeleton command with custom output directory (single-file layout)."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_single_file_feature_spec(
+                Path("."),
                 feature_id="inventory",
-                story_id="availability",
                 scenario_id="check-stock",
             )
 
@@ -263,17 +309,16 @@ class TestSkeletonCommand:
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
 
-            generated_file = Path("custom_tests/inventory/test_availability.py")
+            generated_file = Path("custom_tests/test_inventory.py")
             assert generated_file.exists()
 
     def test_skeleton_custom_features_dir(self) -> None:
-        """Test skeleton command with custom features directory."""
+        """Test skeleton command with custom features directory (single-file layout)."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            features_dir = _create_feature_specs(
+            features_dir = _create_single_file_feature_spec(
                 Path("."),
                 feature_id="support",
-                story_id="tickets",
                 scenario_id="open-ticket",
                 features_dir_name="specs",
             )
@@ -284,7 +329,7 @@ class TestSkeletonCommand:
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
-            assert Path("tests/support/test_tickets.py").exists()
+            assert Path("tests/test_support.py").exists()
 
     def test_skeleton_with_parameterized_tests(self) -> None:
         """Test skeleton command generates parameterized tests correctly."""
@@ -340,10 +385,9 @@ class TestSkeletonCommand:
         """Test skeleton command shows next steps."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="auth",
-                story_id="login",
                 scenario_id="login-success",
             )
 
@@ -351,22 +395,21 @@ class TestSkeletonCommand:
             assert result.exit_code == 2
             assert "Confirm creation?" in result.output
             assert "Cancelled" in result.output
-            assert not Path("tests/auth/test_login.py").exists()
+            assert not Path("tests/test_auth.py").exists()
 
     def test_skeleton_preview_output(self) -> None:
         """Test skeleton command outputs a preview."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="auth",
-                story_id="login",
                 scenario_id="login-success",
             )
 
             result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
             assert result.exit_code == 2
-            assert "File: tests/auth/test_login.py" in result.output
+            assert "File: tests/test_auth.py" in result.output
             assert "Scenario IDs: login-success" in result.output
             assert "Steps (first scenario): 3" in result.output
             assert "Status: SKIPPED (not implemented)" in result.output
@@ -378,16 +421,15 @@ class TestSkeletonCommand:
         """Test skeleton command skips existing files."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="auth",
-                story_id="login",
                 scenario_id="login-success",
             )
 
             first_run = runner.invoke(cli, ["test", "skeleton"], input="y\n")
             assert first_run.exit_code == 0
-            generated_file = Path("tests/auth/test_login.py")
+            generated_file = Path("tests/test_auth.py")
             assert generated_file.exists()
             initial_content = generated_file.read_text()
 
@@ -402,10 +444,9 @@ class TestSkeletonCommand:
 
         runner = CliRunner()
         with runner.isolated_filesystem():
-            _create_feature_specs(
+            _create_single_file_feature_spec(
                 Path("."),
                 feature_id="auth",
-                story_id="login",
                 scenario_id="login-success",
             )
 
@@ -414,7 +455,7 @@ class TestSkeletonCommand:
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
-            generated_file = Path("tests/auth/test_login.py")
+            generated_file = Path("tests/test_auth.py")
             assert generated_file.exists()
 
             # Run pytest on the generated skeleton
@@ -428,6 +469,7 @@ class TestSkeletonCommand:
             # Verify the test was SKIPPED, not failed
             output = pytest_result.stdout + pytest_result.stderr
             assert "SKIPPED" in output or "skipped" in output.lower()
+            assert "FAILED" not in output
             assert "FAILED" not in output
             # Pytest exit code 0 means all tests passed/skipped (no failures)
             assert pytest_result.returncode == 0
@@ -467,6 +509,7 @@ class TestValidateCommand:
             assert "is valid" in result.output
             assert "Features: 1" in result.output
             assert "Stories: 1" in result.output
+            assert "Detected nested feature structure" in result.output
             assert "Scenarios: 1" in result.output
             assert "Steps: 3" in result.output
 
@@ -522,6 +565,7 @@ class TestValidateCommand:
             )
             assert result.exit_code == 0
             assert "is valid" in result.output
+            assert "Detected nested feature structure" in result.output
 
 
 class TestFeaturesListCommand:
@@ -543,6 +587,7 @@ class TestFeaturesListCommand:
             assert "- auth: Auth Feature" in result.output
             assert "- login: Login Story" in result.output
             assert "- login-success: Login Success" in result.output
+            assert "Detected nested feature structure" in result.output
 
     def test_features_list_json_output(self) -> None:
         runner = CliRunner()
@@ -558,7 +603,30 @@ class TestFeaturesListCommand:
             assert result.exit_code == 0
             payload = json.loads(result.output)
             assert payload["summary"]["features"] == 1
-            assert payload["features"][0]["feature_id"] == "auth"
+            feature = payload["features"][0]
+            assert feature["feature_id"] == "auth"
+            # Canonical feature shape with flattened scenarios
+            assert feature["title"] == "Auth Feature"
+            assert "confidence" in feature  # nullable
+            assert "scenarios" in feature  # flattened from stories
+            assert "stories" not in feature  # no stories nesting
+            scenario = feature["scenarios"][0]
+            assert scenario["id"] == "login-success"  # canonical uses 'id'
+
+    def test_nested_structure_warning(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="legacy",
+                story_id="billing",
+                scenario_id="legacy-charge",
+            )
+
+            result = runner.invoke(cli, ["features", "list"])
+            assert result.exit_code == 0
+            assert "Detected nested feature structure" in result.output
+            assert "features/legacy/_feature.md" not in result.output
 
     def test_features_list_missing_dir(self) -> None:
         runner = CliRunner()
@@ -566,6 +634,95 @@ class TestFeaturesListCommand:
             result = runner.invoke(cli, ["features", "list"])
             assert result.exit_code == 1
             assert "Directory not found" in result.output
+
+
+class TestPlanCommand:
+    """Tests for 'specleft plan' command."""
+
+    def test_plan_missing_prd_warns(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["plan"])
+            assert result.exit_code == 0
+            assert "PRD not found" in result.output
+            assert "Expected locations" in result.output
+
+    def test_plan_creates_features_from_h2(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## User Authentication\n## Payments\n")
+            result = runner.invoke(cli, ["plan"])
+            assert result.exit_code == 0
+            assert Path("features/user-authentication.md").exists()
+            assert Path("features/payments.md").exists()
+            assert "Features planned: 2" in result.output
+
+            content = Path("features/user-authentication.md").read_text()
+            assert "# Feature: User Authentication" in content
+            assert "### Scenario: Example" in content
+
+    def test_plan_uses_h1_when_no_h2(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# User Authentication\n")
+            result = runner.invoke(cli, ["plan"])
+            assert result.exit_code == 0
+            assert Path("features/user-authentication.md").exists()
+            assert "using top-level title" in result.output
+
+    def test_plan_defaults_to_prd_file_when_no_headings(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("No headings here")
+            result = runner.invoke(cli, ["plan"])
+            assert result.exit_code == 0
+            assert Path("features/prd.md").exists()
+            assert "creating features/prd.md" in result.output
+
+    def test_plan_dry_run_creates_nothing(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# User Authentication\n")
+            result = runner.invoke(cli, ["plan", "--dry-run"])
+            assert result.exit_code == 0
+            assert not Path("features").exists()
+            assert "Dry run" in result.output
+            assert "Would create:" in result.output
+
+    def test_plan_json_output(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# User Authentication\n")
+            result = runner.invoke(cli, ["plan", "--format", "json"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["feature_count"] == 1
+            assert payload["created"]
+
+    def test_plan_json_dry_run(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# User Authentication\n")
+            result = runner.invoke(cli, ["plan", "--format", "json", "--dry-run"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["dry_run"] is True
+            assert payload["would_create"]
+            assert "created" not in payload
+
+    def test_plan_skips_existing_feature(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            features_dir = Path("features")
+            features_dir.mkdir()
+            feature_file = features_dir / "user-authentication.md"
+            feature_file.write_text("# Feature: User Authentication\n")
+
+            Path("prd.md").write_text("# User Authentication\n")
+            result = runner.invoke(cli, ["plan"])
+            assert result.exit_code == 0
+            assert "Skipped existing" in result.output
+            assert feature_file.read_text() == "# Feature: User Authentication\n"
 
 
 class TestDoctorCommand:
@@ -610,8 +767,21 @@ class TestStatusCommand:
             result = runner.invoke(cli, ["status", "--format", "json"])
             assert result.exit_code == 0
             payload = json.loads(result.output)
-            scenarios = payload["features"][0]["stories"][0]["scenarios"]
+            scenarios = payload["features"][0]["scenarios"]
             assert scenarios[0]["execution_time"] == "slow"
+
+    def test_status_groups_by_feature_file(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_single_file_feature_spec(
+                Path("."),
+                feature_id="auth",
+                scenario_id="login-success",
+            )
+            result = runner.invoke(cli, ["status"])
+            assert result.exit_code == 0
+            assert "Feature File: features/auth.md" in result.output
+            assert "login-success" in result.output
 
     def test_status_unimplemented_table_output(self) -> None:
         runner = CliRunner()
@@ -626,6 +796,7 @@ class TestStatusCommand:
             assert result.exit_code == 0
             assert "Unimplemented Scenarios" in result.output
             assert "⚠ auth/login/login-success" in result.output
+            assert "Detected nested feature structure" in result.output
 
     def test_status_filter_requires_valid_ids(self) -> None:
         runner = CliRunner()
@@ -651,9 +822,9 @@ class TestStatusCommand:
             )
             result = runner.invoke(cli, ["status", "--format", "json"])
             payload = json.loads(result.output)
-            scenario = payload["features"][0]["stories"][0]["scenarios"][0]
+            scenario = payload["features"][0]["scenarios"][0]
             assert scenario["status"] == "skipped"
-            assert "test_login.py" in scenario["test_file"]
+            assert "test_login.py" in scenario["test_file"]  # nested layout default
 
     def test_status_marks_skipped_when_decorator_skip_true(self) -> None:
         runner = CliRunner()
@@ -677,9 +848,7 @@ def test_login_success():
             )
 
             result = runner.invoke(cli, ["status", "--format", "json"])
-            scenario = json.loads(result.output)["features"][0]["stories"][0][
-                "scenarios"
-            ][0]
+            scenario = json.loads(result.output)["features"][0]["scenarios"][0]
             assert scenario["status"] == "skipped"
             assert scenario["reason"] == "Not implemented"
 
@@ -705,10 +874,46 @@ def test_login_success():
             )
 
             result = runner.invoke(cli, ["status", "--format", "json"])
-            scenario = json.loads(result.output)["features"][0]["stories"][0][
-                "scenarios"
-            ][0]
+            scenario = json.loads(result.output)["features"][0]["scenarios"][0]
             assert scenario["status"] == "implemented"
+
+    def test_status_json_canonical_shape(self) -> None:
+        """Test status JSON output matches canonical feature shape."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            _create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            result = runner.invoke(cli, ["status", "--format", "json"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+
+            feature = payload["features"][0]
+            # Canonical feature fields
+            assert feature["feature_id"] == "auth"
+            assert feature["title"] == "Auth Feature"
+            assert "confidence" in feature  # nullable
+            assert "source" in feature  # nullable
+            assert "assumptions" in feature  # nullable
+            assert "open_questions" in feature  # nullable
+            assert "owner" in feature  # nullable
+            assert "component" in feature  # nullable
+            assert "tags" in feature
+
+            # Scenarios flattened (no stories nesting)
+            assert "scenarios" in feature
+            assert "stories" not in feature
+            scenario = feature["scenarios"][0]
+            assert (
+                scenario["id"] == "login-success"
+            )  # canonical uses 'id' not 'scenario_id'
+            assert scenario["title"] == "Login Success"
+            assert "priority" in scenario
+            assert "tags" in scenario
+            assert "steps" in scenario
 
 
 class TestNextCommand:
@@ -847,6 +1052,7 @@ class TestFeaturesStatsCommand:
             assert "Coverage:" in result.output
             assert "Scenarios with tests:" in result.output
             assert "Scenarios without tests:" in result.output
+            assert "Detected nested feature structure" in result.output
 
     def test_features_stats_json_output(self) -> None:
         runner = CliRunner()
@@ -903,6 +1109,7 @@ def test_login_success():
             assert "Scenarios with tests: 1" in result.output
             assert "Scenarios without tests: 0" in result.output
             assert "Coverage: 100.0%" in result.output
+            assert "Detected nested feature structure" in result.output
 
     def test_features_stats_with_partial_coverage(self) -> None:
         """Test stats when some scenarios have tests and some don't."""
@@ -953,6 +1160,7 @@ def test_login_success():
             assert "Coverage: 50.0%" in result.output
             # Should list the uncovered scenario
             assert "login-failure" in result.output
+            assert "Detected nested feature structure" in result.output
 
 
 @pytest.fixture
@@ -1022,6 +1230,13 @@ class TestReportCommand:
             assert payload["status"] == "ok"
             assert payload["summary"]["total_features"] == 1
 
+    def test_init_creates_single_file_example(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init"], input="1\n")
+            assert result.exit_code == 0
+            assert Path("features/example-feature.md").exists()
+
     def test_init_json_dry_run(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -1030,6 +1245,7 @@ class TestReportCommand:
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
             assert payload["summary"]["directories"] == 3
+            assert "features/example-feature.md" in payload["would_create"]
 
     def test_init_json_requires_dry_run(self) -> None:
         runner = CliRunner()

@@ -215,12 +215,14 @@ class TestScenarioSpec:
         assert scenario.scenario_id == "basic-scenario"
         assert scenario.name == "Basic scenario"
         assert scenario.description is None
-        assert scenario.priority == Priority.MEDIUM
+        assert scenario.priority is None  # Nullable in Phase 3
+        assert scenario.priority_raw is None
         assert scenario.tags == []
         assert scenario.execution_time == ExecutionTime.FAST
         assert scenario.steps == []
         assert scenario.test_data == []
         assert scenario.source_file is None
+        assert scenario.raw_metadata == {}
 
     def test_scenario_with_all_fields(self) -> None:
         """Test creating scenario with all fields."""

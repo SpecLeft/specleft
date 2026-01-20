@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from specleft.commands.contracts.types import ContractCheckResult
 from specleft.commands.constants import CLI_VERSION, CONTRACT_DOC_PATH, CONTRACT_VERSION
+from specleft.commands.contracts.types import ContractCheckResult
 
 
 def build_contract_payload() -> dict[str, object]:

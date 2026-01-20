@@ -1,4 +1,19 @@
 """Pytest configuration for SpecLeft tests."""
 
+import pytest
+
 # Enable the pytester fixture for testing pytest plugins
 pytest_plugins = ["pytester"]
+
+
+@pytest.fixture(autouse=True)
+def reset_nested_warning_state():
+    """Reset the nested structure warning state before each test.
+
+    This ensures each test can independently verify warning behavior.
+    """
+    from specleft.utils.structure import reset_nested_warning_state
+
+    reset_nested_warning_state()
+    yield
+    reset_nested_warning_state()

@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -180,7 +180,7 @@ def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
     output = {
         "healthy": healthy,
         "version": checks.get("version"),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "checks": checks_map,
     }
 

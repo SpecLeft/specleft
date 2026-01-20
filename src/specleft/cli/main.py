@@ -11,6 +11,7 @@ from specleft.commands import (
     features,
     init,
     next_command,
+    plan,
     status,
     test,
 )
@@ -29,6 +30,7 @@ cli.add_command(features)
 cli.add_command(doctor)
 cli.add_command(status)
 cli.add_command(next_command)
+cli.add_command(plan)
 cli.add_command(coverage)
 cli.add_command(init)
 cli.add_command(contract)
