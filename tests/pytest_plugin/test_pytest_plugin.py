@@ -16,111 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-
-def _write_specs_tree(base_dir: Path) -> Path:
-    features_dir = base_dir / "features"
-    auth_story_dir = features_dir / "auth" / "login"
-    parse_story_dir = features_dir / "parse" / "units"
-    auth_story_dir.mkdir(parents=True, exist_ok=True)
-    parse_story_dir.mkdir(parents=True, exist_ok=True)
-
-    (features_dir / "auth" / "_feature.md").write_text(
-        """
----
-feature_id: auth
-priority: critical
-tags: [core]
----
-
-# Feature: User Authentication
-""".strip()
-    )
-    (auth_story_dir / "_story.md").write_text(
-        """
----
-story_id: login
-priority: high
-tags: [auth-flow]
----
-
-# Story: Login
-""".strip()
-    )
-    (auth_story_dir / "login_success.md").write_text(
-        """
----
-scenario_id: login-success
-priority: high
-tags: [smoke, critical, auth-flow]
-execution_time: fast
----
-
-# Scenario: Successful login
-
-## Steps
-- **Given** user has valid credentials
-- **When** user logs in
-- **Then** user sees dashboard
-""".strip()
-    )
-    (auth_story_dir / "login_failure.md").write_text(
-        """
----
-scenario_id: login-failure
-priority: medium
-tags: [regression, negative]
-execution_time: fast
----
-
-# Scenario: Failed login
-
-## Steps
-- **Given** user has invalid credentials
-- **When** user tries to log in
-- **Then** user sees error message
-""".strip()
-    )
-
-    (features_dir / "parse" / "_feature.md").write_text(
-        """
----
-feature_id: parse
-priority: high
-tags: [unit]
----
-
-# Feature: Unit Parsing
-""".strip()
-    )
-    (parse_story_dir / "_story.md").write_text(
-        """
----
-story_id: units
-priority: medium
-tags: [parsing]
----
-
-# Story: Units
-""".strip()
-    )
-    (parse_story_dir / "extract_unit.md").write_text(
-        """
----
-scenario_id: extract-unit
-priority: medium
-tags: [unit, parsing]
-execution_time: fast
----
-
-# Scenario: Extract unit from string
-
-## Steps
-- **When** extracting unit
-- **Then** unit is correct
-""".strip()
-    )
-
-    return features_dir
+from tests.helpers.specs import write_specs_tree
 
 
 if TYPE_CHECKING:
@@ -130,7 +26,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def create_specs_tree(pytester: Pytester) -> Path:
     """Create a Markdown specs tree in the test directory."""
-    return _write_specs_tree(pytester.path)
+    return write_specs_tree(pytester.path)
 
 
 @pytest.fixture(autouse=True)
