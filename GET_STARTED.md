@@ -49,9 +49,21 @@ specleft features stats
 Example output:
 
 ```
-Discovered 87 pytest tests
-0 linked to feature specs
-87 unlinked tests
+Test Coverage Stats
+
+Target Directories:
+  Features Directory: features/
+  Tests Directory: tests/
+
+Pytest Tests:
+  Total pytest tests discovered: 20
+  Tests with @specleft: 0
+
+Specifications:
+  No specs found.
+
+Coverage:
+  Cannot calculate coverage without specs.
 ```
 
 **What this tells you**
