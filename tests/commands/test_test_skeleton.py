@@ -198,6 +198,28 @@ class TestSkeletonCommand:
             assert result.exit_code == 1
             assert "Error loading" in result.output
 
+    def test_skeleton_dedupes_duplicate_scenario_ids(self) -> None:
+        """Test duplicate scenario names are de-duped with warnings."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="auth",
+                scenario_id="example",
+            )
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="billing",
+                scenario_id="example",
+            )
+
+            result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
+            assert result.exit_code == 2
+            assert "Duplicate scenario name found" in result.output
+            assert "Scenario IDs:" in result.output
+            assert "example" in result.output
+            assert "example-1" in result.output
+
     def test_skeleton_shows_next_steps(self) -> None:
         """Test skeleton command shows next steps."""
         runner = CliRunner()

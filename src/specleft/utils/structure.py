@@ -120,5 +120,5 @@ def warn_if_nested_structure(features_dir: Path, *, force: bool = False) -> None
     click.echo(
         "      Consider using single-file features (features/<feature>.md) for better"
     )
-    click.echo("      agent compatibility. See: https://opencode.ai/docs/specleft")
+    click.echo("      agent compatibility. See: https://specleft.dev/docs")
     click.echo()

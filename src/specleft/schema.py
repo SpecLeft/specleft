@@ -137,15 +137,6 @@ class SpecsConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_unique_ids(self) -> SpecsConfig:
-        seen_scenario_ids: set[str] = set()
-        for feature in self.features:
-            for story in feature.stories:
-                for scenario in story.scenarios:
-                    if scenario.scenario_id in seen_scenario_ids:
-                        raise ValueError(
-                            f"Duplicate scenario_id: {scenario.scenario_id}"
-                        )
-                    seen_scenario_ids.add(scenario.scenario_id)
         return self
 
     @classmethod

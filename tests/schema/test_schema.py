@@ -505,8 +505,8 @@ class TestSpecsConfig:
         config = SpecsConfig(features=[feature])
         assert config.features == [feature]
 
-    def test_duplicate_scenario_ids_raises_error(self) -> None:
-        """Test that duplicate scenario IDs across specs raise error."""
+    def test_duplicate_scenario_ids_allowed(self) -> None:
+        """Test that duplicate scenario IDs are permitted in config."""
         scenario = ScenarioSpec(scenario_id="scenario", name="Scenario")
         story = StorySpec(story_id="story", name="Story", scenarios=[scenario])
         feature = FeatureSpec(feature_id="feature", name="Feature", stories=[story])
@@ -519,25 +519,8 @@ class TestSpecsConfig:
             feature_id="feature-2", name="Feature 2", stories=[other_story]
         )
 
-        with pytest.raises(ValidationError) as exc_info:
-            SpecsConfig(features=[feature, other_feature])
-        assert "Duplicate scenario_id: scenario" in str(exc_info.value)
-
-    def test_duplicate_scenario_ids_same_feature(self) -> None:
-        """Test duplicate scenario IDs within same feature."""
-        scenario1 = ScenarioSpec(scenario_id="dup", name="Scenario 1")
-        scenario2 = ScenarioSpec(scenario_id="dup", name="Scenario 2")
-
-        story1 = StorySpec(story_id="story-1", name="Story 1", scenarios=[scenario1])
-        story2 = StorySpec(story_id="story-2", name="Story 2", scenarios=[scenario2])
-
-        feature = FeatureSpec(
-            feature_id="feature", name="Feature", stories=[story1, story2]
-        )
-
-        with pytest.raises(ValidationError) as exc_info:
-            SpecsConfig(features=[feature])
-        assert "Duplicate scenario_id: dup" in str(exc_info.value)
+        config = SpecsConfig(features=[feature, other_feature])
+        assert config.features
 
     def test_unique_scenario_ids_valid(self) -> None:
         """Test that unique scenario IDs are valid."""
