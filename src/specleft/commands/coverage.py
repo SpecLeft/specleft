@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -130,7 +130,7 @@ def _build_coverage_json(entries: list[ScenarioStatusEntry]) -> dict[str, object
         return payload
 
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "coverage": {
             "overall": {
                 "total_scenarios": metrics.overall.total,
