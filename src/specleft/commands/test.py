@@ -477,7 +477,7 @@ def skeleton(
         sys.exit(1)
 
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(features_dir, warn_on_duplicate_scenarios=True)
     except FileNotFoundError:
         click.secho(f"Error: {features_dir} not found", fg="red", err=True)
         click.echo("Create a features directory with Markdown specs to continue.")

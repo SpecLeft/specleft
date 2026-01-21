@@ -220,6 +220,25 @@ class TestSkeletonCommand:
             assert "example" in result.output
             assert "example-1" in result.output
 
+    def test_skeleton_dedupes_without_warning_elsewhere(self) -> None:
+        """Test duplicate warnings only appear during skeleton command."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="auth",
+                scenario_id="example",
+            )
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="billing",
+                scenario_id="example",
+            )
+
+            result = runner.invoke(cli, ["features", "list"])
+            assert result.exit_code == 0
+            assert "Duplicate scenario name found" not in result.output
+
     def test_skeleton_shows_next_steps(self) -> None:
         """Test skeleton command shows next steps."""
         runner = CliRunner()

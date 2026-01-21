@@ -22,7 +22,9 @@ class SpecStats:
     tags: set[str]
 
 
-def load_specs_directory(features_dir: str | Path) -> SpecsConfig:
+def load_specs_directory(
+    features_dir: str | Path, *, warn_on_duplicate_scenarios: bool = False
+) -> SpecsConfig:
     """Load and validate specs from a directory."""
     features_path = Path(features_dir)
     if not features_path.exists():
@@ -32,7 +34,7 @@ def load_specs_directory(features_dir: str | Path) -> SpecsConfig:
     if not config.features:
         raise ValueError(f"No feature specs found in {features_path}")
 
-    _ensure_unique_scenario_ids(config)
+    _ensure_unique_scenario_ids(config, warn_on_duplicate=warn_on_duplicate_scenarios)
     _validate_unique_feature_ids(config)
     _validate_unique_story_ids(config)
 
@@ -88,7 +90,9 @@ def _validate_unique_story_ids(config: SpecsConfig) -> None:
             seen_story_ids.add(story.story_id)
 
 
-def _ensure_unique_scenario_ids(config: SpecsConfig) -> None:
+def _ensure_unique_scenario_ids(
+    config: SpecsConfig, *, warn_on_duplicate: bool
+) -> None:
     seen_scenario_ids: set[str] = set()
     for feature in config.features:
         for story in feature.stories:
@@ -98,6 +102,7 @@ def _ensure_unique_scenario_ids(config: SpecsConfig) -> None:
                     seen_ids=seen_scenario_ids,
                     feature_id=feature.feature_id,
                     story_id=story.story_id,
+                    warn_on_duplicate=warn_on_duplicate,
                 )
 
 
@@ -107,6 +112,7 @@ def _dedupe_scenario_id(
     seen_ids: set[str],
     feature_id: str,
     story_id: str,
+    warn_on_duplicate: bool,
 ) -> str:
     original_id = scenario.scenario_id
     if original_id not in seen_ids:
@@ -120,11 +126,12 @@ def _dedupe_scenario_id(
             scenario.scenario_id = candidate
             scenario.raw_metadata["scenario_id"] = candidate
             scenario.name = scenario.name or original_id
-            click.secho(
-                "Warning: Duplicate scenario name found; "
-                f"using scenario_id '{candidate}' (feature '{feature_id}', story '{story_id}').",
-                fg="yellow",
-            )
+            if warn_on_duplicate:
+                click.secho(
+                    "Warning: Duplicate scenario name found; "
+                    f"using scenario_id '{candidate}' (feature '{feature_id}', story '{story_id}').",
+                    fg="yellow",
+                )
             seen_ids.add(candidate)
             return candidate
         counter += 1
