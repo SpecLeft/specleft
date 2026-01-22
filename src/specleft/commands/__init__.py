@@ -5,6 +5,7 @@ from __future__ import annotations
 from specleft.commands.contract import contract
 from specleft.commands.coverage import coverage
 from specleft.commands.doctor import doctor
+from specleft.commands.enforce import enforce
 from specleft.commands.features import features
 from specleft.commands.init import init
 from specleft.commands.next import next_command
@@ -16,6 +17,7 @@ __all__ = [
     "contract",
     "coverage",
     "doctor",
+    "enforce",
     "features",
     "init",
     "next_command",
