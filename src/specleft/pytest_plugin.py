@@ -10,7 +10,16 @@ from typing import Any, Protocol, TypedDict, cast
 import pytest
 
 from specleft.decorators import get_current_steps
-from specleft.schema import FeatureSpec, ScenarioSpec, SpecsConfig
+from specleft.schema import FeatureSpec, Priority, ScenarioSpec, SpecsConfig
+
+
+def _get_priority_value(scenario: ScenarioSpec) -> str:
+    """Get priority value string, defaulting to 'medium' if not set."""
+    if scenario.priority_raw is not None:
+        return scenario.priority_raw.value
+    if scenario.priority is not None:
+        return scenario.priority.value
+    return Priority.MEDIUM.value
 
 
 class SpecleftMetadata(TypedDict, total=False):
@@ -230,7 +239,7 @@ def pytest_collection_modifyitems(
                 for tag in scenario.tags:
                     marker_name = _sanitize_marker_name(tag)
                     item.add_marker(getattr(pytest.mark, marker_name))
-                priority_marker = f"priority_{scenario.priority.value}"
+                priority_marker = f"priority_{_get_priority_value(scenario)}"
                 item.add_marker(getattr(pytest.mark, priority_marker))
 
         if use_filters and not _matches_filters(
@@ -340,7 +349,7 @@ def _matches_filters(
         return not tag_filters and not priority_filters
 
     scenario_tags = {_sanitize_marker_name(tag) for tag in scenario.tags}
-    scenario_priority = scenario.priority.value.lower()
+    scenario_priority = _get_priority_value(scenario).lower()
 
     if tag_filters and not scenario_tags.intersection(tag_filters):
         return False

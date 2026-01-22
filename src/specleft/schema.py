@@ -72,12 +72,14 @@ class ScenarioSpec(BaseModel):
     scenario_id: str = Field(pattern=r"^[a-z0-9-]+$")
     name: str
     description: str | None = None
-    priority: Priority = Priority.MEDIUM
+    priority: Priority | None = None
+    priority_raw: Priority | None = None
     tags: list[str] = Field(default_factory=list)
     execution_time: ExecutionTime = ExecutionTime.FAST
     steps: list[SpecStep] = Field(default_factory=list)
     test_data: list[SpecDataRow] = Field(default_factory=list)
     source_file: Path | None = None
+    raw_metadata: dict[str, Any] = Field(default_factory=dict)
 
     @property
     def is_parameterized(self) -> bool:
@@ -110,8 +112,14 @@ class FeatureSpec(BaseModel):
     owner: str | None = None
     priority: Priority = Priority.MEDIUM
     tags: list[str] = Field(default_factory=list)
+    confidence: str | None = None
+    source: str | None = None
+    assumptions: list[str] | None = None
+    open_questions: list[str] | None = None
     stories: list[StorySpec] = Field(default_factory=list)
     source_dir: Path | None = None
+    source_file: Path | None = None
+    raw_metadata: dict[str, Any] = Field(default_factory=dict)
 
     @property
     def all_scenarios(self) -> list[ScenarioSpec]:
@@ -129,15 +137,6 @@ class SpecsConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_unique_ids(self) -> SpecsConfig:
-        seen_scenario_ids: set[str] = set()
-        for feature in self.features:
-            for story in feature.stories:
-                for scenario in story.scenarios:
-                    if scenario.scenario_id in seen_scenario_ids:
-                        raise ValueError(
-                            f"Duplicate scenario_id: {scenario.scenario_id}"
-                        )
-                    seen_scenario_ids.add(scenario.scenario_id)
         return self
 
     @classmethod

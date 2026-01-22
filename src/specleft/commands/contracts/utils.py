@@ -1,0 +1,62 @@
+"""Shared helpers for contract commands."""
+
+from __future__ import annotations
+
+import json
+import textwrap
+from pathlib import Path
+from typing import cast
+
+
+def write_text_file(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(textwrap.dedent(content).strip())
+
+
+def create_contract_specs(root: Path) -> None:
+    write_text_file(
+        root / "features" / "auth" / "_feature.md",
+        """
+        ---
+        feature_id: auth
+        priority: high
+        ---
+        # Feature: Auth
+        """,
+    )
+    write_text_file(
+        root / "features" / "auth" / "login" / "_story.md",
+        """
+        ---
+        story_id: login
+        ---
+        # Story: Login
+        """,
+    )
+    write_text_file(
+        root / "features" / "auth" / "login" / "login-success.md",
+        """
+        ---
+        scenario_id: login-success
+        priority: high
+        execution_time: fast
+        ---
+        # Scenario: Login Success
+        ## Steps
+        - **Given** a user exists
+        - **When** the user logs in
+        - **Then** access is granted
+        """,
+    )
+
+
+def load_json_output(raw_output: str, *, allow_preamble: bool = False) -> object | None:
+    payload = raw_output
+    if allow_preamble:
+        lines = raw_output.splitlines()
+        if lines and lines[0].strip() == "Running contract tests...":
+            payload = "\n".join(lines[1:])
+    try:
+        return cast(object, json.loads(payload))
+    except json.JSONDecodeError:
+        return None

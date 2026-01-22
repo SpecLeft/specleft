@@ -1,1 +1,1 @@
-"""SpecLeft CLI package."""
+"""CLI package for SpecLeft."""

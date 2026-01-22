@@ -49,9 +49,21 @@ specleft features stats
 Example output:
 
 ```
-Discovered 87 pytest tests
-0 linked to feature specs
-87 unlinked tests
+Test Coverage Stats
+
+Target Directories:
+  Features Directory: features/
+  Tests Directory: tests/
+
+Pytest Tests:
+  Total pytest tests discovered: 20
+  Tests with @specleft: 0
+
+Specifications:
+  No specs found.
+
+Coverage:
+  Cannot calculate coverage without specs.
 ```
 
 **What this tells you**
@@ -102,7 +114,7 @@ specleft test skeleton
 SpecLeft shows you **exactly** what it plans to generate:
 
 ```bash
-Will generate: tests/auth/test_login_success.py
+Will generate: tests/auth/test_login.py
 
 - Feature: auth
 - Scenario: login-success
@@ -203,3 +215,50 @@ specleft test report --open-browser
 #### Full alignment with your tests now awaits.
 
 Any enhancements or bug requests — please raise an [Issue](https://github.com/SpecLeft/spec-left/issues)
+
+---
+
+# For AI Agents: Automated Setup
+
+If you're an AI agent setting up SpecLeft:
+```bash
+# Full automated workflow
+pip install specleft
+specleft doctor --format json  # Verify installation
+specleft contract --format json  # Review agent contract
+specleft features stats --format json  # Check project fit
+specleft init --dry-run --format json  # Preview initialization plan
+
+# Create example specs (or extract from requirements)
+# ... create feature/story/scenario .md files ...
+
+specleft features validate --format json  # Validate specs
+specleft test skeleton --dry-run --format json  # Preview skeleton plan
+specleft test skeleton  # Generate skeletons
+specleft next --limit 3 --format json  # Get next tests to implement
+
+# Implement each test (remove skip=True, add test logic)
+# ... implementation loop ...
+
+specleft status --format json  # Check progress
+```
+
+**Programmatic Example:**
+```python
+import subprocess, json
+
+# Get next test to implement
+result = subprocess.run(
+    ["specleft", "next", "--limit", "1", "--format", "json"],
+    capture_output=True, text=True
+)
+next_test = json.loads(result.stdout)["tests"][0]
+
+# Implement test (your logic here)
+implement_test(next_test["test_file"], next_test["scenario_id"])
+
+# Verify
+subprocess.run(["pytest", next_test["test_file"]])
+```
+
+See [AI Agents Guide](docs/ai-agents-main.md) for complete workflows.

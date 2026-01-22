@@ -8,6 +8,7 @@ AGENTS*.md
 *.bak
 examples/tests/
 .future-features/
+archives/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -218,3 +219,11 @@ marimo/_lsp/
 __marimo__/
 .vscode/
 .vscode/
+.DS_Store
+prd.md
+features/feature-1-user-authentication.md
+features/feature-2-payments-and-refunds.md
+features/feature-3-subscriptions.md
+features/non-goals.md
+features/open-questions.md
+features/overview.md
