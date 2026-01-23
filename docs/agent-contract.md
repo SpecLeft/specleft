@@ -69,6 +69,46 @@ SpecLeft guarantees that:
 
 Agents may rely on documented JSON fields without defensive parsing.
 
+### Example output (JSON)
+
+```bash
+❯ specleft contract --format json
+```
+```json
+{
+  "contract_version": "1.0",
+  "specleft_version": "0.2.0",
+  "guarantees": {
+    "safety": {
+      "no_implicit_writes": true,
+      "dry_run_never_writes": true,
+      "existing_tests_not_modified_by_default": true
+    },
+    "execution": {
+      "skeletons_skipped_by_default": true,
+      "skipped_never_fail": true,
+      "validation_non_destructive": true
+    },
+    "determinism": {
+      "deterministic_for_same_inputs": true,
+      "safe_for_retries": true
+    },
+    "cli_api": {
+      "json_supported_globally": true,
+      "json_additive_within_minor": true,
+      "exit_codes": {
+        "success": 0,
+        "error": 1,
+        "cancelled": 2
+      }
+    }
+  },
+  "docs": {
+    "agent_contract": "docs/agent-contract.md"
+  }
+}
+```
+
 ---
 
 ## 5. Exit Code Semantics
@@ -148,6 +188,18 @@ Changes to this contract require:
 - explicit documentation
 - a major version increment
 
+---
+## Verification Caching
+   
+   Safe to cache verification results for:
+   - Same `specleft_version`
+   - Same `contract_version`
+   - Within same session
+   
+   Re-verify if:
+   - SpecLeft version changes
+   - Contract version changes
+   - New session starts
 ---
 
 ## Summary for Agents

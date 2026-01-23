@@ -64,6 +64,71 @@ Everything is file-based and visible in git.
 
 ---
 
+## Machine-verifiable safety guarantees for AI Agents
+
+SpecLeft's guarantees:
+
+- --dry-run never writes
+- Commands are idempotent
+- Skipped tests never fail
+- JSON schemas are additive-only within minor versions
+
+### Agent Contract
+
+All verification commands are fast enough for pre-flight checks.
+
+```bash
+# Step 1: Verify the contract - completes in <100ms
+specleft contract --format json
+
+# Step 2: Test the contract - completes in <5 seconds
+specleft contract test --format json
+
+# Step 3: Safe to proceed - completes in <500ms
+specleft doctor --format json
+
+```
+### Example output (JSON)
+
+```bash
+❯ specleft contract --format json
+```
+```json
+{
+  "contract_version": "1.0",
+  "specleft_version": "0.2.0",
+  "guarantees": {
+    "safety": {
+      "no_implicit_writes": true,
+      "dry_run_never_writes": true,
+      "existing_tests_not_modified_by_default": true
+    },
+    "execution": {
+      "skeletons_skipped_by_default": true,
+      "skipped_never_fail": true,
+      "validation_non_destructive": true
+    },
+    "determinism": {
+      "deterministic_for_same_inputs": true,
+      "safe_for_retries": true
+    },
+    "cli_api": {
+      "json_supported_globally": true,
+      "json_additive_within_minor": true,
+      "exit_codes": {
+        "success": 0,
+        "error": 1,
+        "cancelled": 2
+      }
+    }
+  },
+  "docs": {
+    "agent_contract": "docs/agent-contract.md"
+  }
+}
+```
+More details in [agent-contract.md](docs/agent-contract.md)
+
 ## Canonical Agent Workflow (Happy Path)
 
 This is the **default** flow agents should follow.
