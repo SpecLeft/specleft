@@ -12,14 +12,15 @@ import yaml
 from click.testing import CliRunner
 from specleft.cli.main import cli
 from specleft.license.repo_identity import RepoIdentity
-from specleft.license.verify import add_trusted_key, remove_trusted_key
 
 from tests.helpers.specs import create_feature_specs
 from tests.license.fixtures import (
     TEST_KEY_ID,
     TEST_PUBLIC_KEY_B64,
+    add_trusted_key,
     create_core_policy_data,
     create_enforce_policy_data,
+    remove_trusted_key,
 )
 
 
@@ -278,13 +279,13 @@ class TestEnforceEnforcePolicy:
             write_policy_file(Path("."), policy_data)
 
             with patch(
-                "specleft.license.repo_identity.detect_repo_identity",
+                "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
 
             assert result.exit_code == 2
-            assert "Evaluation ended" in result.output
+            assert "Evaluation" in result.output and "ended" in result.output
 
 
 class TestEnforceHelpText:

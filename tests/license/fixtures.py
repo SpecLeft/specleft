@@ -13,7 +13,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
 )
-from specleft.license.canonical import canonical_payload
+from specleft_signing.canonical import canonical_payload
+from specleft_signing.verify import TRUSTED_PUBLIC_KEYS
 
 # Test keypair - ONLY for testing, never use in production
 # Generated once and stored here for deterministic tests
@@ -30,6 +31,28 @@ TEST_KEY_ID = "specleft-test-2026"
 TEST_PUBLIC_KEY_B64 = base64.b64encode(_TEST_PUBLIC_KEY.public_bytes_raw()).decode(
     "utf-8"
 )
+
+
+def add_trusted_key(key_id: str, public_key_base64: str) -> None:
+    """Add a trusted public key for verification.
+
+    This is primarily used for testing with test keypairs.
+    Registers the key with specleft_signing's trusted keys.
+
+    Args:
+        key_id: Key identifier
+        public_key_base64: Base64-encoded Ed25519 public key bytes
+    """
+    TRUSTED_PUBLIC_KEYS[key_id] = public_key_base64
+
+
+def remove_trusted_key(key_id: str) -> None:
+    """Remove a trusted public key.
+
+    Args:
+        key_id: Key identifier to remove
+    """
+    TRUSTED_PUBLIC_KEYS.pop(key_id, None)
 
 
 def sign_payload(payload: bytes) -> str:

@@ -18,6 +18,7 @@ dependencies = [
     "python-slugify>=8.0.0",
     "pyyaml>=6.0.0",
     "cryptography>=41.0.0",
+    "specleft-signing @ git+ssh://git@github.com/SpecLeft/specleft-signing.git@v0.1.0"
 ]
 
 [project.optional-dependencies]
@@ -123,6 +124,10 @@ disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
 module = "frontmatter"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "specleft_signing.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

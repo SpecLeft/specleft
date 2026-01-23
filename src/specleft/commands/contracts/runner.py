@@ -24,7 +24,26 @@ def emit_contract_check(check: ContractCheckResult, verbose: bool) -> None:
     _emit(check, verbose)
 
 
+_IN_CONTRACT_TEST = False
+
+
 def run_contract_tests(
+    *,
+    verbose: bool,
+    on_progress: Callable[[ContractCheckResult], None] | None = None,
+) -> tuple[bool, list[ContractCheckResult], list[str]]:
+    global _IN_CONTRACT_TEST
+    if _IN_CONTRACT_TEST:
+        # Avoid recursive execution when contract test checks itself
+        return True, [], []
+    _IN_CONTRACT_TEST = True
+    try:
+        return _run_contract_tests_impl(verbose=verbose, on_progress=on_progress)
+    finally:
+        _IN_CONTRACT_TEST = False
+
+
+def _run_contract_tests_impl(
     *,
     verbose: bool,
     on_progress: Callable[[ContractCheckResult], None] | None = None,

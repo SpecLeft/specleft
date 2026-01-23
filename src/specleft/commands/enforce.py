@@ -5,15 +5,23 @@ from __future__ import annotations
 import json
 import sys
 from datetime import date
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import click
 import yaml
+from specleft_signing.schema import PolicyType, SignedPolicy
+from specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
 
 from specleft.enforcement.engine import evaluate_policy
-from specleft.license.schema import PolicyType, SignedPolicy
-from specleft.license.verify import VerifyFailure, VerifyResult, verify_policy
+from specleft.license.repo_identity import detect_repo_identity
+
+
+class VerifyMismatchFailure(Enum):
+    """Additional verification failure reasons."""
+
+    REPO_MISMATCH = "repo_mismatch"
 
 
 def load_policy(path: str) -> SignedPolicy | None:
@@ -65,7 +73,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("", err=True)
         click.echo("Renew your license at: https://specleft.dev/renew", err=True)
 
-    elif result.failure == VerifyFailure.REPO_MISMATCH:
+    elif result.failure == VerifyMismatchFailure.REPO_MISMATCH:
         click.echo("", err=True)
         click.echo("This policy file is licensed for a different repository.", err=True)
         click.echo(
@@ -181,8 +189,25 @@ def enforce(
         )
         sys.exit(1)
 
-    # Verify signature, expiry, repo binding, evaluation
+    # Verify signature, expiry, evaluation
     result = verify_policy(policy)
+
+    # Check repository binding
+    if result.valid:
+        repo = detect_repo_identity()
+        if repo is None:
+            result = VerifyResult(
+                valid=False,
+                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                message="Cannot detect repository. Ensure git remote 'origin' exists.",
+            )
+        elif not repo.matches(policy.license.licensed_to):
+            result = VerifyResult(
+                valid=False,
+                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                message=f"License for '{policy.license.licensed_to}', "
+                f"current repo is '{repo.canonical}'",
+            )
 
     if not result.valid:
         handle_verification_failure(result)
