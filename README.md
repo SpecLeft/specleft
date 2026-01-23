@@ -8,6 +8,7 @@ SpecLeft does **not** replace pytest.
 It does **not** reinterpret your tests.
 It does **not** mutate your code unless you explicitly say yes.
 
+For AI Agent overview see [AI_AGENTS.md](AI_AGENTS.md)
 ---
 
 ## What problem does SpecLeft solve?
@@ -221,7 +222,7 @@ specleft next --format json
 specleft status --format json
 ```
 
-**For detailed agent workflows, see [AI Agents Guide](docs/ai-agents.md)**
+**For detailed agent workflows, see [AI Agents Guide](AI_AGENTS.md)**
 ---
 
 ## License
