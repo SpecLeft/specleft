@@ -9,6 +9,7 @@ AGENTS*.md
 examples/tests/
 .future-features/
 archives/
+.licenses/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

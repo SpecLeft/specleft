@@ -63,7 +63,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("  Option 1: Purchase Enforce license", err=True)
         click.echo("    https://specleft.dev/pricing", err=True)
         click.echo("", err=True)
-        click.echo("  Option 2: Downgrade to Core Policy", err=True)
+        click.echo("  Option 2: Switch to Core Policy", err=True)
         click.echo(
             "    Update your CI to use: specleft enforce .specleft/policy-core.yml",
             err=True,
@@ -72,7 +72,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
 
     elif result.failure == VerifyFailure.EXPIRED:
         click.echo("", err=True)
-        click.echo("Renew your license at: https://specleft.dev/renew", err=True)
+        click.secho("Renew your license at: https://specleft.dev/enforce", err=True, bold=True)
 
     elif result.failure == VerifyMismatchFailure.REPO_MISMATCH:
         click.echo("", err=True)
@@ -93,8 +93,22 @@ def display_policy_status(policy: SignedPolicy) -> None:
     if policy.policy_type == PolicyType.ENFORCE:
         if policy.license.evaluation:
             days = (policy.license.evaluation.ends_at - date.today()).days
-            click.secho("Enforce Policy (evaluation)", fg="cyan", bold=True)
-            click.echo(f"Evaluation expires in {days} days")
+            if days >= 11:
+                click.echo(
+                    f"ℹ Enforce policy running in evaluation mode ({days} days remaining)"
+                )
+            elif 2 <= days <= 10:
+                click.secho(
+                    f"⚠ Evaluation ends in {days} days — upgrade or switch to Core",
+                    fg="yellow",
+                )
+                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
+            elif days == 1:
+                click.secho(
+                    "⚠ Evaluation expires tomorrow — CI will block",
+                    fg="yellow",
+                )
+                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
         else:
             click.secho("Enforce Policy active", fg="cyan", bold=True)
     else:
@@ -116,7 +130,7 @@ def display_violations(violations: dict[str, Any]) -> None:
         click.echo()
 
     if violations["priority_violations"]:
-        click.secho("Priority violations:", fg="red")
+        click.secho("Priority violations:", fg="red", bold=True)
         click.echo()
         for pv in violations["priority_violations"]:
             click.echo(
@@ -126,16 +140,23 @@ def display_violations(violations: dict[str, Any]) -> None:
         click.echo()
 
     if violations.get("coverage_violations"):
-        click.echo("Coverage violations:")
+        click.secho("Coverage violations:", fg="red", bold=True)
+        click.echo()
         for cv in violations["coverage_violations"]:
+            click.secho(f" \u2717 Scenario test coverage below {cv['threshold']}%", bold=True)
+            click.echo()
             click.echo(
-                f"  \u2717 Coverage {cv['actual']}% below threshold {cv['threshold']}%"
+                f" Current Test Coverage {cv['actual']}%"
+                # f"  \u2717 Test Coverage {cv['actual']}% (must be {cv['threshold']}% or above)"
             )
         click.echo()
 
     if not violations["failed"]:
-        click.echo("\u2713 All checks passed")
+        click.secho("\u2713 All checks passed", fg="green")
 
+    click.echo()
+    click.echo("Documentation: https://specleft.dev/docs/enforce")
+    click.echo("Support: https://specleft.dev/contact")
 
 @click.command("enforce")
 @click.argument(
@@ -226,15 +247,10 @@ def enforce(
     # Show policy status (table format only)
     if fmt == "table":
         display_policy_status(policy)
-        click.echo("Validating scenarios are covered...")
-        click.echo("")
-        click.echo("Features directory: " + str(Path(features_dir).resolve()))
-        click.echo("Tests directory: " + str(Path(test_dir).resolve()))
-        click.echo("")
+        click.echo("Checking scenarios...")
         if policy.policy_type == PolicyType.ENFORCE:
-            click.echo(f"Ignored features: {', '.join(ignored) if ignored else 'none'}")
-            click.echo(f"Checking coverage in {test_dir}/...")
-        click.echo()
+            click.echo("Checking coverage...")
+        click.echo("")
 
     # Run enforcement
     violations = evaluate_policy(
