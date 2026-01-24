@@ -39,7 +39,14 @@ jobs:
           git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
           git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
           git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
-
+      
+      # Add this debug step to your workflow temporarily
+      - name: Test access to private repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
