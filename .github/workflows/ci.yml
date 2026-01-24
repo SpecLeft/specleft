@@ -50,9 +50,11 @@ jobs:
           echo "Credentials configured"
 
       - name: Verify GitHub access
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "Testing access to specleft-signing..."
-          git ls-remote https://github.com/SpecLeft/specleft-signing.git
+          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
       
       - name: Install dependencies
         run: |
