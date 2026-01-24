@@ -171,8 +171,8 @@ def test_login_success():
                 result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
 
             assert result.exit_code == 0
-            assert "Enforce Policy (evaluation)" in result.output
-            assert "expires in" in result.output
+            assert "ℹ Enforce policy running in evaluation mode" in result.output
+            assert "days remaining" in result.output
 
     def test_workflow_enforce_purchased(self) -> None:
         """enforce with no evaluation block (purchased license)."""
