@@ -24,19 +24,13 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: SpecLeft
       
-      - name: Debug token generation
-        run: |
-          echo "Token generated: ${{ steps.app-token.outputs.token != '' }}"
-          echo "Token length: ${#TOKEN}"
-          git config --global --list | grep url
-        env:
-          TOKEN: ${{ steps.app-token.outputs.token }}
-      
       - name: Configure Git for private repos
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
-          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
 
       - name: Install pre-commit
         run: pip install pre-commit
