@@ -33,6 +33,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: SpecLeft
+          repositories: specleft-signing
 
       - name: Configure Git credentials
         env:
