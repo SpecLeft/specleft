@@ -98,7 +98,6 @@ def evaluate_policy(
         return result.to_dict()
 
     entries = build_status_entries(config, Path(tests_dir))
-
     # Filter out ignored features
     filtered_entries: list[ScenarioStatusEntry] = []
     for entry in entries:

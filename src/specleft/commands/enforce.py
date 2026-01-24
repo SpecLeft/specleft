@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pydoc import cli
 import sys
 from datetime import date
 from enum import Enum
@@ -72,7 +71,9 @@ def handle_verification_failure(result: VerifyResult) -> None:
 
     elif result.failure == VerifyFailure.EXPIRED:
         click.echo("", err=True)
-        click.secho("Renew your license at: https://specleft.dev/enforce", err=True, bold=True)
+        click.secho(
+            "Renew your license at: https://specleft.dev/enforce", err=True, bold=True
+        )
 
     elif result.failure == VerifyMismatchFailure.REPO_MISMATCH:
         click.echo("", err=True)
@@ -143,14 +144,12 @@ def display_violations(violations: dict[str, Any]) -> None:
         click.secho("Coverage violations:", fg="red", bold=True)
         click.echo()
         for cv in violations["coverage_violations"]:
-            click.secho(f" \u2717 Scenario test coverage below {cv['threshold']}%", bold=True)
-            click.echo()
-            click.echo(
-                f" Current Test Coverage {cv['actual']}%"
-                # f"  \u2717 Test Coverage {cv['actual']}% (must be {cv['threshold']}% or above)"
+            click.secho(
+                f" \u2717 Behaviour test coverage below {cv['threshold']}%", bold=True
             )
+            click.echo()
+            click.echo(f" Current Behaviour Coverage {cv['actual']}%")
         click.echo()
-
     if not violations["failed"]:
         click.secho("\u2713 All checks passed", fg="green")
 
@@ -158,11 +157,12 @@ def display_violations(violations: dict[str, Any]) -> None:
     click.echo("Documentation: https://specleft.dev/docs/enforce")
     click.echo("Support: https://specleft.dev/contact")
 
+
 @click.command("enforce")
 @click.argument(
     "policy_file",
     type=click.Path(exists=False),
-    default=".specleft/policy.yml",
+    default=".specleft/licenses/policy.yml",
 )
 @click.option(
     "--format",
@@ -207,9 +207,31 @@ def enforce(
       1 - Policy violated (scenarios/coverage)
       2 - License issue (signature, expired, repo mismatch)
     """
+    from specleft.validator import load_specs_directory
+
     # Load policy
     policy = load_policy(policy_file)
     if not policy:
+        sys.exit(2)
+
+    try:
+        features = load_specs_directory(features_dir).features
+        if not features:
+            sys.exit(2)
+    except (FileNotFoundError, ValueError):
+        click.secho(
+            f"Warning: No feature units found in directory: {features_dir}/. Nothing to enforce.",
+            fg="yellow",
+            err=True,
+        )
+        click.echo()
+        click.echo("Have you defined your features files correctly?")
+        click.echo()
+        click.echo("You can list detected features with:")
+        click.echo(f"  > specleft features list --dir {features_dir}")
+        click.echo("")
+        click.echo("Documentation: https://specleft.dev/docs/enforce")
+        click.echo("Support: https://specleft.dev/contact")
         sys.exit(2)
 
     # Reject --ignore-feature-id for Core
@@ -257,7 +279,7 @@ def enforce(
         policy=policy,
         ignored_features=list(ignored),
         features_dir=features_dir,
-        tests_dir=test_dir
+        tests_dir=test_dir,
     )
 
     if fmt == "json":
