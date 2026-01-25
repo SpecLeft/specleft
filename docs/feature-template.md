@@ -1,15 +1,17 @@
-# Feature: User Authentication
+# Overview of project
 
-## Scenarios
+## Feature: User Authentication
 
-### Scenario: Valid credentials
+### Scenarios
+
+#### Scenario: Valid credentials
 priority: critical
 
 - Given …
 - When …
 - Then …
 
-### Scenario: Invalid password
+#### Scenario: Invalid password
 priority: high
 
 - Given …
