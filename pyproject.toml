@@ -16,15 +16,20 @@ dependencies = [
     "jinja2>=3.0.0",
     "python-frontmatter>=1.0.0",
     "python-slugify>=8.0.0",
+    "pyyaml>=6.0.0",
+    "cryptography>=41.0.0",
+    "specleft-signing @ git+ssh://git@github.com/SpecLeft/specleft-signing.git@v0.2.0",
+
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest-cov",
     "pytest-subtests",
-    "black",
-    "ruff",
+    "black==24.10.0",
+    "ruff==0.8.3",
     "mypy",
+    "types-PyYAML",
     "pre-commit",
 ]
 
@@ -81,7 +86,6 @@ select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
-    "I",   # isort
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
@@ -121,6 +125,10 @@ disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
 module = "frontmatter"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "specleft_signing.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

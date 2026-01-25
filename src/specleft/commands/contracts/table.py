@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, cast
 
 import click
@@ -10,7 +11,7 @@ from specleft.commands.constants import CONTRACT_DOC_PATH
 from specleft.commands.contracts.types import ContractCheckResult
 
 
-def print_contract_table(payload: dict[str, object]) -> None:
+def print_contract_table(payload: Mapping[str, object]) -> None:
     guarantees = cast(dict[str, Any], payload.get("guarantees", {}))
     safety = cast(dict[str, Any], guarantees.get("safety", {}))
     execution = cast(dict[str, Any], guarantees.get("execution", {}))

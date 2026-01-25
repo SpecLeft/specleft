@@ -16,6 +16,22 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: SpecLeft
+
+      - name: Configure Git for private repos
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
+
       - name: Install pre-commit
         run: pip install pre-commit
 

@@ -8,6 +8,7 @@ from specleft.commands import (
     contract,
     coverage,
     doctor,
+    enforce,
     features,
     init,
     next_command,
@@ -34,6 +35,7 @@ cli.add_command(plan)
 cli.add_command(coverage)
 cli.add_command(init)
 cli.add_command(contract)
+cli.add_command(enforce)
 
 
 __all__ = ["cli"]
