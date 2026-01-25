@@ -143,7 +143,17 @@ def _extract_prd_scenarios(
                     block_lines.append(lines[index])
                     index += 1
                 steps = extract_steps(block_lines)
-                scenario = {"title": scenario_title, "steps": steps}
+                scenario_priority = None
+                for block_line in block_lines:
+                    scenario_priority = extract_priority(block_line)
+                    if scenario_priority:
+                        break
+                scenario = {
+                    "title": scenario_title,
+                    "steps": steps,
+                }
+                if scenario_priority:
+                    scenario["priority"] = scenario_priority
                 if current_feature is None:
                     warnings.append(
                         f" Scenario found without feature - '{scenario_title}'. "
@@ -165,11 +175,13 @@ def _render_scenarios(scenarios: list[dict[str, object]]) -> str:
     blocks: list[str] = []
     for scenario in scenarios:
         title = str(scenario.get("title", "Scenario"))
+        priority = scenario.get("priority")
         steps = scenario.get("steps") or []
         step_lines = [f"- {step}" for step in steps]
         block = "\n".join(
             [
                 f"### Scenario: {title}",
+                f"priority: {priority}" if priority else "",
                 *step_lines,
             ]
         ).strip()
