@@ -551,8 +551,8 @@ def skeleton(
     if format_type == "table":
         click.secho(f"\n✓ Created {len(plan_result.plans)} test files", fg="green")
         click.secho("\nNext steps:", fg="cyan", bold=True)
-        click.echo(f"  1. Implement test logic in {output_dir}/")
-        click.echo(f"  2. Run tests: pytest {output_dir if output_dir else ''}/")
+        click.echo(f"  1. Implement test logic in {output_dir.removesuffix('/')}/")
+        click.echo(f"  2. Run tests: pytest {output_dir.removesuffix('/')}/")
         click.echo("  3. View report: specleft test report")
 
 

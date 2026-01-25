@@ -1,4 +1,4 @@
-# Feature: Feature 1: Planning Mode (`specleft plan`)
+# Feature: Feature 1: Planning Mode
 priority: critical
 
 ## Scenarios
