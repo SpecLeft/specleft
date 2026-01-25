@@ -35,21 +35,6 @@ jobs:
           owner: SpecLeft
           repositories: specleft-signing
 
-      - name: Configure Git credentials
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          # Set up credential helper
-          git config --global credential.helper store
-          
-          # Store credentials
-          mkdir -p ~/.config/git
-          echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
-          chmod 600 ~/.git-credentials
-          
-          # Verify credential file exists
-          echo "Credentials configured"
-
       - name: Verify GitHub access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
