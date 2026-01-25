@@ -22,8 +22,12 @@ from specleft.commands.constants import CLI_VERSION
 @click.group()
 @click.version_option(version=CLI_VERSION, prog_name="specleft")
 def cli() -> None:
-    """SpecLeft - Code-driven test case management for Python."""
-    pass
+    """
+    SpecLeft - Code driven intent analysis for Python.
+
+    Documentation: https://specleft.dev/docs \n
+    Github: https://github.com/SpecLeft/spec-left
+    """
 
 
 cli.add_command(test)

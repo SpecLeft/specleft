@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import json
+from pydoc import cli
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -286,8 +287,8 @@ def print_status_table(
         if separator:
             click.echo(separator[0])
         return
-
-    click.echo("Feature Coverage Report")
+    click.echo()
+    click.secho("Feature Coverage Report", fg="magenta", bold=True)
     separator = _build_status_table_rows(entries)
     if separator:
         click.echo(separator[0])
@@ -311,8 +312,10 @@ def print_status_table(
                 else f"features/{feature_id}.md"
             )
         )
-        click.echo(
-            f"Feature File: {feature_file} ({feature_summary.coverage_percent}%)"
+        click.secho(
+            f"{feature_file} ({feature_summary.coverage_percent}%)",
+            fg="cyan",
+            bold=True
         )
 
         # Show scenarios directly (flattened from stories)
@@ -323,8 +326,10 @@ def print_status_table(
             click.echo(f"  {marker} {entry.scenario.scenario_id:<25} {path}{suffix}")
         click.echo("")
 
-    click.echo(
-        f"Overall: {summary.implemented}/{summary.total_scenarios} scenarios implemented ({summary.coverage_percent}%)"
+    click.secho(
+        f"Overall: {summary.implemented}/{summary.total_scenarios} scenarios implemented ({summary.coverage_percent}%)",
+        fg="magenta",
+        bold=True
     )
     if separator:
         click.echo(separator[0])
