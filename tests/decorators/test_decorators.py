@@ -7,6 +7,7 @@ import importlib
 import threading
 import time
 from datetime import datetime
+from typing import cast
 
 import pytest
 import specleft.decorators as decorators
@@ -90,7 +91,7 @@ class TestContextHelpers:
 
     def test_get_current_steps_initializes_list(self) -> None:
         """Test that get_current_steps creates empty list if not present."""
-        _get_context().pop("steps", None)
+        cast(dict[str, object], _get_context()).pop("steps", None)
         steps = get_current_steps()
         assert steps == []
         assert "steps" in _get_context()
@@ -554,6 +555,7 @@ class TestContextInitialization:
         steps = get_current_steps()
         assert len(steps) == 1
         assert steps[0].status == "failed"
+        assert steps[0].error is not None
         assert "Action failed" in steps[0].error
 
     def test_multiple_reusable_steps_in_test(self) -> None:

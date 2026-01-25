@@ -27,7 +27,7 @@ dev = [
     "pytest-cov",
     "pytest-subtests",
     "black==24.10.0",
-    "ruff",
+    "ruff==0.8.3",
     "mypy",
     "types-PyYAML",
     "pre-commit",

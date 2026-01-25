@@ -43,7 +43,7 @@ class TestStepType:
     def test_step_type_is_string_enum(self) -> None:
         """Test that StepType is a str enum."""
         assert isinstance(StepType.GIVEN, str)
-        assert StepType.GIVEN == "given"
+        assert StepType.GIVEN.value == "given"
         assert StepType.GIVEN.name == "GIVEN"
 
     def test_step_type_invalid_value(self) -> None:
@@ -72,7 +72,7 @@ class TestPriority:
     def test_priority_is_string_enum(self) -> None:
         """Test that Priority is a str enum."""
         assert isinstance(Priority.HIGH, str)
-        assert Priority.HIGH == "high"
+        assert Priority.HIGH.value == "high"
         assert Priority.HIGH.name == "HIGH"
 
     def test_priority_invalid_value(self) -> None:
@@ -99,7 +99,7 @@ class TestExecutionTime:
     def test_execution_time_is_string_enum(self) -> None:
         """Test that ExecutionTime is a str enum."""
         assert isinstance(ExecutionTime.FAST, str)
-        assert ExecutionTime.FAST == "fast"
+        assert ExecutionTime.FAST.value == "fast"
         assert ExecutionTime.FAST.name == "FAST"
 
     def test_execution_time_invalid_value(self) -> None:
@@ -155,7 +155,7 @@ class TestSpecStep:
 
     def test_step_with_string_type(self) -> None:
         """Test creating step with string type value."""
-        step = SpecStep(type="given", description="test step")
+        step = SpecStep.model_validate({"type": "given", "description": "test step"})
         assert step.type == StepType.GIVEN
 
 
@@ -316,19 +316,15 @@ class TestScenarioSpec:
 
     def test_scenario_with_string_priority(self) -> None:
         """Test creating scenario with string priority."""
-        scenario = ScenarioSpec(
-            scenario_id="test",
-            name="Test",
-            priority="high",
+        scenario = ScenarioSpec.model_validate(
+            {"scenario_id": "test", "name": "Test", "priority": "high"}
         )
         assert scenario.priority == Priority.HIGH
 
     def test_scenario_with_string_execution_time(self) -> None:
         """Test creating scenario with string execution time."""
-        scenario = ScenarioSpec(
-            scenario_id="test",
-            name="Test",
-            execution_time="slow",
+        scenario = ScenarioSpec.model_validate(
+            {"scenario_id": "test", "name": "Test", "execution_time": "slow"}
         )
         assert scenario.execution_time == ExecutionTime.SLOW
 
@@ -388,7 +384,9 @@ class TestStorySpec:
 
     def test_story_with_string_priority(self) -> None:
         """Test creating story with string priority."""
-        story = StorySpec(story_id="test", name="Test", priority="low")
+        story = StorySpec.model_validate(
+            {"story_id": "test", "name": "Test", "priority": "low"}
+        )
         assert story.priority == Priority.LOW
 
 
@@ -480,7 +478,9 @@ class TestFeatureSpec:
 
     def test_feature_with_string_priority(self) -> None:
         """Test creating feature with string priority."""
-        feature = FeatureSpec(feature_id="test", name="Test", priority="critical")
+        feature = FeatureSpec.model_validate(
+            {"feature_id": "test", "name": "Test", "priority": "critical"}
+        )
         assert feature.priority == Priority.CRITICAL
 
 

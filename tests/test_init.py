@@ -7,8 +7,8 @@ import specleft
 
 def test_package_exports() -> None:
     assert specleft.__version__ == "0.2.0"
-    assert specleft.specleft
-    assert specleft.step
-    assert specleft.shared_step
-    assert specleft.StepResult
-    assert specleft.SpecsConfig
+    assert specleft.specleft is not None
+    assert specleft.step is not None
+    assert specleft.shared_step is not None
+    assert specleft.StepResult is not None
+    assert specleft.SpecsConfig is not None
