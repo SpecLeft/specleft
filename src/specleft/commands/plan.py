@@ -51,10 +51,16 @@ def _extract_prd_scenarios(
     prd_content: str,
     *,
     require_step_keywords: bool = True,
-) -> tuple[dict[str, list[dict[str, object]]], list[dict[str, object]], list[str]]:
+) -> tuple[
+    dict[str, list[dict[str, object]]],
+    list[dict[str, object]],
+    dict[str, str],
+    list[str],
+]:
     warnings: list[str] = []
     scenarios_by_feature: dict[str, list[dict[str, object]]] = {}
     orphan_scenarios: list[dict[str, object]] = []
+    feature_priorities: dict[str, str] = {}
 
     def parse_heading(line: str) -> tuple[int, str] | None:
         stripped = line.lstrip()
@@ -106,6 +112,16 @@ def _extract_prd_scenarios(
                 steps.append(normalized)
         return steps
 
+    def extract_priority(line: str) -> str | None:
+        stripped = line.strip()
+        if stripped.startswith("-"):
+            stripped = stripped[1:].strip()
+        lower = stripped.lower()
+        if not lower.startswith("priority:"):
+            return None
+        value = stripped.split(":", 1)[1].strip()
+        return value or None
+
     lines = prd_content.splitlines()
     current_feature: str | None = None
     index = 0
@@ -136,9 +152,13 @@ def _extract_prd_scenarios(
                 else:
                     scenarios_by_feature.setdefault(current_feature, []).append(scenario)
                 continue
+        if current_feature is not None and current_feature not in feature_priorities:
+            priority_value = extract_priority(line)
+            if priority_value:
+                feature_priorities[current_feature] = priority_value
         index += 1
 
-    return scenarios_by_feature, orphan_scenarios, warnings
+    return scenarios_by_feature, orphan_scenarios, feature_priorities, warnings
 
 
 def _render_scenarios(scenarios: list[dict[str, object]]) -> str:
@@ -160,6 +180,7 @@ def _render_scenarios(scenarios: list[dict[str, object]]) -> str:
 def _feature_template(
     title: str,
     scenarios: list[dict[str, object]] | None = None,
+    priority: str | None = None,
 ) -> str:
     scenario_block = None
     if scenarios:
@@ -181,6 +202,8 @@ def _feature_template(
         [
             f"# Feature: {title}",
             "",
+            f"priority: {priority}" if priority else "",
+            "" if priority else "",
             "## Scenarios",
             "",
             block,
@@ -208,6 +231,7 @@ def _apply_plan(
     features_dir: Path,
     dry_run: bool,
     scenarios_by_feature: dict[str, list[dict[str, object]]] | None = None,
+    feature_priorities: dict[str, str] | None = None,
 ) -> tuple[list[Path], list[Path]]:
     created: list[Path] = []
     skipped: list[Path] = []
@@ -223,7 +247,10 @@ def _apply_plan(
         scenarios = None
         if scenarios_by_feature:
             scenarios = scenarios_by_feature.get(title)
-        path.write_text(_feature_template(title, scenarios=scenarios))
+        priority = None
+        if feature_priorities:
+            priority = feature_priorities.get(title)
+        path.write_text(_feature_template(title, scenarios=scenarios, priority=priority))
         created.append(path)
     return created, skipped
 
@@ -338,6 +365,7 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
     (
         scenarios_by_feature,
         orphan_scenarios,
+        feature_priorities,
         scenario_warnings,
     ) = _extract_prd_scenarios(prd_content, require_step_keywords=True)
     warnings.extend(scenario_warnings)
@@ -351,6 +379,7 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
         features_dir=features_dir,
         dry_run=dry_run,
         scenarios_by_feature=scenarios_by_feature,
+        feature_priorities=feature_priorities,
     )
     feature_count = len(titles)
 
