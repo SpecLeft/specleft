@@ -63,26 +63,11 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
+    
+      - name: Configure SSH for private repo access
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: SpecLeft
-
-      - name: Configure Git for private repos
-        run: |
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
-      
-      # Add this debug step to your workflow temporarily
-      - name: Test access to private repo
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
@@ -133,26 +118,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: SpecLeft
 
-      - name: Configure Git for private repos
-        run: |
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
-      
-      # Add this debug step to your workflow temporarily
-      - name: Test access to private repo
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
+      - name: Configure SSH for private repo access
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
@@ -209,26 +179,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
+      - name: Configure SSH for private repo access
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: SpecLeft
-
-      - name: Configure Git for private repos
-        run: |
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
-      
-      # Add this debug step to your workflow temporarily
-      - name: Test access to private repo
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install build dependencies
         run: |
@@ -261,26 +215,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
+      - name: Configure SSH for private repo access
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: SpecLeft
-
-      - name: Configure Git for private repos
-        run: |
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "git@github.com:"
-          git config --global --add url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "ssh://git@github.com/"
-      
-      # Add this debug step to your workflow temporarily
-      - name: Test access to private repo
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/SpecLeft/specleft-signing.git
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
