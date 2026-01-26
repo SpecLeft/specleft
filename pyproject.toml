@@ -53,7 +53,10 @@ keywords=[
     "autonomous",
     "verification",
     "plan",
-    "buffer"
+    "pytest",
+    "plugin",
+    "ci",
+    "feature-specs"
 ]
 [project.urls]
 Homepage = "https://github.com/SpecLeft/spec-left"

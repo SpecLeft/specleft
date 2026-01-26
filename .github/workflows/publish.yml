@@ -58,9 +58,9 @@ jobs:
 
       - name: Build release distributions
         run: |
-          # NOTE: put your own distribution build steps here.
-          python -m pip install build
+          python -m pip install build twine
           python -m build
+          twine check dist/*
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
@@ -81,7 +81,7 @@ jobs:
     environment:
       name: pypi
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/specleft
+      url: https://pypi.org/project/specleft
       #
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
