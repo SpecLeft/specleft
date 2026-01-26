@@ -5,23 +5,16 @@ from __future__ import annotations
 import json
 import sys
 from datetime import date
-from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
 import click
 import yaml
-from specleft_signing.schema import PolicyType, SignedPolicy
-from specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
+from specleft.specleft_signing.schema import PolicyType, SignedPolicy
+from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
 
 from specleft.enforcement.engine import evaluate_policy
 from specleft.license.repo_identity import detect_repo_identity
-
-
-class VerifyMismatchFailure(Enum):
-    """Additional verification failure reasons."""
-
-    REPO_MISMATCH = "repo_mismatch"
 
 
 def load_policy(path: str) -> SignedPolicy | None:
@@ -34,18 +27,7 @@ def load_policy(path: str) -> SignedPolicy | None:
         SignedPolicy if valid, None if loading failed
     """
     try:
-
-        class _NoDatesSafeLoader(yaml.SafeLoader):
-            pass
-
-        for ch, resolvers in list(_NoDatesSafeLoader.yaml_implicit_resolvers.items()):
-            _NoDatesSafeLoader.yaml_implicit_resolvers[ch] = [
-                (tag, regexp)
-                for tag, regexp in resolvers
-                if tag != "tag:yaml.org,2002:timestamp"
-            ]
-
-        content = yaml.load(Path(path).read_text(), Loader=_NoDatesSafeLoader)
+        content = yaml.safe_load(Path(path).read_text())
         return SignedPolicy.model_validate(content)
     except FileNotFoundError:
         click.echo(f"Error: Policy file not found: {path}", err=True)
@@ -71,7 +53,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("To continue using SpecLeft enforcement:", err=True)
         click.echo("", err=True)
         click.echo("  Option 1: Purchase Enforce license", err=True)
-        click.echo("    https://specleft.dev/pricing", err=True)
+        click.echo("    https://specleft.dev/enforce", err=True)
         click.echo("", err=True)
         click.echo("  Option 2: Switch to Core Policy", err=True)
         click.echo(
@@ -86,7 +68,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
             "Renew your license at: https://specleft.dev/enforce", err=True, bold=True
         )
 
-    elif result.failure == VerifyMismatchFailure.REPO_MISMATCH:
+    elif result.failure == VerifyFailure.REPO_MISMATCH:
         click.echo("", err=True)
         click.echo("This policy file is licensed for a different repository.", err=True)
         click.echo(
@@ -114,13 +96,13 @@ def display_policy_status(policy: SignedPolicy) -> None:
                     f"⚠ Evaluation ends in {days} days — upgrade or switch to Core",
                     fg="yellow",
                 )
-                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
+                click.echo("  Enforce Policy Info: https://specleft.dev/enforce")
             elif days == 1:
                 click.secho(
                     "⚠ Evaluation expires tomorrow — CI will block",
                     fg="yellow",
                 )
-                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
+                click.echo("  Enforce Policy Info: https://specleft.dev/enforce")
         else:
             click.secho("Enforce Policy active", fg="cyan", bold=True)
     else:
@@ -264,13 +246,13 @@ def enforce(
         if repo is None:
             result = VerifyResult(
                 valid=False,
-                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                failure=VerifyFailure.REPO_MISMATCH,
                 message="Cannot detect repository. Ensure git remote 'origin' exists.",
             )
         elif not repo.matches(policy.license.licensed_to):
             result = VerifyResult(
                 valid=False,
-                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                failure=VerifyFailure.REPO_MISMATCH,
                 message=f"License for '{policy.license.licensed_to}', "
                 f"current repo is '{repo.canonical}'",
             )

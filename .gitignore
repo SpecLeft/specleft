@@ -1,6 +1,4 @@
 # SpecLeft specifc
-.specleft/
-CLAUDE.md
 PROGRESS.md
 *report.html
 .llm/
@@ -10,6 +8,7 @@ examples/tests/
 .future-features/
 archives/
 .licenses/
+.specleft/results
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -229,3 +228,4 @@ features/non-goals.md
 features/open-questions.md
 features/overview.md
 .licenses/policy.yml
+bandit-report.json

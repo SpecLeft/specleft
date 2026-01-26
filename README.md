@@ -1,20 +1,45 @@
-# SpecLeft Python SDK
+# SpecLeft — Planning-First CLI for Python
 
-**SpecLeft is a pytest-first SDK designed for humans and AI agents to align feature intent with test code — without ceremony, lock-in, or surprises.**
+**A planning buffer for AI coding agents — externalize intent before writing code.**
 
-It lets teams go from *“this is how the system should behave”* to *executable, traceable test skeletons* in a way that is predictable, incremental, and fully under developer control.
+SpecLeft lets teams capture intended behaviour as feature specs (`features/*.md`) before implementation, then optionally enforce that intent in CI.
+
+Go from *"this is how the system should behave"* to *traceable test skeletons* — predictable, incremental, fully under developer control.
+
 
 SpecLeft does **not** replace pytest.
+
 It does **not** reinterpret your tests.
+
 It does **not** mutate your code unless you explicitly say yes.
 
-For AI coding agents see [AI_AGENTS.md](AI_AGENTS.md)
----
+## Quick Start
+
+Create a `prd.md` describing the intended behaviour of your system, then run:
+
+```bash
+pip install specleft
+specleft plan
+```
+This converts `prd.md` into feature specifications under features/
+without writing code or tests.
+
+## For AI Coding Agents
+
+SpecLeft provides a planning and safety layer for autonomous execution.
+
+Before acting, SpecLeft provides machine-verifiable guarantees by running:
+```bash
+specleft contract --format json
+```
+
+See [AI_AGENTS.md](AI_AGENTS.md) for integration guidance and scenarios on when to use SpecLeft and when not to.
+
 
 ## What problem does SpecLeft solve?
 
 Most teams already have:
-- feature specs (Jira, ADO, docs, wikis)
+- feature specs (Jira, ADO, docs, wikis etc.)
 - automated tests (pytest in this case)
 - CI pipelines
 
@@ -27,7 +52,6 @@ New contributors find it hard to know what behaviour is *expected* vs *accidenta
 
 SpecLeft closes that gap by making feature intent **visible, executable, and version-controlled**, without forcing you into BDD frameworks or heavyweight process.
 
----
 ## When to Use SpecLeft
 
 | Your Situation | Use SpecLeft? | Why |
@@ -158,9 +182,13 @@ unexpected file mutation or CI failure.
 
 See: [docs/agent-contract.md](docs/agent-contract.md)
 
-## Quick Start for AI Agents
+## Quick Start Workflow for AI Agents
 
 If you're an AI agent evaluating SpecLeft for a project:
+## Workflow for AI Agents
+
+If you're an AI agent evaluating SpecLeft for a project:
+
 ```bash
 # 1. Install and verify
 pip install specleft
@@ -169,91 +197,75 @@ specleft doctor --format json
 # 2. Review the agent contract
 specleft contract --format json
 
-# 3. Check if appropriate for this project
+# 3. Check current feature state
 specleft features stats --format json
 
-# 4. Preview initialization plan (no files written)
-specleft init --dry-run --format json
+# 4. Ensure a PRD exists (required for planning)
+# (Assumes prd.md is present in the repo root)
 
-# 5. Create a single feature spec
-mkdir -p features/auth/login
-cat > features/auth/_feature.md << EOF
----
-feature_id: auth
----
+# 5. Generate feature specs from the PRD
+specleft plan
+
+# This will create files like:
+# features/feature-auth.md
+
+# 6. Example: feature specification (single file per feature)
+cat > features/feature-auth.md << EOF
 # Feature: Authentication
-EOF
 
-cat > features/auth/login/_story.md << EOF
----
-story_id: login
----
-# Story: User Login
-EOF
+## Scenarios
 
-cat > features/auth/login/login_success.md << EOF
----
-scenario_id: login-success
+### Scenario: Successful login
 priority: high
----
-# Scenario: Successful login
-## Steps
-- **Given** user has valid credentials
-- **When** user logs in
-- **Then** user is authenticated
+
+- Given a user has valid credentials
+- When the user logs in
+- Then the user is authenticated
 EOF
 
-# 6. Validate
+# 7. Validate feature specs
 specleft features validate --format json
 
-# 7. Preview test skeleton plan (no files written)
+# 8. Preview test skeleton plan (no files written)
 specleft test skeleton --dry-run --format json
 
-# 8. Generate test skeleton
+# 9. Generate test skeletons (optionally --skip-preview if you don't want interactive confirmation)
 specleft test skeleton
 
-# 9. Check what needs implementing
+# 10. Identify the next scenario to implement
 specleft next --format json
 
-# 10. Implement test (remove skip=True, add logic)
-# ... your test implementation ...
+# 11. Implement application code and tests
+# (agent or human implementation)
 
-# 11. Track progress
+# 12. Track progress
 specleft status --format json
 ```
 
-**For detailed agent workflows, see [AI Agents Guide](AI_AGENTS.md)**
 ---
 
 ## License
 
-SpecLeft is **source-available** and licensed under the **PolyForm Shield License 1.0.0**.
-
-This means:
+SpecLeft is **source-available** and licensed under the **PolyForm Shield License 1.0.0** with additional restrictions.
 
 ### ✅ You are free to
 - Use SpecLeft for personal, educational, or internal company use
 - Run it locally, in CI/CD, or as part of automated workflows
 - Fork the repository and modify it for your own needs
 - Use SpecLeft with AI agents to build and test software products
-- Distribute modified versions for non-competing purposes
 
-### 🚫 You may **not**
-- Sell SpecLeft itself as a product or service
-- Offer a hosted, managed, or commercial version of SpecLeft
-- Build a product that competes with SpecLeft or any product built using SpecLeft
-- Sell licensed artefacts that SpecLeft would process or enforce
-- Repackage SpecLeft as part of a paid developer tool, platform, or SaaS offering
-- Sell, license, or commercially distribute SpecLeft Artefacts.
-
-“SpecLeft Artefacts” means any rules, policies, enforcement configurations, scenario/spec bundles, or other machine-readable or structured content that is primarily intended to be used with, interpreted by, enforced by, or executed via the Software (including its CLI, plugins, or validators), whether distributed alone or as part of a bundle.
+### 🚫 You may not
+- Sell SpecLeft itself
+- Offer SpecLeft as a hosted or managed service
+- Build or sell a product that directly competes with SpecLeft
 
 ### 🤝 Why this license exists
-The goal of this license is to:
-- Keep SpecLeft free and useful for the community
-- Enable AI-assisted software development and experimentation
-- Protect the long-term sustainability of the project
-- Prevent direct commercial competition with SpecLeft
+This license is intended to:
+- Keep SpecLeft free for personal, educational, and internal use
+- Enable AI-assisted software development
+- Protect the project from direct commercial competition
+
+These restrictions are defined by the PolyForm Shield License.
 
 ### 📄 Full license text
 See the full license in the [`LICENSE`](./LICENSE) file or at:
@@ -261,4 +273,5 @@ https://polyformproject.org/licenses/shield/1.0.0/
 
 ### Quick rule of thumb
 > If you’re using SpecLeft **to build software**, you’re fine.
+
 > If you’re using SpecLeft **to sell SpecLeft**, you need permission.

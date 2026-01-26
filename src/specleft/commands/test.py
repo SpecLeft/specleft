@@ -24,6 +24,7 @@ from specleft.schema import FeatureSpec, SpecsConfig, StorySpec
 from specleft.utils.structure import detect_features_layout, warn_if_nested_structure
 from specleft.utils.text import to_snake_case
 from specleft.validator import load_specs_directory
+from jinja2 import select_autoescape
 
 
 def _load_skeleton_template() -> Template:
@@ -32,6 +33,7 @@ def _load_skeleton_template() -> Template:
         loader=FileSystemLoader(templates_dir),
         trim_blocks=True,
         lstrip_blocks=True,
+        autoescape=select_autoescape(enabled_extensions=("html", "xml")),
     )
     env.filters["snake_case"] = to_snake_case
     env.filters["repr"] = repr
@@ -550,9 +552,11 @@ def skeleton(
 
     if format_type == "table":
         click.secho(f"\n✓ Created {len(plan_result.plans)} test files", fg="green")
+        for plan in plan_result.plans:
+            click.echo(f"{plan.output_path}")
         click.secho("\nNext steps:", fg="cyan", bold=True)
-        click.echo(f"  1. Implement test logic in {output_dir}/")
-        click.echo(f"  2. Run tests: pytest {output_dir if output_dir else ''}/")
+        click.echo(f"  1. Implement test logic in {output_dir.removesuffix('/')}/")
+        click.echo(f"  2. Run tests: pytest {output_dir.removesuffix('/')}/")
         click.echo("  3. View report: specleft test report")
 
 
