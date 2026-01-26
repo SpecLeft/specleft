@@ -209,6 +209,12 @@
         .badge-priority-medium { background: #dbeafe; color: #1e40af; }
         .badge-priority-low { background: #f1f5f9; color: #475569; }
 
+        /*Priority Font Colour*/
+        .font-critical { color: #991b1b; font-weight: 400; font-size: 0.7rem; }
+        .font-high { color: #9a3412; font-weight: 400; font-size: 0.7rem; }
+        .font-medium { color: #1e40af; font-weight: 400; font-size: 0.7rem; }
+        .font-low { color: #475569; font-weight: 400; font-size: 0.7rem; }
+
         /* Tags */
         .tags {
             display: flex;
@@ -439,10 +445,10 @@
                         {% for execution in scenario.executions %}
                         <div class="execution">
                             <div class="execution-header">
-                            <div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <span class="execution-name">{{ execution.test_name }}</span>
                             {% if execution.scenario_priority %}
-                            <span class="badge badge-priority-{{ execution.scenario_priority }}">{{ execution.scenario_priority }}</span>
+                            <span class="font-{{ execution.scenario_priority | lower }}">{{ execution.scenario_priority }}</span>
                             {% endif %}
                             </div>
                                 <div>
