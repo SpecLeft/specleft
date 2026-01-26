@@ -23,7 +23,9 @@ class TestPlanCommand:
     def test_plan_creates_features_from_h2(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("prd.md").write_text("# PRD\n\n## Feature: User Authentication\n## Feature: Payments\n")
+            Path("prd.md").write_text(
+                "# PRD\n\n## Feature: User Authentication\n## Feature: Payments\n"
+            )
             result = runner.invoke(cli, ["plan"])
 
             assert result.exit_code == 0
