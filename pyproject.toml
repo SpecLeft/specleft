@@ -12,7 +12,6 @@ description = "A planning-first CLI for AI coding agents to externalize intent b
 readme = "README.md"
 requires-python = ">=3.10"
 license = "PolyForm-Shield-1.0.0"
-license-files = ["LICENSE"]
 authors = [
     {name = "SpecLeft", email = "richard@specleft.dev"},
 ]
