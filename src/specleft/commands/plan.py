@@ -217,7 +217,7 @@ def _feature_template(
     block = scenario_block or default_block
     return "\n".join(
         [
-            f"# Feature: {title}",
+            f"# {title}",
             "",
             f"priority: {priority}" if priority else "",
             "" if priority else "",

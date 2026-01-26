@@ -78,13 +78,13 @@ def test_generate_feature_files_from_prd(
 
         # Verify content structure - should contain Feature title
         auth_content = auth_feature.read_text()
-        assert "# Feature:" in auth_content, "Feature file missing Feature header"
+        assert "# Feature 1:" in auth_content, "Feature file missing Feature header"
         assert (
             "Authentication" in auth_content or "authentication" in auth_content.lower()
         )
 
         payment_content = payment_feature.read_text()
-        assert "# Feature:" in payment_content, "Feature file missing Feature header"
+        assert "# Feature 2:" in payment_content, "Feature file missing Feature header"
         assert "Payment" in payment_content or "payment" in payment_content.lower()
 
     with specleft.step("And no code or test files are modified"):

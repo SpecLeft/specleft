@@ -23,15 +23,18 @@ class TestPlanCommand:
     def test_plan_creates_features_from_h2(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("prd.md").write_text("# PRD\n\n## User Authentication\n## Payments\n")
+            Path("prd.md").write_text("# PRD\n\n## Feature: User Authentication\n## Feature: Payments\n")
             result = runner.invoke(cli, ["plan"])
-            assert result.exit_code == 0
-            assert Path("features/user-authentication.md").exists()
-            assert Path("features/payments.md").exists()
-            assert "Features planned: 2" in result.output
 
-            content = Path("features/user-authentication.md").read_text()
+            assert result.exit_code == 0
+            assert Path("features/feature-user-authentication.md").exists()
+            assert Path("features/feature-payments.md").exists()
+            assert "Features planned: 2" in result.output
+            content = Path("features/feature-user-authentication.md").read_text()
+            # breakpoint()
             assert "# Feature: User Authentication" in content
+            assert "priority: medium" in content
+            assert "## Scenario:" in content
             assert "### Scenario: Example" in content
 
     def test_plan_uses_h1_when_no_h2(self) -> None:
