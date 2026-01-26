@@ -312,9 +312,9 @@ def print_status_table(
             )
         )
         click.secho(
-            f"Feature File: {feature_file} ({feature_summary.coverage_percent}%)",
+            f"{feature_file} ({feature_summary.coverage_percent}%)",
             fg="cyan",
-            bold=True,
+            bold=True
         )
 
         # Show scenarios directly (flattened from stories)
@@ -436,3 +436,4 @@ def status(
         elif implemented:
             show_only = "implemented"
         print_status_table(entries, show_only=show_only)
+    click.echo("To enforce intent coverage in CI, see: https://specleft.dev/enforce")
