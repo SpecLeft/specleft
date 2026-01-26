@@ -425,7 +425,6 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     collector = ResultCollector(output_dir=f"{output_dir}/results")
 
     results_data = collector.collect(results)
-    filepath = collector.write(results_data)
 
     summary = results_data["summary"]
     encoding = (sys.stdout.encoding or "utf-8").lower()
@@ -437,6 +436,12 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     print(f"Total Executions: {summary['total_executions']}")
     print(f"Passed: {summary['passed']}")
     print(f"Failed: {summary['failed']}")
+    print(f"Skipped: {summary['skipped']}")
     print(f"Duration: {summary['duration']:.2f}s")
-    print(f"\nResults saved to: {filepath}")
+    print("\nView Report with 'specleft test report --open-browser'")
+    print()
+    print("SpecLeft currently runs in report-only mode.")
+    print("")
+    print("To enforce declared behaviour in CI, see:\nhttps://specleft.dev/enforce")
+
     print(f"{line}\n")

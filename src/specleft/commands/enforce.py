@@ -64,7 +64,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("To continue using SpecLeft enforcement:", err=True)
         click.echo("", err=True)
         click.echo("  Option 1: Purchase Enforce license", err=True)
-        click.echo("    https://specleft.dev/pricing", err=True)
+        click.echo("    https://specleft.dev/enforce", err=True)
         click.echo("", err=True)
         click.echo("  Option 2: Switch to Core Policy", err=True)
         click.echo(
@@ -107,13 +107,13 @@ def display_policy_status(policy: SignedPolicy) -> None:
                     f"⚠ Evaluation ends in {days} days — upgrade or switch to Core",
                     fg="yellow",
                 )
-                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
+                click.echo("  Enforce Policy Info: https://specleft.dev/enforce")
             elif days == 1:
                 click.secho(
                     "⚠ Evaluation expires tomorrow — CI will block",
                     fg="yellow",
                 )
-                click.echo("  Enforce Policy Info: https://specleft.dev/pricing")
+                click.echo("  Enforce Policy Info: https://specleft.dev/enforce")
         else:
             click.secho("Enforce Policy active", fg="cyan", bold=True)
     else:
