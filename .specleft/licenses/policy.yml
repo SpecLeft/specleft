@@ -1,0 +1,21 @@
+policy_id: enforce-v1
+policy_version: '1.0'
+policy_type: enforce
+license:
+  license_id: lic_2a834c35f9e03b53
+  licensed_to: SpecLeft/spec-left
+  issued_at: '2026-01-24'
+  expires_at: '2027-01-24'
+rules:
+  priorities:
+    critical:
+      must_be_implemented: true
+    high:
+      must_be_implemented: true
+  coverage:
+    threshold_percent: 100
+    fail_below: true
+signature:
+  algorithm: ed25519
+  key_id: specleft-dev-2026
+  value: SzG1ID/gZjNb53isS4doh4AJ5AIz0FTFArhNPCoJPdWJuT8s1BQC1e4eKxGWIgYD4jOej3OyHDOeEZlFw4LABA==

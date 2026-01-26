@@ -1,0 +1,19 @@
+policy_id: core-v1
+policy_version: '1.0'
+policy_type: core
+license:
+  license_id: lic_2a834c35f9e03b53core
+  licensed_to: SpecLeft/spec-left
+  issued_at: '2026-01-24'
+  expires_at: '2027-01-24'
+  derived_from: lic_2a834c35f9e03b53
+rules:
+  priorities:
+    critical:
+      must_be_implemented: true
+    high:
+      must_be_implemented: true
+signature:
+  algorithm: ed25519
+  key_id: specleft-dev-2026
+  value: pXYNfeSwPoYlvCJgnh1y5pofdlH/X4CUMK/HkbhSGnefNMejsPwjLv0sts7EHVuSKRciGJcfUatHx7N9rmGWCA==

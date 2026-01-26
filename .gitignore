@@ -1,6 +1,4 @@
 # SpecLeft specifc
-.specleft/
-CLAUDE.md
 PROGRESS.md
 *report.html
 .llm/
@@ -10,6 +8,7 @@ examples/tests/
 .future-features/
 archives/
 .licenses/
+.specleft/results
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

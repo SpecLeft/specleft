@@ -4,11 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "specleft"
-version = "0.2.0"
-description = "Code-driven test case management for pytest"
+version = "0.1.0"
+description = "A planning-first CLI for AI coding agents to externalize intent before writing code, with optional CI enforcement for Python projects."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = {text = "Polyform Shield 1.0.0"}
+authors = [
+    {name = "SpecLeft", email = "richard@specleft.dev"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Quality Assurance",
+    "Environment :: Console",
+    "Framework :: Pytest",
+    "Development Status :: 4 - Beta",
+]
 dependencies = [
     "pytest>=7.0.0",
     "pydantic>=2.0.0",
@@ -20,6 +34,24 @@ dependencies = [
     "cryptography>=41.0.0",
     "specleft-signing @ git+ssh://git@github.com/SpecLeft/specleft-signing.git@v0.2.0",
 
+]
+keywords=[
+    "ai",
+    "agents", 
+    "testing",
+    "bdd",
+    "behaviour",
+    "behavior",
+    "specification",
+    "intent",
+    "claude",
+    "gemini",
+    "gpt",
+    "copilot",
+    "autonomous",
+    "verification",
+    "plan",
+    "buffer"
 ]
 
 [project.optional-dependencies]
