@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import sys
 from datetime import date
-from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
@@ -16,12 +15,6 @@ from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify
 
 from specleft.enforcement.engine import evaluate_policy
 from specleft.license.repo_identity import detect_repo_identity
-
-
-class VerifyMismatchFailure(Enum):
-    """Additional verification failure reasons."""
-
-    REPO_MISMATCH = "repo_mismatch"
 
 
 def load_policy(path: str) -> SignedPolicy | None:
@@ -86,7 +79,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
             "Renew your license at: https://specleft.dev/enforce", err=True, bold=True
         )
 
-    elif result.failure == VerifyMismatchFailure.REPO_MISMATCH:
+    elif result.failure == VerifyFailure.REPO_MISMATCH:
         click.echo("", err=True)
         click.echo("This policy file is licensed for a different repository.", err=True)
         click.echo(
@@ -264,13 +257,13 @@ def enforce(
         if repo is None:
             result = VerifyResult(
                 valid=False,
-                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                failure=VerifyFailure.REPO_MISMATCH,
                 message="Cannot detect repository. Ensure git remote 'origin' exists.",
             )
         elif not repo.matches(policy.license.licensed_to):
             result = VerifyResult(
                 valid=False,
-                failure=VerifyMismatchFailure.REPO_MISMATCH,
+                failure=VerifyFailure.REPO_MISMATCH,
                 message=f"License for '{policy.license.licensed_to}', "
                 f"current repo is '{repo.canonical}'",
             )

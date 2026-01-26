@@ -144,7 +144,7 @@ def _extract_prd_scenarios(
                     scenario_priority = extract_priority(block_line)
                     if scenario_priority:
                         break
-                scenario = {
+                scenario: dict[str, object] = {
                     "title": scenario_title,
                     "steps": steps,
                 }
@@ -172,7 +172,10 @@ def _render_scenarios(scenarios: list[dict[str, object]]) -> str:
     for scenario in scenarios:
         title = str(scenario.get("title", "Scenario"))
         priority = scenario.get("priority")
-        steps = scenario.get("steps") or []
+        steps_value = scenario.get("steps")
+        steps: list[str] = []
+        if isinstance(steps_value, list):
+            steps = [str(step) for step in steps_value]
         step_lines = [f"- {step}" for step in steps]
         block = "\n".join(
             [

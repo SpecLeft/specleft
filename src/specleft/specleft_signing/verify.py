@@ -29,6 +29,7 @@ class VerifyFailure(Enum):
     UNKNOWN_KEY_ID = "unknown_key_id"
     EXPIRED = "expired"
     EVALUATION_EXPIRED = "evaluation_expired"
+    REPO_MISMATCH = "repo_mismatch"
 
 
 @dataclass

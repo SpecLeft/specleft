@@ -329,6 +329,12 @@ def test_clear_failures_when_contract_is_violated(
             if not str(p).startswith(".") and p.name != "__pycache__"
         }
 
+        assert expected_paths.issubset(actual_paths), (
+            "Expected only baseline feature files to exist. "
+            f"Missing: {sorted(expected_paths - actual_paths)}. "
+            f"Found: {sorted(actual_paths)}"
+        )
+
         # The contract test should not create additional files
         # (e.g., should not auto-generate tests or reports)
         unexpected_dirs = {"tests", ".specleft", "reports"}

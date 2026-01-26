@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import json
-from pydoc import cli
 import sys
 from datetime import datetime
 from pathlib import Path
