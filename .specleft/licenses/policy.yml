@@ -3,7 +3,7 @@ policy_version: '1.0'
 policy_type: enforce
 license:
   license_id: lic_2a834c35f9e03b53
-  licensed_to: SpecLeft/spec-left
+  licensed_to: SpecLeft/specleft
   issued_at: '2026-01-24'
   expires_at: '2027-01-24'
 rules:

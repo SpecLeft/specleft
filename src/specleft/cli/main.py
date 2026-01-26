@@ -26,7 +26,7 @@ def cli() -> None:
     SpecLeft - Code driven intent analysis for Python.
 
     Documentation: https://specleft.dev/docs \n
-    Github: https://github.com/SpecLeft/spec-left
+    Github: https://github.com/SpecLeft/specleft
     """
 
 

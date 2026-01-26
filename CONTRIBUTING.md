@@ -15,8 +15,8 @@ Thank you for your interest in contributing to SpecLeft SDK! This document provi
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/spec-left.git
-   cd spec-left
+   git clone https://github.com/yourusername/specleft.git
+   cd specleft
    ```
 
 2. **Create a virtual environment (recommended):**
@@ -163,7 +163,7 @@ Use Make commands to run lint
 ## Project Structure
 
 ```
-spec-left/
+specleft/
 ├── src/specleft/           # Main package source
 │   ├── __init__.py         # Public API exports
 │   ├── decorators.py       # @specleft and @shared_step decorators

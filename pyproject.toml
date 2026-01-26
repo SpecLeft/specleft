@@ -57,10 +57,10 @@ keywords=[
     "feature-specs"
 ]
 [project.urls]
-Homepage = "https://github.com/SpecLeft/spec-left"
-Issues = "https://github.com/SpecLeft/spec-left/issues"
-Documentation = "https://github.com/SpecLeft/spec-left/tree/main/docs"
-Repository = "https://github.com/SpecLeft/spec-left"
+Homepage = "https://github.com/SpecLeft/specleft"
+Issues = "https://github.com/SpecLeft/specleft/issues"
+Documentation = "https://github.com/SpecLeft/specleft/tree/main/docs"
+Repository = "https://github.com/SpecLeft/specleft"
 
 [project.optional-dependencies]
 dev = [
