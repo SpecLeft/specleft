@@ -33,6 +33,8 @@ class SpecleftMetadata(TypedDict, total=False):
     feature_name: str | None
     scenario_name: str | None
     tags: list[str]
+    feature_priority: str | None
+    scenario_priority: str | None
 
 
 class _SpecleftConfig(Protocol):
@@ -268,6 +270,10 @@ def pytest_collection_modifyitems(
                     "feature_name": feature.name if feature else None,
                     "scenario_name": scenario.name if scenario else None,
                     "tags": list(scenario.tags) if scenario else [],
+                    "feature_priority": feature.priority.value if feature else None,
+                    "scenario_priority": (
+                        _get_priority_value(scenario) if scenario else None
+                    ),
                 }
             )
 
@@ -425,6 +431,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     collector = ResultCollector(output_dir=f"{output_dir}/results")
 
     results_data = collector.collect(results)
+    collector.write(results_data)
 
     summary = results_data["summary"]
     encoding = (sys.stdout.encoding or "utf-8").lower()

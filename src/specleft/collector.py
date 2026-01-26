@@ -21,11 +21,13 @@ class ResultCollector:
             lambda: defaultdict(list)
         )
         feature_names: dict[str, str | None] = {}
+        feature_priorities: dict[str, str | None] = {}
 
         for result in pytest_results:
             feature_id = result["feature_id"]
             features_map[feature_id][result["scenario_id"]].append(result)
             feature_names.setdefault(feature_id, result.get("feature_name"))
+            feature_priorities.setdefault(feature_id, result.get("feature_priority"))
 
         features_list = []
         total_executions = total_passed = total_failed = total_skipped = 0
@@ -71,6 +73,7 @@ class ResultCollector:
                 {
                     "feature_id": feature_id,
                     "feature_name": feature_names.get(feature_id),
+                    "feature_priority": feature_priorities.get(feature_id),
                     "scenarios": scenarios_list,
                 }
             )
