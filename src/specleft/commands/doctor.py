@@ -37,7 +37,7 @@ def _load_dependency_names() -> list[str]:
     entries = re.findall(r'"([^"]+)"', dependencies_block)
     parsed: list[str] = []
     for entry in entries:
-        name = re.split(r"[<>=\s]", entry.strip(), maxsplit=1)[0]
+        name = re.split(r"[<>=\s\[~!;@]", entry.strip(), maxsplit=1)[0]
         if name:
             parsed.append(name)
 
