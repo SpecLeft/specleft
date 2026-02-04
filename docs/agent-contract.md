@@ -1,7 +1,7 @@
 # SpecLeft Agent Contract
 
 **Version:** 1.0
-**Applies to:** SpecLeft CLI ≥ 0.2.0
+**Applies to:** SpecLeft CLI ≥ 0.1.0
 
 This document defines the **operational guarantees** that SpecLeft provides to autonomous agents and automated systems.
 
