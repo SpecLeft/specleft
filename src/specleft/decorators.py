@@ -8,8 +8,8 @@ from __future__ import annotations
 import functools
 import inspect
 import threading
-from collections.abc import Callable, Generator
-from contextlib import contextmanager
+from collections.abc import AsyncGenerator, Callable, Generator
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, TypedDict, TypeVar, cast
@@ -112,25 +112,45 @@ class SpecleftDecorator:
             func._specleft_feature_id = feature_id  # type: ignore[attr-defined]
             func._specleft_scenario_id = scenario_id  # type: ignore[attr-defined]
 
-            @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
-                _reset_context()
-                ctx = _get_context()
-                ctx["feature_id"] = feature_id
-                ctx["scenario_id"] = scenario_id
-                ctx["in_specleft_test"] = True
-                try:
-                    return func(*args, **kwargs)
-                finally:
-                    ctx["in_specleft_test"] = False
+            # Check if the function is async and create appropriate wrapper
+            if inspect.iscoroutinefunction(func):
+
+                @functools.wraps(func)
+                async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                    _reset_context()
+                    ctx = _get_context()
+                    ctx["feature_id"] = feature_id
+                    ctx["scenario_id"] = scenario_id
+                    ctx["in_specleft_test"] = True
+                    try:
+                        return await func(*args, **kwargs)
+                    finally:
+                        ctx["in_specleft_test"] = False
+
+                wrapper_func: Any = async_wrapper
+            else:
+
+                @functools.wraps(func)
+                def wrapper(*args: Any, **kwargs: Any) -> Any:
+                    _reset_context()
+                    ctx = _get_context()
+                    ctx["feature_id"] = feature_id
+                    ctx["scenario_id"] = scenario_id
+                    ctx["in_specleft_test"] = True
+                    try:
+                        return func(*args, **kwargs)
+                    finally:
+                        ctx["in_specleft_test"] = False
+
+                wrapper_func = wrapper
 
             if skip:
                 skip_reason = reason or "SpecLeft test skipped"
                 import pytest
 
-                return cast(F, pytest.mark.skip(reason=skip_reason)(wrapper))
+                return cast(F, pytest.mark.skip(reason=skip_reason)(wrapper_func))
 
-            return cast(F, wrapper)
+            return cast(F, wrapper_func)
 
         return decorator
 
@@ -165,51 +185,119 @@ class SpecleftDecorator:
             ctx["steps"].append(step_result)
 
     @staticmethod
+    @asynccontextmanager
+    async def async_step(
+        description: str,
+        skip: bool = False,
+        reason: str | None = None,
+    ) -> AsyncGenerator[None, None]:
+        """Async context manager for test steps that need to await."""
+        ctx = _get_context()
+        step_result = StepResult(description=description, start_time=datetime.now())
+
+        if skip:
+            step_result.status = "skipped"
+            step_result.skipped_reason = reason or "Step marked as skip"
+            step_result.end_time = datetime.now()
+            ctx["steps"].append(step_result)
+            yield
+            return
+
+        try:
+            yield
+            step_result.status = "passed"
+        except Exception as exc:
+            step_result.status = "failed"
+            step_result.error = str(exc)
+            raise
+        finally:
+            step_result.end_time = datetime.now()
+            ctx["steps"].append(step_result)
+
+    @staticmethod
     def shared_step(description: str) -> Callable[[F], F]:
         """Decorator for creating shared step functions."""
 
         def decorator(func: F) -> F:
-            @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
-                try:
-                    sig = inspect.signature(func)
-                    bound = sig.bind(*args, **kwargs)
-                    bound.apply_defaults()
-                    formatted_desc = description.format(**bound.arguments)
-                except (KeyError, IndexError, ValueError, TypeError):
-                    formatted_desc = description
+            # Check if the function is async and create appropriate wrapper
+            if inspect.iscoroutinefunction(func):
 
-                ctx = _get_context()
-                step_result = StepResult(
-                    description=formatted_desc, start_time=datetime.now()
-                )
+                @functools.wraps(func)
+                async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                    try:
+                        sig = inspect.signature(func)
+                        bound = sig.bind(*args, **kwargs)
+                        bound.apply_defaults()
+                        formatted_desc = description.format(**bound.arguments)
+                    except (KeyError, IndexError, ValueError, TypeError):
+                        formatted_desc = description
 
-                try:
-                    result = func(*args, **kwargs)
-                    step_result.status = "passed"
-                    return result
-                except Exception as exc:
-                    step_result.status = "failed"
-                    step_result.error = str(exc)
-                    raise
-                finally:
-                    step_result.end_time = datetime.now()
-                    ctx["steps"].append(step_result)
+                    ctx = _get_context()
+                    step_result = StepResult(
+                        description=formatted_desc, start_time=datetime.now()
+                    )
 
-            wrapper._specleft_reusable_step = True  # type: ignore[attr-defined]
-            wrapper._specleft_step_description = description  # type: ignore[attr-defined]
-            return wrapper  # type: ignore[return-value]
+                    try:
+                        result = await func(*args, **kwargs)
+                        step_result.status = "passed"
+                        return result
+                    except Exception as exc:
+                        step_result.status = "failed"
+                        step_result.error = str(exc)
+                        raise
+                    finally:
+                        step_result.end_time = datetime.now()
+                        ctx["steps"].append(step_result)
+
+                async_wrapper._specleft_reusable_step = True  # type: ignore[attr-defined]
+                async_wrapper._specleft_step_description = description  # type: ignore[attr-defined]
+                return async_wrapper  # type: ignore[return-value]
+
+            else:
+
+                @functools.wraps(func)
+                def wrapper(*args: Any, **kwargs: Any) -> Any:
+                    try:
+                        sig = inspect.signature(func)
+                        bound = sig.bind(*args, **kwargs)
+                        bound.apply_defaults()
+                        formatted_desc = description.format(**bound.arguments)
+                    except (KeyError, IndexError, ValueError, TypeError):
+                        formatted_desc = description
+
+                    ctx = _get_context()
+                    step_result = StepResult(
+                        description=formatted_desc, start_time=datetime.now()
+                    )
+
+                    try:
+                        result = func(*args, **kwargs)
+                        step_result.status = "passed"
+                        return result
+                    except Exception as exc:
+                        step_result.status = "failed"
+                        step_result.error = str(exc)
+                        raise
+                    finally:
+                        step_result.end_time = datetime.now()
+                        ctx["steps"].append(step_result)
+
+                wrapper._specleft_reusable_step = True  # type: ignore[attr-defined]
+                wrapper._specleft_step_description = description  # type: ignore[attr-defined]
+                return wrapper  # type: ignore[return-value]
 
         return decorator
 
 
 specleft = SpecleftDecorator()
 step = specleft.step
+async_step = specleft.async_step
 shared_step = specleft.shared_step
 
 
 __all__ = [
     "StepResult",
+    "async_step",
     "clear_steps",
     "get_current_metadata",
     "get_current_steps",
