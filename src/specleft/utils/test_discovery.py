@@ -63,7 +63,7 @@ def extract_skip_flag(decorator: ast.expr) -> bool:
 def extract_specleft_calls(tree: ast.AST) -> dict[str, dict[str, object]]:
     scenario_map: dict[str, dict[str, object]] = {}
     for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef):
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             continue
         for decorator in node.decorator_list:
             scenario_id = extract_specleft_scenario_id(decorator)
@@ -88,7 +88,7 @@ def find_specleft_tests_in_file(file_path: Path) -> FileSpecleftResult:
     scenario_ids: set[str] = set()
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             for decorator in node.decorator_list:
                 scenario_id = extract_specleft_scenario_id(decorator)
                 if scenario_id is not None:
