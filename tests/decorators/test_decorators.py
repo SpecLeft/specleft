@@ -687,3 +687,418 @@ class TestCombinedUsage:
         assert steps[0].description == "Low level action: step 1"
         assert steps[1].description == "Low level action: step 2"
         assert steps[2].description == "High level workflow"
+
+
+class TestAsyncSpecleftDecorator:
+    """Tests for @specleft decorator with async functions."""
+
+    def setup_method(self) -> None:
+        clear_steps()
+        _get_context()["feature_id"] = None
+        _get_context()["scenario_id"] = None
+        _get_context()["in_specleft_test"] = False
+
+    async def test_async_decorator_stores_feature_id(self) -> None:
+        """Test that decorator stores feature_id on async function."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-login")
+        async def dummy_async_test() -> None:
+            pass
+
+        assert hasattr(dummy_async_test, "_specleft_feature_id")
+        assert dummy_async_test._specleft_feature_id == "ASYNC-001"
+
+    async def test_async_decorator_stores_scenario_id(self) -> None:
+        """Test that decorator stores scenario_id on async function."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-login-success")
+        async def dummy_async_test() -> None:
+            pass
+
+        assert hasattr(dummy_async_test, "_specleft_scenario_id")
+        assert dummy_async_test._specleft_scenario_id == "async-login-success"
+
+    async def test_async_decorator_preserves_function_name(self) -> None:
+        """Test that decorator preserves original async function name."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-login")
+        async def test_async_user_login() -> None:
+            """Async test docstring."""
+            pass
+
+        assert test_async_user_login.__name__ == "test_async_user_login"
+        assert test_async_user_login.__doc__ == "Async test docstring."
+
+    async def test_async_decorator_sets_context(self) -> None:
+        """Test that context is set when async test starts."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-context")
+        async def test_context() -> tuple[dict, bool]:
+            return get_current_metadata(), is_in_specleft_test()
+
+        metadata, in_test = await test_context()
+        assert metadata == {"feature_id": "ASYNC-001", "scenario_id": "async-context"}
+        assert in_test is True
+
+    async def test_async_decorator_clears_flag_after_test(self) -> None:
+        """Test that in_specleft_test flag is cleared after async execution."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-flag")
+        async def test_clears_flag() -> None:
+            pass
+
+        await test_clears_flag()
+        assert is_in_specleft_test() is False
+
+    async def test_async_decorator_clears_flag_on_exception(self) -> None:
+        """Test that in_specleft_test flag is cleared even on async exception."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-error")
+        async def test_raises() -> None:
+            raise ValueError("Async test error")
+
+        with pytest.raises(ValueError):
+            await test_raises()
+
+        assert is_in_specleft_test() is False
+
+    async def test_async_decorator_returns_function_result(self) -> None:
+        """Test that async decorator passes through function return value."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-return")
+        async def test_with_return() -> str:
+            return "async test result"
+
+        result = await test_with_return()
+        assert result == "async test result"
+
+    async def test_async_decorator_passes_args_and_kwargs(self) -> None:
+        """Test that async decorator passes arguments correctly."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-args")
+        async def test_with_args(
+            a: int, b: str, c: float = 1.0
+        ) -> tuple[int, str, float]:
+            return (a, b, c)
+
+        result = await test_with_args(1, "hello", c=2.5)
+        assert result == (1, "hello", 2.5)
+
+    async def test_async_decorator_with_await(self) -> None:
+        """Test that async decorator properly awaits the function."""
+        import asyncio
+
+        call_order: list[str] = []
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-await")
+        async def test_with_await() -> str:
+            call_order.append("start")
+            await asyncio.sleep(0.01)
+            call_order.append("after_await")
+            return "completed"
+
+        result = await test_with_await()
+        assert result == "completed"
+        assert call_order == ["start", "after_await"]
+
+    async def test_async_decorator_with_steps(self) -> None:
+        """Test that steps work inside async decorated function."""
+
+        @specleft(feature_id="ASYNC-001", scenario_id="async-steps")
+        async def test_with_steps() -> None:
+            with step("Async step 1"):
+                pass
+            with step("Async step 2"):
+                pass
+
+        await test_with_steps()
+
+        steps = get_current_steps()
+        assert len(steps) == 2
+        assert steps[0].description == "Async step 1"
+        assert steps[1].description == "Async step 2"
+
+
+class TestAsyncStepContextManager:
+    """Tests for specleft.async_step() async context manager."""
+
+    def setup_method(self) -> None:
+        clear_steps()
+
+    async def test_async_step_records_description(self) -> None:
+        """Test that async_step records the description."""
+        from specleft.decorators import async_step
+
+        async with async_step("Given user is logged in async"):
+            pass
+
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].description == "Given user is logged in async"
+
+    async def test_async_step_records_passed_status(self) -> None:
+        """Test that successful async_step has passed status."""
+        from specleft.decorators import async_step
+
+        async with async_step("Successful async step"):
+            pass
+
+        steps = get_current_steps()
+        assert steps[0].status == "passed"
+
+    async def test_async_step_records_failed_status_on_exception(self) -> None:
+        """Test that async_step with exception has failed status."""
+        from specleft.decorators import async_step
+
+        with pytest.raises(ValueError):
+            async with async_step("Failing async step"):
+                raise ValueError("Async test error")
+
+        steps = get_current_steps()
+        assert steps[0].status == "failed"
+        assert steps[0].error == "Async test error"
+
+    async def test_async_step_allows_await(self) -> None:
+        """Test that async_step allows await inside the block."""
+        import asyncio
+
+        from specleft.decorators import async_step
+
+        result = None
+        async with async_step("Step with await"):
+            await asyncio.sleep(0.01)
+            result = "awaited"
+
+        assert result == "awaited"
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].status == "passed"
+
+    async def test_async_step_records_timing(self) -> None:
+        """Test that async_step records start and end times."""
+        import asyncio
+
+        from specleft.decorators import async_step
+
+        async with async_step("Timed async step"):
+            await asyncio.sleep(0.01)
+
+        steps = get_current_steps()
+        assert steps[0].start_time is not None
+        assert steps[0].end_time is not None
+        assert steps[0].end_time >= steps[0].start_time
+        assert steps[0].duration >= 0.01
+
+    async def test_async_step_skip_records_result(self) -> None:
+        """Test that skipped async steps are recorded."""
+        from specleft.decorators import async_step
+
+        async with async_step("Skipped async step", skip=True, reason="Not needed"):
+            pass
+
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].status == "skipped"
+        assert steps[0].skipped_reason == "Not needed"
+
+    async def test_multiple_async_steps_recorded_in_order(self) -> None:
+        """Test that multiple async steps are recorded in execution order."""
+        from specleft.decorators import async_step
+
+        async with async_step("Async Step 1"):
+            pass
+        async with async_step("Async Step 2"):
+            pass
+        async with async_step("Async Step 3"):
+            pass
+
+        steps = get_current_steps()
+        assert len(steps) == 3
+        assert steps[0].description == "Async Step 1"
+        assert steps[1].description == "Async Step 2"
+        assert steps[2].description == "Async Step 3"
+
+
+class TestAsyncSharedStep:
+    """Tests for @shared_step decorator with async functions."""
+
+    def setup_method(self) -> None:
+        clear_steps()
+        _get_context()["in_specleft_test"] = False
+
+    async def test_async_shared_step_stores_description(self) -> None:
+        """Test that shared_step stores description on async function."""
+
+        @shared_step("User performs async action")
+        async def user_action() -> None:
+            pass
+
+        assert hasattr(user_action, "_specleft_step_description")
+        assert user_action._specleft_step_description == "User performs async action"
+
+    async def test_async_shared_step_traced_inside_specleft_test(self) -> None:
+        """Test that async shared step traces inside @specleft tests."""
+
+        @shared_step("User clicks button async")
+        async def click_button() -> str:
+            return "clicked"
+
+        @specleft(feature_id="UI-001", scenario_id="async-click-test")
+        async def test_click() -> str:
+            return await click_button()
+
+        result = await test_click()
+
+        assert result == "clicked"
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].description == "User clicks button async"
+
+    async def test_async_shared_step_parameter_interpolation(self) -> None:
+        """Test parameter interpolation in async shared step description."""
+
+        @shared_step("User logs in async with {username}")
+        async def login(username: str, password: str) -> bool:
+            return True
+
+        @specleft(feature_id="AUTH-001", scenario_id="async-login")
+        async def test_login() -> None:
+            await login("admin@example.com", "secret")
+
+        await test_login()
+
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].description == "User logs in async with admin@example.com"
+
+    async def test_async_shared_step_with_await(self) -> None:
+        """Test async shared_step properly awaits internal operations."""
+        import asyncio
+
+        @shared_step("Perform async operation")
+        async def async_operation() -> str:
+            await asyncio.sleep(0.01)
+            return "completed"
+
+        @specleft(feature_id="ASYNC-001", scenario_id="shared-await")
+        async def test_operation() -> str:
+            return await async_operation()
+
+        result = await test_operation()
+
+        assert result == "completed"
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].status == "passed"
+
+    async def test_async_shared_step_propagates_exceptions(self) -> None:
+        """Test that async shared step propagates exceptions."""
+
+        @shared_step("Failing async action")
+        async def failing_action() -> None:
+            raise RuntimeError("Async action failed")
+
+        @specleft(feature_id="ERR-001", scenario_id="async-error-test")
+        async def test_failure() -> None:
+            await failing_action()
+
+        with pytest.raises(RuntimeError, match="Async action failed"):
+            await test_failure()
+
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].status == "failed"
+        assert steps[0].error is not None
+        assert "Async action failed" in steps[0].error
+
+    async def test_multiple_async_shared_steps_in_test(self) -> None:
+        """Test multiple async shared steps in one test."""
+
+        @shared_step("Async Step A with {value}")
+        async def step_a(value: str) -> None:
+            pass
+
+        @shared_step("Async Step B with {value}")
+        async def step_b(value: str) -> None:
+            pass
+
+        @specleft(feature_id="MULTI-001", scenario_id="async-multi-step")
+        async def test_multi() -> None:
+            await step_a("first")
+            await step_b("second")
+
+        await test_multi()
+
+        steps = get_current_steps()
+        assert len(steps) == 2
+        assert steps[0].description == "Async Step A with first"
+        assert steps[1].description == "Async Step B with second"
+
+
+class TestMixedSyncAsyncUsage:
+    """Tests for combined sync and async usage patterns."""
+
+    def setup_method(self) -> None:
+        clear_steps()
+
+    async def test_sync_steps_in_async_test(self) -> None:
+        """Test that sync step() works inside async decorated function."""
+
+        @specleft(feature_id="MIXED-001", scenario_id="sync-in-async")
+        async def test_mixed() -> None:
+            with step("Sync step in async test"):
+                pass
+
+        await test_mixed()
+
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].description == "Sync step in async test"
+
+    async def test_sync_shared_step_in_async_test(self) -> None:
+        """Test that sync shared_step can be called from async test."""
+
+        @shared_step("Sync shared step")
+        def sync_step() -> str:
+            return "sync result"
+
+        @specleft(feature_id="MIXED-001", scenario_id="sync-shared-in-async")
+        async def test_mixed() -> str:
+            return sync_step()
+
+        result = await test_mixed()
+
+        assert result == "sync result"
+        steps = get_current_steps()
+        assert len(steps) == 1
+        assert steps[0].description == "Sync shared step"
+
+    async def test_mixed_sync_and_async_steps(self) -> None:
+        """Test mixing sync step(), async_step(), and shared_step."""
+        from specleft.decorators import async_step
+
+        @shared_step("Shared step {num}")
+        def shared(num: int) -> None:
+            pass
+
+        @shared_step("Async shared step {num}")
+        async def async_shared(num: int) -> None:
+            pass
+
+        @specleft(feature_id="MIXED-001", scenario_id="all-step-types")
+        async def test_all_types() -> None:
+            with step("Sync step 1"):
+                pass
+            async with async_step("Async step 2"):
+                pass
+            shared(3)
+            await async_shared(4)
+
+        await test_all_types()
+
+        steps = get_current_steps()
+        assert len(steps) == 4
+        assert steps[0].description == "Sync step 1"
+        assert steps[1].description == "Async step 2"
+        assert steps[2].description == "Shared step 3"
+        assert steps[3].description == "Async shared step 4"

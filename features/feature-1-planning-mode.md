@@ -25,3 +25,11 @@ priority: critical
 - When `specleft plan` is executed
 - Then a clear warning is emitted
 - And no feature files are created
+
+### Scenario: Trace async test execution
+
+- Given a test function decorated with @specleft and @pytest.mark.asyncio
+- When the async test is executed with pytest
+- Then the test runs successfully
+- And step results are properly recorded
+- And the async function is awaited correctly

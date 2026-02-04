@@ -208,3 +208,50 @@ def test_handle_missing_prd_gracefully(acceptance_workspace) -> None:
         assert not Path(
             "features"
         ).exists(), "features/ directory should not be created when PRD is missing"
+
+
+@specleft(
+    feature_id="feature-1-planning-mode",
+    scenario_id="trace-async-test-execution",
+)
+async def test_trace_async_test_execution() -> None:
+    """Trace async test execution
+
+    Priority: high
+
+    Verifies that @specleft decorator works correctly with pytest-asyncio tests,
+    properly awaiting async functions and recording step results.
+    """
+    import asyncio
+
+    from specleft.decorators import async_step, get_current_steps, is_in_specleft_test
+
+    with specleft.step(
+        "Given a test function decorated with @specleft and @pytest.mark.asyncio"
+    ):
+        # This test itself is the async test - we're verifying it runs correctly
+        assert is_in_specleft_test(), "Should be inside a specleft test"
+
+    async with async_step("When the async test is executed with pytest"):
+        # Simulate some async work
+        await asyncio.sleep(0.01)
+        result = "async_completed"
+
+    with specleft.step("Then the test runs successfully"):
+        assert result == "async_completed", "Async operation should complete"
+
+    with specleft.step("And step results are properly recorded"):
+        steps = get_current_steps()
+        # We should have 4 steps at this point (this is the 4th)
+        assert len(steps) >= 3, f"Expected at least 3 steps, got {len(steps)}"
+
+        # Verify async step was recorded
+        step_descriptions = [s.description for s in steps]
+        assert any(
+            "async test is executed" in desc for desc in step_descriptions
+        ), f"Async step not found in {step_descriptions}"
+
+    with specleft.step("And the async function is awaited correctly"):
+        # If we got here, the async function was awaited correctly
+        # (otherwise we'd have a coroutine object, not a result)
+        assert is_in_specleft_test(), "Context should still be active"

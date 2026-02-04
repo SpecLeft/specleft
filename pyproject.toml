@@ -7,7 +7,7 @@ specleft = ["py.typed", "templates/*.jinja2"]
 
 [project]
 name = "specleft"
-version = "0.1.1"
+version = "0.1.2"
 description = "A planning-first CLI for AI coding agents to externalize intent before writing code, with optional CI enforcement for Python projects."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -66,6 +66,7 @@ Repository = "https://github.com/SpecLeft/specleft"
 dev = [
     "pytest-cov",
     "pytest-subtests",
+    "pytest-asyncio",
     "black==26.1.0",
     "ruff==0.8.3",
     "mypy",
@@ -177,6 +178,8 @@ addopts = [
     "--cov-report=xml",
 ]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
