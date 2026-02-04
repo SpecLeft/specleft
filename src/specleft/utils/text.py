@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Text helpers that are reusable outside the CLI."""
 
 from __future__ import annotations

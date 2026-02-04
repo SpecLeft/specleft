@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Init command."""
 
 from __future__ import annotations
@@ -55,12 +58,18 @@ def _init_example_content() -> dict[str, str]:
 
 
 def _init_plan(example: bool) -> tuple[list[Path], list[tuple[Path, str]]]:
-    directories = [Path("features"), Path("tests"), Path(".specleft")]
+    directories = [
+        Path("features"),
+        Path("tests"),
+        Path(".specleft"),
+        Path(".specleft/licenses"),
+    ]
     files: list[tuple[Path, str]] = []
     if example:
         for rel_path, content in _init_example_content().items():
             files.append((Path(rel_path), content))
     files.append((Path(".specleft/.gitkeep"), ""))
+    files.append((Path(".specleft/licenses/.gitkeep"), ""))
     return directories, files
 
 
@@ -86,6 +95,20 @@ def _print_init_dry_run(directories: list[Path], files: list[tuple[Path, str]]) 
     click.echo("Summary:")
     click.echo(f"  {len(files)} files would be created")
     click.echo(f"  {len(directories)} directories would be created")
+
+
+def _print_license_notice() -> None:
+    click.echo("Welcome to SpecLeft (v0.2.x)")
+    click.echo("")
+    click.echo("Core technology is licensed under Apache 2.0.")
+    click.echo("Commercial features (e.g., `specleft enforce`) require a valid")
+    click.echo("commercial license policy.yml.")
+    click.echo("")
+    click.echo("To register a license:")
+    click.echo("  store the policy file in .specleft/licenses/")
+    click.echo("")
+    click.echo("For details:")
+    click.echo("  https://specleft.dev/enforce")
 
 
 def _apply_init_plan(
@@ -174,6 +197,8 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         )
         click.echo("")
         _print_init_dry_run(directories, files)
+        click.echo("")
+        _print_license_notice()
         return
 
     if format_type == "json" and not dry_run:
@@ -198,6 +223,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
             click.echo(f"✓ Created {path}")
 
     click.echo("")
+    _print_license_notice()
     if example:
         click.echo("Example project ready!")
         click.echo("")

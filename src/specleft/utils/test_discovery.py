@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Utilities for discovering specleft-decorated tests."""
 
 from __future__ import annotations

@@ -1,3 +1,7 @@
+# NOTICE: Commercial License
+# See LICENSE-COMMERCIAL for details.
+# Copyright (c) 2026 SpecLeft.
+
 # src/specleft_signing/exceptions.py
 """Custom exceptions for specleft-signing."""
 

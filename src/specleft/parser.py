@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """SpecLeft Markdown Parser.
 
 Parses feature specifications from Markdown files with YAML frontmatter.

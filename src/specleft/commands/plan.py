@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Planning command for SpecLeft."""
 
 from __future__ import annotations
@@ -9,6 +12,8 @@ from pathlib import Path
 
 import click
 from slugify import slugify
+
+from specleft.license.status import resolve_license
 
 SUGGESTED_PRD_LOCATIONS = (Path("prd.md"), Path("docs/prd.md"))
 
@@ -417,3 +422,12 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
         _print_warning(warning)
     _print_plan_summary(feature_count=feature_count, dry_run=dry_run)
     _print_plan_results(created=created, skipped=skipped, dry_run=dry_run)
+
+    license_validation = resolve_license()
+    if not license_validation.valid:
+        click.echo("")
+        click.echo("Notice: Enforcement capabilities require a commercial license.")
+        click.echo("")
+        click.echo("A valid license key is not registered.")
+        click.echo("Obtain a license:")
+        click.echo("  https://specleft.dev/enforce")

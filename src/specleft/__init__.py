@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """SpecLeft - Specification-driven test management for pytest."""
 
 from specleft.decorators import StepResult, shared_step, specleft, step

@@ -143,7 +143,7 @@ Validate a cryptographic policy file and enforce coverage/priority rules against
 specleft enforce [POLICY_FILE] [OPTIONS]
 
 Arguments:
-  POLICY_FILE           Path to policy YAML file (default: .specleft/policy.yml)
+  POLICY_FILE           Path to policy YAML file (default: .specleft/licenses/policy.yml)
 
 Options:
   --dir PATH                  Path to features directory (default: features/)
@@ -179,7 +179,7 @@ Options:
 specleft enforce
 
 # Enforce with specific policy file
-specleft enforce .specleft/policy-core.yml
+specleft enforce .specleft/licenses/policy-core.yml
 
 # Enforce with JSON output
 specleft enforce --format json
@@ -222,4 +222,23 @@ Options:
   -o, --output PATH         Output HTML file (default: report.html)
   --open-browser            Open report in browser after generation
   --format [table|json]     Output format (default: table)
+```
+
+## License
+
+### `specleft license status`
+
+Show license status and the validated policy file.
+
+```bash
+specleft license status [OPTIONS]
+
+Options:
+  --file PATH   License policy file to check (default: .specleft/licenses/policy.yml)
+```
+
+Example:
+
+```bash
+specleft license status --file .specleft/licenses/policy.yml
 ```

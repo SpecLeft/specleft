@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Feature structure detection utilities.
 
 Detects whether the features directory uses single-file or nested layout.

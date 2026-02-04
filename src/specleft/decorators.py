@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """SpecLeft Decorators.
 
 Provides the @specleft decorator and step() context manager for test functions.

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """Enforce command for policy validation and enforcement."""
 
 from __future__ import annotations
@@ -57,7 +60,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("", err=True)
         click.echo("  Option 2: Switch to Core Policy", err=True)
         click.echo(
-            "    Update your CI to use: specleft enforce .specleft/policy-core.yml",
+            "    Update your CI to use: specleft enforce .specleft/licenses/policy-core.yml",
             err=True,
         )
         click.echo("", err=True)
