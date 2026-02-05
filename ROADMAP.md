@@ -16,15 +16,15 @@
 - 🧪 **Test Stubs** - Create empty test containers as an alternate to test skeletons.
 
 
-## Future (v0.3.0+)
+## Future (v0.3.0 and beyond)
 - 🎯 **Test Plan Orchestration** — Manage, chain and orchestrate test execution based on dependencies, priorities, and conditional logic. Build dynamic test workflows.
 - 🤖 **AI-Generated Tests** — Let SpecLeft generate test implementations from your feature specs using LLMs. Reduce boilerplate even further.
 - 🔗 **CI/CD Integration** — Native integrations with GitHub Actions, GitLab CI, Jenkins, and other CI platforms for seamless reporting and result tracking.
-- 🌐 **Assisted Discovery** — Discover existing functionality from a project and turn them in to feature definitions.
+- 🌐 **Assisted Discovery** — Discover existing functionality from brownfield projects and turn them in to feature definitions.
 - 🔌 **3rd Party Plugin for Syncing Features** - Sync feature specifications with external platforms like Jira and Azure DevOps to maintain alignment between requirements and automated tests.
 - 🔔 **Notifications** - Get real-time updates on test execution and results via Slack, Microsoft Teams, Discord, and other messaging platforms.
 - 📊 **Test Collector** — Aggregate and correlate test results across multiple runs, environments, and branches. Track trends, identify flaky tests, and spot patterns in failures.
-- 📈 **Enhanced Reporting** — Interactive dashboards with drill-down capabilities, failure analysis, and historical trends.
+- 📈 **Enhanced Reporting** — Interactive dashboards with drill-down capabilities, failure analysis, and historical trends. Ideal for compliance reporting.
 - 🎚️ **SpecLeft CLI Filters** — First-class test selection via `--specleft-tag/priority/feature/scenario` flags and pytest config defaults.
 
 ## Community & Contributions
