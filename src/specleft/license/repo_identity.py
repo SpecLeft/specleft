@@ -1,3 +1,7 @@
+# NOTICE: Commercial License
+# See LICENSE-COMMERCIAL for details.
+# Copyright (c) 2026 SpecLeft.
+
 """Repository identity detection from git remotes.
 
 Parses git remote URLs to extract owner/repo information

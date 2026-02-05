@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """CLI entrypoint for SpecLeft."""
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ from specleft.commands import (
     enforce,
     features,
     init,
+    license_group,
     next_command,
     plan,
     status,
@@ -40,6 +44,7 @@ cli.add_command(coverage)
 cli.add_command(init)
 cli.add_command(contract)
 cli.add_command(enforce)
+cli.add_command(license_group)
 
 
 __all__ = ["cli"]

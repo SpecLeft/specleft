@@ -246,32 +246,13 @@ specleft status --format json
 
 ## License
 
-SpecLeft is **source-available** and licensed under the **PolyForm Shield License 1.0.0** with additional restrictions.
+SpecLeft is **dual-licensed**:
 
-### ✅ You are free to
-- Use SpecLeft for personal, educational, or internal company use
-- Run it locally, in CI/CD, or as part of automated workflows
-- Fork the repository and modify it for your own needs
-- Use SpecLeft with AI agents to build and test software products
+- **Open Core (Apache 2.0)** for the core engine and non-commercial modules
+- **Commercial License** for enforcement, signing, and license logic
 
-### 🚫 You may not
-- Sell SpecLeft itself
-- Offer SpecLeft as a hosted or managed service
-- Build or sell a product that directly competes with SpecLeft
+Open-source terms are in [LICENSE-OPEN](LICENSE-OPEN).
+Commercial terms are in [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL).
 
-### 🤝 Why this license exists
-This license is intended to:
-- Keep SpecLeft free for personal, educational, and internal use
-- Enable AI-assisted software development
-- Protect the project from direct commercial competition
-
-These restrictions are defined by the PolyForm Shield License.
-
-### 📄 Full license text
-See the full license in the [`LICENSE`](./LICENSE) file or at:
-https://polyformproject.org/licenses/shield/1.0.0/
-
-### Quick rule of thumb
-> If you’re using SpecLeft **to build software**, you’re fine.
-
-> If you’re using SpecLeft **to sell SpecLeft**, you need permission.
+Commercial features (e.g., `specleft enforce`) require a valid license policy file.
+See [NOTICE.md](NOTICE.md) for licensing scope details.

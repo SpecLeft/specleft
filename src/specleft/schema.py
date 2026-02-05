@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 SpecLeft Contributors
+
 """SpecLeft Schema Definitions.
 
 Pydantic models for parsing and validating Markdown specifications.

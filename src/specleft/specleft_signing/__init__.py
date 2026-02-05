@@ -1,3 +1,7 @@
+# NOTICE: Commercial License
+# See LICENSE-COMMERCIAL for details.
+# Copyright (c) 2026 SpecLeft.
+
 # src/specleft_signing/__init__.py
 """SpecLeft Signing - Cryptographic signing and verification for policy files."""
 

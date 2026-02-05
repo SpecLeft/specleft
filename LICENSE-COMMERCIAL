@@ -1,0 +1,22 @@
+SpecLeft Commercial License
+Version 0.2.0+
+
+NOTICE: This file describes the commercial license governing
+the use of commercial components of SpecLeft, including:
+
+- The licensing logic in `src/specleft/license`
+- Enforcement rules in `src/specleft/enforcement`
+- Signing & validation in `src/specleft/specleft_signing`
+- Any premium policy modules bundled or released separately
+
+By using any of these commercial components (including
+the `specleft enforce` command), you agree to these terms.
+
+Commercial use (including deployment, SaaS, internal use
+by enterprises) requires a valid commercial license key
+issued by SpecLeft.
+
+Licenses are obtained via:
+https://specleft.dev/enforce
+
+All rights not expressly granted are reserved.
