@@ -210,6 +210,23 @@ Options:
   --force                   Overwrite existing test files
 ```
 
+### `specleft test stub`
+
+Generate stub test files from Markdown specs.
+
+```bash
+specleft test stub [OPTIONS]
+
+Options:
+  -f, --features-dir PATH   Path to features directory (default: features)
+  -o, --output-dir PATH     Output directory (default: tests)
+  --single-file             Generate all tests in one file
+  --skip-preview            Skip preview before creation
+  --dry-run                 Show what would be created
+  --format [table|json]     Output format (default: table)
+  --force                   Overwrite existing test files
+```
+
 ### `specleft test report`
 
 Generate an HTML report from test results.

@@ -30,7 +30,7 @@ from specleft.validator import load_specs_directory
 from jinja2 import select_autoescape
 
 
-def _load_skeleton_template() -> Template:
+def _load_test_template(template_name: str) -> Template:
     templates_dir = Path(__file__).parent.parent / "templates"
     env = Environment(
         loader=FileSystemLoader(templates_dir),
@@ -40,7 +40,7 @@ def _load_skeleton_template() -> Template:
     )
     env.filters["snake_case"] = to_snake_case
     env.filters["repr"] = repr
-    return env.get_template("skeleton_test.py.jinja2")
+    return env.get_template(template_name)
 
 
 def _story_output_path(output_path: Path, feature_id: str, story_id: str) -> Path:
@@ -368,8 +368,8 @@ def _print_skeleton_plan_table(
     would_create: list[SkeletonScenarioEntry],
     would_skip: list[SkeletonScenarioEntry],
     dry_run: bool,
+    title: str = "Skeleton Generation Plan",
 ) -> None:
-    title = "Skeleton Generation Plan"
     click.echo(title)
     click.echo("━" * 58)
     if dry_run:
@@ -505,7 +505,7 @@ def skeleton(
     if format_type == "table":
         warn_if_nested_structure(Path(features_dir))
 
-    template = _load_skeleton_template()
+    template = _load_test_template("skeleton_test.py.jinja2")
     output_path = Path(output_dir)
     plan_result = _plan_skeleton_generation(
         config=config,
@@ -533,6 +533,7 @@ def skeleton(
             would_create=would_create,
             would_skip=would_skip,
             dry_run=dry_run,
+            title="Skeleton Generation Plan",
         )
         if not skip_preview:
             for plan in plan_result.plans:
@@ -543,6 +544,147 @@ def skeleton(
 
     if not plan_result.plans:
         click.secho("No new skeleton tests to generate.", fg="magenta")
+        return
+
+    if not force and not click.confirm("Confirm creation?", default=False):
+        click.echo("Cancelled")
+        sys.exit(2)
+
+    for plan in plan_result.plans:
+        plan.output_path.parent.mkdir(parents=True, exist_ok=True)
+        plan.output_path.write_text(plan.content)
+
+    if format_type == "table":
+        click.secho(f"\n✓ Created {len(plan_result.plans)} test files", fg="green")
+        for plan in plan_result.plans:
+            click.echo(f"{plan.output_path}")
+        click.secho("\nNext steps:", fg="cyan", bold=True)
+        click.echo(f"  1. Implement test logic in {output_dir.removesuffix('/')}/")
+        click.echo(f"  2. Run tests: pytest {output_dir.removesuffix('/')}/")
+        click.echo("  3. View report: specleft test report")
+
+
+@test.command("stub")
+@click.option(
+    "--features-dir",
+    "-f",
+    default="features",
+    help="Path to features directory.",
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    default="tests",
+    help="Output directory for generated test files.",
+)
+@click.option(
+    "--single-file",
+    is_flag=True,
+    help="Generate all tests in a single file (test_generated.py).",
+)
+@click.option(
+    "--skip-preview",
+    is_flag=True,
+    help="Skip the preview of the generated stub tests before creating files.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show what would be created without writing files.",
+)
+@click.option(
+    "--format",
+    "format_type",
+    type=click.Choice(["table", "json"], case_sensitive=False),
+    default="table",
+    show_default=True,
+    help="Output format: 'table' or 'json'.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite existing test files.",
+)
+def stub(
+    features_dir: str,
+    output_dir: str,
+    single_file: bool,
+    skip_preview: bool,
+    dry_run: bool,
+    format_type: str,
+    force: bool,
+) -> None:
+    """Generate stub test files from Markdown feature specs."""
+    if format_type == "json" and not dry_run and not force:
+        click.secho(
+            "JSON output requires --dry-run or --force to avoid prompts.",
+            fg="red",
+            err=True,
+        )
+        sys.exit(1)
+
+    try:
+        config = load_specs_directory(features_dir, warn_on_duplicate_scenarios=True)
+    except FileNotFoundError:
+        click.secho(f"Error: {features_dir} not found", fg="red", err=True)
+        click.echo("Create a features directory with Markdown specs to continue.")
+        sys.exit(1)
+    except ValueError as e:
+        if "No feature specs found" in str(e):
+            click.secho(f"No specs found in {features_dir}.", fg="yellow")
+            return
+        click.secho(f"Error loading specs from {features_dir}: {e}", fg="red", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.secho(
+            f"Unexpected error loading specs from {features_dir}: {e}",
+            fg="red",
+            err=True,
+        )
+        sys.exit(1)
+
+    if format_type == "table":
+        warn_if_nested_structure(Path(features_dir))
+
+    template = _load_test_template("stub_test.py.jinja2")
+    output_path = Path(output_dir)
+    plan_result = _plan_skeleton_generation(
+        config=config,
+        output_path=output_path,
+        template=template,
+        single_file=single_file,
+        force=force,
+        features_dir=Path(features_dir),
+    )
+
+    flattened = _flatten_skeleton_entries(plan_result)
+    would_create = [entry for entry in flattened if entry.skip_reason is None]
+    would_skip = [entry for entry in flattened if entry.skip_reason is not None]
+
+    if format_type == "json":
+        payload = _build_skeleton_json(
+            would_create=would_create,
+            would_skip=would_skip,
+            dry_run=dry_run,
+            template=template,
+        )
+        click.echo(json.dumps(payload, indent=2))
+    else:
+        _print_skeleton_plan_table(
+            would_create=would_create,
+            would_skip=would_skip,
+            dry_run=dry_run,
+            title="Stub Generation Plan",
+        )
+        if not skip_preview:
+            for plan in plan_result.plans:
+                _render_skeleton_preview(plan)
+
+    if dry_run:
+        return
+
+    if not plan_result.plans:
+        click.secho("No new stub tests to generate.", fg="magenta")
         return
 
     if not force and not click.confirm("Confirm creation?", default=False):

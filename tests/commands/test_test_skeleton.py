@@ -20,6 +20,7 @@ class TestTestGroup:
         result = runner.invoke(cli, ["test", "--help"])
         assert result.exit_code == 0
         assert "skeleton" in result.output
+        assert "stub" in result.output
         assert "report" in result.output
 
 
