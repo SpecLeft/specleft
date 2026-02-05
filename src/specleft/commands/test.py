@@ -23,7 +23,7 @@ from specleft.commands.types import (
     SkeletonSkipPlan,
     SkeletonSummary,
 )
-from specleft.schema import FeatureSpec, SpecsConfig, StorySpec
+from specleft.schema import FeatureSpec, ScenarioSpec, SpecsConfig, StorySpec
 from specleft.utils.structure import detect_features_layout, warn_if_nested_structure
 from specleft.utils.text import to_snake_case
 from specleft.validator import load_specs_directory
@@ -41,6 +41,12 @@ def _load_test_template(template_name: str) -> Template:
     env.filters["snake_case"] = to_snake_case
     env.filters["repr"] = repr
     return env.get_template(template_name)
+
+
+def generate_test_stub(feature: FeatureSpec, scenario: ScenarioSpec) -> str:
+    """Generate a stub test method for a single scenario."""
+    template = _load_test_template("stub_test_method.py.jinja2")
+    return template.render(feature=feature, scenario=scenario)
 
 
 def _story_output_path(output_path: Path, feature_id: str, story_id: str) -> Path:

@@ -6,6 +6,8 @@ from pathlib import Path
 
 from click.testing import CliRunner
 from specleft.cli.main import cli
+from specleft.commands.test import generate_test_stub
+from specleft.schema import FeatureSpec, Priority, ScenarioSpec, SpecDataRow
 
 from tests.helpers.specs import create_feature_specs, create_single_file_feature_spec
 
@@ -239,3 +241,45 @@ class TestStubCommand:
             assert "'a'" in content
             assert "'A'" in content
             assert "skip=True" in content
+
+    def test_generate_test_stub_renders_single_method(self) -> None:
+        """Test stub generator renders a single test method."""
+        feature = FeatureSpec(feature_id="auth", name="Auth")
+        scenario = ScenarioSpec(
+            scenario_id="login-success",
+            name="Login Success",
+            description="User logs in successfully.",
+            priority=Priority.HIGH,
+            tags=["smoke"],
+        )
+
+        content = generate_test_stub(feature=feature, scenario=scenario)
+
+        assert "@specleft(" in content
+        assert 'feature_id="auth"' in content
+        assert 'scenario_id="login-success"' in content
+        assert "def test_login_success" in content
+        assert "pass  # TODO: Implement test" in content
+        assert "with specleft.step" not in content
+
+    def test_generate_test_stub_includes_parametrize(self) -> None:
+        """Test stub generator includes parametrize for data rows."""
+        feature = FeatureSpec(feature_id="params", name="Params")
+        scenario = ScenarioSpec(
+            scenario_id="formatting",
+            name="Formatting",
+            priority=Priority.MEDIUM,
+            test_data=[
+                SpecDataRow(
+                    params={"input": "a", "expected": "A"},
+                    description="lowercase a",
+                )
+            ],
+        )
+
+        content = generate_test_stub(feature=feature, scenario=scenario)
+
+        assert "@pytest.mark.parametrize" in content
+        assert "input, expected" in content
+        assert "'a'" in content
+        assert "'A'" in content
