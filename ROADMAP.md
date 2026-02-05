@@ -21,6 +21,7 @@
 - 📑 **Agent Contract** - An organisation / project specific ruleset, which is machine verifable.
 - 🎯 **Test Plan Orchestration** — Manage, chain and orchestrate test execution based on dependencies, priorities, and conditional logic. Build dynamic test workflows.
 - 🤖 **AI-Generated Tests** — Let SpecLeft generate test implementations from your feature specs using LLMs. Reduce boilerplate even further.
+- 👾 **MCP Server** - A SpecLeft MCP server to smoother integration with AI agents.
 - ✍️ **Agent Skills** - Integrated agent skills for more autonomous planning and test generation.
 - 🔗 **CI/CD Integration** — Native integrations with GitHub Actions, GitLab CI, Jenkins, and other CI platforms for seamless reporting and result tracking.
 - 🔌 **3rd Party Plugin for Syncing Features** - Sync feature specifications with external platforms like Jira and Azure DevOps to maintain alignment between requirements and automated tests.
