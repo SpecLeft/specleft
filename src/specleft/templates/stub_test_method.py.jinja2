@@ -1,0 +1,29 @@
+@specleft(
+    feature_id="{{ feature.feature_id }}",
+    scenario_id="{{ scenario.scenario_id }}",
+    skip=True,
+    reason="Stub test - not yet implemented",
+)
+{% if scenario.test_data %}
+@pytest.mark.parametrize(
+    "{{ scenario.test_data[0].params.keys() | list | join(', ') }}",
+    [
+{% for data_row in scenario.test_data %}
+        ({{ data_row.params.values() | list | map('repr') | join(', ') }}),  # {{ data_row.description or '' }}
+{% endfor %}
+    ],
+)
+{% endif %}
+def test_{{ scenario.scenario_id | snake_case }}({% if scenario.test_data %}{{ scenario.test_data[0].params.keys() | list | join(', ') }}{% endif %}):
+    """{{ scenario.name }}
+
+{% if scenario.description %}
+    {{ scenario.description }}
+
+{% endif %}
+    Priority: {{ scenario.priority.value }}
+{% if scenario.tags %}
+    Tags: {{ scenario.tags | join(', ') }}
+{% endif %}
+    """
+    pass  # TODO: Implement test
