@@ -259,3 +259,33 @@ Example:
 ```bash
 specleft license status --file .specleft/licenses/policy.yml
 ```
+
+## Plan
+
+### `specleft plan`
+
+Generate feature specs from a PRD.
+
+```bash
+specleft plan [OPTIONS]
+
+Options:
+  --from PATH             Path to the PRD file (default: prd.md)
+  --format [table|json]   Output format (default: table)
+  --dry-run               Preview without writing files
+  --analyze               Analyze PRD structure without writing files
+  --template PATH         Path to a PRD template YAML file
+```
+
+Examples:
+
+```bash
+# Analyze PRD structure
+specleft plan --analyze
+
+# Use a custom template
+specleft plan --template .specleft/templates/prd-template.yml
+
+# Analyze with JSON output
+specleft plan --analyze --format json
+```

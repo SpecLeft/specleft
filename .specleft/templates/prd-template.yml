@@ -1,0 +1,30 @@
+version: "1.0"
+
+features:
+  heading_level: 2
+  patterns:
+    - "Feature: {title}"
+    - "Feature {title}"
+  exclude:
+    - "Overview"
+    - "Goals"
+    - "Non-Goals"
+    - "Open Questions"
+    - "Notes"
+
+scenarios:
+  heading_level: [3, 4]
+  patterns:
+    - "Scenario: {title}"
+  step_keywords:
+    - "Given"
+    - "When"
+    - "Then"
+    - "And"
+    - "But"
+
+priorities:
+  patterns:
+    - "priority: {value}"
+    - "Priority: {value}"
+  mapping: {}

@@ -13,8 +13,11 @@ import shutil
 from pathlib import Path
 
 from click.testing import CliRunner
+import click
+import pytest
 
 from specleft import specleft
+from specleft.templates.prd_template import load_template
 from specleft.cli.main import cli
 from conftest import PrdFiles
 
@@ -255,3 +258,143 @@ async def test_trace_async_test_execution() -> None:
         # If we got here, the async function was awaited correctly
         # (otherwise we'd have a coroutine object, not a result)
         assert is_in_specleft_test(), "Context should still be active"
+
+
+@specleft(
+    feature_id="feature-1-planning-mode",
+    scenario_id="validate-prd-template-definitions",
+)
+def test_validate_prd_template_definitions(tmp_path: Path) -> None:
+    """Validate PRD template definitions
+
+    Priority: high
+
+    Verifies invalid heading levels and invalid patterns are rejected
+    with clear errors when loading PRD templates.
+    """
+    invalid_heading = tmp_path / "invalid-heading.yml"
+    invalid_heading.write_text("""
+version: "1.0"
+features:
+  heading_level: 0
+""".lstrip())
+
+    invalid_pattern = tmp_path / "invalid-pattern.yml"
+    invalid_pattern.write_text("""
+version: "1.0"
+features:
+  heading_level: 2
+  patterns:
+    - "Feature: {title"
+""".lstrip())
+
+    with specleft.step("Given a PRD template file defines headings and patterns"):
+        assert invalid_heading.exists()
+        assert invalid_pattern.exists()
+
+    with specleft.step("When the template is loaded for planning"):
+        with pytest.raises(click.ClickException):
+            load_template(invalid_heading)
+        with pytest.raises(click.ClickException):
+            load_template(invalid_pattern)
+
+    with specleft.step("Then invalid heading levels are rejected with a clear error"):
+        with pytest.raises(click.ClickException) as excinfo:
+            load_template(invalid_heading)
+        assert "heading" in str(excinfo.value).lower()
+
+    with specleft.step("And invalid patterns are rejected with a clear error"):
+        with pytest.raises(click.ClickException) as excinfo:
+            load_template(invalid_pattern)
+        assert "pattern" in str(excinfo.value).lower()
+
+
+@specleft(
+    feature_id="feature-1-planning-mode",
+    scenario_id="analyze-prd-structure-without-writing-files",
+)
+def test_analyze_prd_structure_without_writing_files() -> None:
+    """Analyze PRD structure without writing files
+
+    Priority: high
+
+    Verifies that analyze mode classifies headings and does not create files.
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("prd.md").write_text(
+            "# PRD\n\n## Overview\n\n## Feature: Billing\n\n## Notes\n\n## Payments\n"
+        )
+
+        with specleft.step("Given a PRD contains headings that mix features and notes"):
+            assert Path("prd.md").exists()
+
+        with specleft.step("When specleft plan --analyze is executed"):
+            result = runner.invoke(cli, ["plan", "--analyze"])
+
+        with specleft.step(
+            "Then the output classifies headings as feature, excluded, or ambiguous"
+        ):
+            assert result.exit_code == 0, f"Command failed: {result.output}"
+            output = result.output
+            assert "Analyzing PRD structure" in output
+            assert "Features:" in output
+            assert "Excluded:" in output
+            assert "Ambiguous:" in output
+
+        with specleft.step("And no feature files are created"):
+            assert not Path("features").exists()
+
+
+@specleft(
+    feature_id="feature-1-planning-mode",
+    scenario_id="generate-features-with-a-custom-prd-template",
+)
+def test_generate_features_with_custom_prd_template() -> None:
+    """Generate features with a custom PRD template
+
+    Priority: high
+
+    Verifies that custom template patterns drive feature/scenario extraction.
+    """
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("prd.md").write_text(
+            "# PRD\n\n## Epic: Billing\n\n### AC: Refund requested\n- Priority = p0\n"
+        )
+        Path("template.yml").write_text("""
+version: "1.0"
+
+features:
+  heading_level: 2
+  patterns:
+    - "Epic: {title}"
+
+scenarios:
+  heading_level: [3]
+  patterns:
+    - "AC: {title}"
+
+priorities:
+  patterns:
+    - "Priority = {value}"
+  mapping:
+    p0: critical
+""".lstrip())
+
+        with specleft.step(
+            "Given a PRD template defines custom feature and scenario patterns"
+        ):
+            assert Path("template.yml").exists()
+
+        with specleft.step("When specleft plan --template <file.yml> is executed"):
+            result = runner.invoke(cli, ["plan", "--template", "template.yml"])
+
+        with specleft.step("Then features are generated using the custom patterns"):
+            assert result.exit_code == 0, f"Command failed: {result.output}"
+            feature_file = Path("features/epic-billing.md")
+            assert feature_file.exists()
+
+        with specleft.step("And priorities are normalized using the template mapping"):
+            content = feature_file.read_text()
+            assert "priority: critical" in content

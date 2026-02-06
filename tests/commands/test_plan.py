@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import json
+import importlib
 from pathlib import Path
+from types import ModuleType
 
 from click.testing import CliRunner
 from specleft.cli.main import cli
+from specleft.templates.prd_template import (
+    PRDFeaturesConfig,
+    PRDPrioritiesConfig,
+    PRDScenariosConfig,
+    PRDTemplate,
+)
 
 
 class TestPlanCommand:
@@ -101,3 +109,164 @@ class TestPlanCommand:
             assert result.exit_code == 0
             assert "Skipped existing" in result.output
             assert feature_file.read_text() == "# Feature: User Authentication\n"
+
+
+class TestPlanTemplateExtraction:
+    def test_extract_feature_titles_with_template_patterns(self) -> None:
+        plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
+        prd_content = """
+        # PRD
+        ## Overview
+        ## Epic: Billing
+        """.strip()
+        template = PRDTemplate(
+            features=PRDFeaturesConfig(
+                heading_level=2,
+                patterns=["Epic: {title}"],
+                exclude=["Overview"],
+            )
+        )
+
+        titles, warnings = plan_module._extract_feature_titles(
+            prd_content,
+            template,
+        )
+
+        assert warnings == []
+        assert titles == ["Epic: Billing"]
+
+    def test_extract_prd_scenarios_with_template_patterns(self) -> None:
+        plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
+        prd_content = """
+        ## Feature: Billing
+        - Priority = p1
+
+        ### AC: Refund requested
+        - Priority = p0
+        - Given a customer
+        - When they request a refund
+        - Then we mark it pending
+        """.strip()
+        template = PRDTemplate(
+            features=PRDFeaturesConfig(heading_level=2),
+            scenarios=PRDScenariosConfig(
+                heading_level=[3],
+                patterns=["AC: {title}"],
+                step_keywords=["Given", "When", "Then"],
+            ),
+            priorities=PRDPrioritiesConfig(
+                patterns=["Priority = {value}"],
+                mapping={"p0": "critical", "p1": "high"},
+            ),
+        )
+
+        scenarios_by_feature, orphan_scenarios, feature_priorities, warnings = (
+            plan_module._extract_prd_scenarios(
+                prd_content,
+                template=template,
+                require_step_keywords=True,
+            )
+        )
+
+        assert warnings == []
+        assert orphan_scenarios == []
+        assert feature_priorities == {"Feature: Billing": "high"}
+        assert scenarios_by_feature == {
+            "Feature: Billing": [
+                {
+                    "title": "Refund requested",
+                    "steps": [
+                        "Given a customer",
+                        "When they request a refund",
+                        "Then we mark it pending",
+                    ],
+                    "priority": "critical",
+                }
+            ]
+        }
+
+
+class TestPlanAnalyzeMode:
+    def test_analyze_flag_is_recognized(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text(
+                "# PRD\n\n## Overview\n\n## Feature: Billing\n\n## Notes\n\n## Payments\n"
+            )
+            result = runner.invoke(cli, ["plan", "--analyze"])
+
+            assert result.exit_code == 0
+            assert not Path("features").exists()
+            assert "Analyzing PRD structure" in result.output
+            assert "Ambiguous:" in result.output
+
+    def test_analyze_json_output(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
+            result = runner.invoke(cli, ["plan", "--analyze", "--format", "json"])
+
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["summary"]["features"] == 1
+            assert payload["headings"]
+
+
+class TestPlanTemplateMode:
+    def test_plan_uses_custom_template_patterns(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text(
+                "# PRD\n\n## Epic: Billing\n\n### AC: Refund requested\n- Priority = p0\n"
+            )
+            Path("template.yml").write_text("""
+version: "1.0"
+
+features:
+  heading_level: 2
+  patterns:
+    - "Epic: {title}"
+
+scenarios:
+  heading_level: [3]
+  patterns:
+    - "AC: {title}"
+  step_keywords: ["Given", "When", "Then"]
+
+priorities:
+  patterns:
+    - "Priority = {value}"
+  mapping:
+    p0: critical
+""".lstrip())
+
+            result = runner.invoke(cli, ["plan", "--template", "template.yml"])
+
+            assert result.exit_code == 0
+            feature_file = Path("features/epic-billing.md")
+            assert feature_file.exists()
+            content = feature_file.read_text()
+            assert "priority: critical" in content
+
+    def test_plan_template_json_includes_metadata(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Epic: Billing\n")
+            Path("template.yml").write_text("""
+version: "1.0"
+
+features:
+  heading_level: 2
+  patterns:
+    - "Epic: {title}"
+""".lstrip())
+
+            result = runner.invoke(
+                cli,
+                ["plan", "--template", "template.yml", "--format", "json"],
+            )
+
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["template"]["path"] == "template.yml"
+            assert payload["template"]["version"] == "1.0"
