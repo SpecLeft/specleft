@@ -6,14 +6,22 @@
 from __future__ import annotations
 
 import json
+import re
 import textwrap
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 import click
 from slugify import slugify
 
 from specleft.license.status import resolve_license
+from specleft.templates.prd_template import (
+    PRDTemplate,
+    compile_pattern,
+    default_template,
+    load_template,
+)
 
 SUGGESTED_PRD_LOCATIONS = (Path("prd.md"), Path("docs/prd.md"))
 
@@ -31,18 +39,195 @@ def _read_prd(prd_path: Path) -> tuple[str | None, list[str]]:
         return None, warnings
 
 
-def _extract_feature_titles(prd_content: str) -> tuple[list[str], list[str]]:
-    warnings: list[str] = []
-    lines = [line.rstrip() for line in prd_content.splitlines()]
-    h1_titles = [line[2:].strip() for line in lines if line.startswith("# ")]
-    h2_titles = [
-        line[3:].strip()
-        for line in lines
-        if line.startswith("## ") and "feature" in line.lower()
-    ]
+def _normalize_heading_levels(levels: int | list[int]) -> set[int]:
+    if isinstance(levels, int):
+        return {levels}
+    return set(levels)
 
-    if h2_titles:
-        return [title for title in h2_titles if title], warnings
+
+def _compile_patterns(patterns: list[str]) -> list[re.Pattern[str]]:
+    compiled: list[re.Pattern[str]] = []
+    for pattern in patterns:
+        base = compile_pattern(pattern)
+        compiled.append(re.compile(base.pattern, re.IGNORECASE))
+    return compiled
+
+
+def _compile_contains(terms: list[str]) -> list[str]:
+    return [term.casefold() for term in terms if term]
+
+
+def _matches_mode(
+    *, pattern_match: bool, contains_match: bool, match_mode: str
+) -> bool:
+    if match_mode == "patterns":
+        return pattern_match
+    if match_mode == "contains":
+        return contains_match
+    if match_mode == "all":
+        return pattern_match and contains_match
+    return pattern_match or contains_match
+
+
+def _parse_heading(line: str) -> tuple[int, str] | None:
+    stripped = line.lstrip()
+    if not stripped.startswith("#"):
+        return None
+    level = len(stripped) - len(stripped.lstrip("#"))
+    if level < 1 or level > 6:
+        return None
+    if len(stripped) <= level or stripped[level] != " ":
+        return None
+    return level, stripped[level + 1 :].strip()
+
+
+def _analyze_prd(
+    prd_content: str,
+    template: PRDTemplate,
+) -> dict[str, Any]:
+    feature_levels = _normalize_heading_levels(template.features.heading_level)
+    scenario_levels = set(template.scenarios.heading_level)
+    feature_patterns = _compile_patterns(template.features.patterns)
+    scenario_patterns = _compile_patterns(template.scenarios.patterns)
+    feature_contains = _compile_contains(template.features.contains)
+    scenario_contains = _compile_contains(template.scenarios.contains)
+    exclude = {value.casefold() for value in template.features.exclude}
+
+    headings: list[dict[str, object]] = []
+    current_feature: str | None = None
+    orphan_blocks = 0
+    in_orphan_block = False
+
+    for line in prd_content.splitlines():
+        heading = _parse_heading(line)
+        if heading:
+            level, text = heading
+            classification = "other"
+            parent_feature = current_feature
+            if text.casefold() in exclude:
+                classification = "excluded"
+            elif level in feature_levels:
+                pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+                contains_match = any(
+                    term in text.casefold() for term in feature_contains
+                )
+                if _matches_mode(
+                    pattern_match=pattern_match,
+                    contains_match=contains_match,
+                    match_mode=template.features.match_mode,
+                ):
+                    classification = "feature"
+                    current_feature = text
+                    parent_feature = current_feature
+                else:
+                    classification = "ambiguous"
+            elif level in scenario_levels:
+                pattern_match = any(
+                    pattern.match(text) for pattern in scenario_patterns
+                )
+                contains_match = any(
+                    term in text.casefold() for term in scenario_contains
+                )
+                if _matches_mode(
+                    pattern_match=pattern_match,
+                    contains_match=contains_match,
+                    match_mode=template.scenarios.match_mode,
+                ):
+                    classification = "scenario"
+
+            headings.append(
+                {
+                    "level": level,
+                    "text": text,
+                    "classification": classification,
+                    "parent_feature": parent_feature,
+                }
+            )
+            in_orphan_block = False
+            continue
+
+        if current_feature is None and line.strip():
+            if not in_orphan_block:
+                orphan_blocks += 1
+                in_orphan_block = True
+        else:
+            in_orphan_block = False
+
+    summary = {
+        "total_headings": len(headings),
+        "features": sum(1 for item in headings if item["classification"] == "feature"),
+        "scenarios": sum(
+            1 for item in headings if item["classification"] == "scenario"
+        ),
+        "excluded": sum(1 for item in headings if item["classification"] == "excluded"),
+        "ambiguous": sum(
+            1 for item in headings if item["classification"] == "ambiguous"
+        ),
+        "orphan_content_blocks": orphan_blocks,
+    }
+
+    suggestions: list[str] = []
+    if summary["features"] == 0:
+        suggestions.append(
+            "No feature headings detected; add feature headings or adjust the template."
+        )
+    if summary["ambiguous"]:
+        suggestions.append(
+            "Some headings look like features but did not match; update templates or rename headings."
+        )
+    if orphan_blocks:
+        suggestions.append(
+            "Orphan content detected; move content under a feature heading."
+        )
+
+    return {
+        "headings": headings,
+        "summary": summary,
+        "suggestions": suggestions,
+    }
+
+
+def _extract_feature_titles(
+    prd_content: str,
+    template: PRDTemplate | None = None,
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    template = template or default_template()
+    lines = [line.rstrip() for line in prd_content.splitlines()]
+    feature_levels = _normalize_heading_levels(template.features.heading_level)
+    feature_patterns = _compile_patterns(template.features.patterns)
+    feature_contains = _compile_contains(template.features.contains)
+    exclude = {value.casefold() for value in template.features.exclude}
+
+    h1_titles = [
+        text
+        for line in lines
+        if (heading := _parse_heading(line)) and heading[0] == 1
+        for text in [heading[1]]
+        if text
+    ]
+    feature_titles: list[str] = []
+    for line in lines:
+        heading = _parse_heading(line)
+        if not heading:
+            continue
+        level, text = heading
+        if level not in feature_levels:
+            continue
+        if text.casefold() in exclude:
+            continue
+        pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+        contains_match = any(term in text.casefold() for term in feature_contains)
+        matched = _matches_mode(
+            pattern_match=pattern_match,
+            contains_match=contains_match,
+            match_mode=template.features.match_mode,
+        )
+        if matched and text:
+            feature_titles.append(text)
+
+    if feature_titles:
+        return feature_titles, warnings
 
     if len(h1_titles) == 1 and h1_titles[0]:
         warnings.append("No secondary headings found; using top-level title.")
@@ -55,6 +240,7 @@ def _extract_feature_titles(prd_content: str) -> tuple[list[str], list[str]]:
 def _extract_prd_scenarios(
     prd_content: str,
     *,
+    template: PRDTemplate | None = None,
     require_step_keywords: bool = True,
 ) -> tuple[
     dict[str, list[dict[str, object]]],
@@ -67,32 +253,58 @@ def _extract_prd_scenarios(
     orphan_scenarios: list[dict[str, object]] = []
     feature_priorities: dict[str, str] = {}
 
-    def parse_heading(line: str) -> tuple[int, str] | None:
-        stripped = line.lstrip()
-        if not stripped.startswith("#"):
-            return None
-        level = len(stripped) - len(stripped.lstrip("#"))
-        if level < 2 or level > 4:
-            return None
-        if len(stripped) <= level or stripped[level] != " ":
-            return None
-        return level, stripped[level + 1 :].strip()
+    template = template or default_template()
+    feature_levels = _normalize_heading_levels(template.features.heading_level)
+    scenario_levels = set(template.scenarios.heading_level)
+    feature_patterns = _compile_patterns(template.features.patterns)
+    scenario_patterns = _compile_patterns(template.scenarios.patterns)
+    priority_patterns = _compile_patterns(template.priorities.patterns)
+    feature_contains = _compile_contains(template.features.contains)
+    scenario_contains = _compile_contains(template.scenarios.contains)
+    exclude = {value.casefold() for value in template.features.exclude}
+    step_keywords = tuple(
+        keyword.casefold() for keyword in template.scenarios.step_keywords
+    )
+    priority_mapping = {
+        key.casefold(): value for key, value in template.priorities.mapping.items()
+    }
 
     def is_feature_heading(level: int, text: str) -> bool:
-        return level == 2 and text.lower().startswith("feature")
+        if level not in feature_levels:
+            return False
+        if text.casefold() in exclude:
+            return False
+        pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+        contains_match = any(term in text.casefold() for term in feature_contains)
+        return _matches_mode(
+            pattern_match=pattern_match,
+            contains_match=contains_match,
+            match_mode=template.features.match_mode,
+        )
 
-    def extract_scenario_title(text: str) -> str | None:
-        lower = text.lower()
-        marker = "scenario:"
-        if marker not in lower:
+    def extract_scenario_title(level: int, text: str) -> str | None:
+        if level not in scenario_levels:
             return None
-        start = lower.find(marker) + len(marker)
-        title = text[start:].strip()
-        return title or "Scenario"
+        contains_match = any(term in text.casefold() for term in scenario_contains)
+        if template.scenarios.match_mode == "contains" and not contains_match:
+            return None
+        if template.scenarios.match_mode == "all" and not contains_match:
+            return None
+        for pattern in scenario_patterns:
+            match = pattern.match(text)
+            if not match:
+                continue
+            title = match.groupdict().get("title", "").strip()
+            return title or "Scenario"
+        if template.scenarios.match_mode in {"patterns", "all"}:
+            return None
+        if contains_match:
+            return "Scenario"
+        return None
 
     def is_step_line(text: str) -> bool:
-        lowered = text.lower()
-        return lowered.startswith(("given ", "when ", "then ", "and ", "but "))
+        lowered = text.casefold()
+        return lowered.startswith(tuple(f"{keyword} " for keyword in step_keywords))
 
     def normalize_step(text: str) -> str | None:
         stripped = text.strip()
@@ -119,30 +331,35 @@ def _extract_prd_scenarios(
 
     def extract_priority(line: str) -> str | None:
         stripped = line.strip()
-        if stripped.startswith("-"):
+        if stripped.startswith(("-", "*", "•")):
             stripped = stripped[1:].strip()
-        lower = stripped.lower()
-        if not lower.startswith("priority:"):
-            return None
-        value = stripped.split(":", 1)[1].strip()
-        return value or None
+        for pattern in priority_patterns:
+            match = pattern.match(stripped)
+            if not match:
+                continue
+            value = match.groupdict().get("value", "").strip()
+            if not value:
+                return None
+            mapped = priority_mapping.get(value.casefold())
+            return mapped or value
+        return None
 
     lines = prd_content.splitlines()
     current_feature: str | None = None
     index = 0
     while index < len(lines):
         line = lines[index]
-        heading = parse_heading(line)
+        heading = _parse_heading(line)
         if heading:
             level, text = heading
             if is_feature_heading(level, text):
                 current_feature = text
-            scenario_title = extract_scenario_title(text)
+            scenario_title = extract_scenario_title(level, text)
             if scenario_title:
                 block_lines: list[str] = []
                 index += 1
                 while index < len(lines):
-                    next_heading = parse_heading(lines[index])
+                    next_heading = _parse_heading(lines[index])
                     if next_heading:
                         break
                     block_lines.append(lines[index])
@@ -286,6 +503,7 @@ def _build_plan_payload(
     skipped: list[Path],
     warnings: list[str],
     orphan_scenarios: list[dict[str, object]] | None = None,
+    template_info: dict[str, str] | None = None,
 ) -> dict[str, object]:
     payload: dict[str, object] = {
         "timestamp": datetime.now().isoformat(),
@@ -297,7 +515,9 @@ def _build_plan_payload(
         "suggested_locations": [str(path) for path in SUGGESTED_PRD_LOCATIONS],
         "skipped": [str(path) for path in skipped],
     }
-    payload["oprhan_scenarios"] = orphan_scenarios or []
+    payload["orphan_scenarios"] = orphan_scenarios or []
+    if template_info:
+        payload["template"] = template_info
     if dry_run:
         payload["would_create"] = [str(path) for path in created]
     else:
@@ -335,6 +555,16 @@ def _print_plan_results(
             click.echo(f"  - {path}")
 
 
+def _print_analyze_summary(summary: dict[str, int]) -> None:
+    click.echo("Analyzing PRD structure...")
+    click.echo(f"Headings total: {summary['total_headings']}")
+    click.echo(f"Features: {summary['features']}")
+    click.echo(f"Scenarios: {summary['scenarios']}")
+    click.echo(f"Excluded: {summary['excluded']}")
+    click.echo(f"Ambiguous: {summary['ambiguous']}")
+    click.echo(f"Orphan content blocks: {summary['orphan_content_blocks']}")
+
+
 @click.command(
     "plan",
     epilog=(
@@ -357,9 +587,30 @@ def _print_plan_results(
     help="Output format: 'table' or 'json'.",
 )
 @click.option("--dry-run", is_flag=True, help="Preview without writing files.")
-def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
+@click.option("--analyze", is_flag=True, help="Analyze PRD without writing files.")
+@click.option(
+    "--template",
+    "template_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path to a PRD template YAML file.",
+)
+def plan(
+    prd_path: str,
+    format_type: str,
+    dry_run: bool,
+    analyze: bool,
+    template_path: Path | None,
+) -> None:
     """Generate feature specs from a PRD."""
     prd_file = Path(prd_path)
+    template = default_template()
+    template_info: dict[str, str] | None = None
+    if template_path is not None:
+        template = load_template(template_path)
+        template_info = {
+            "path": str(template_path),
+            "version": template.version,
+        }
     prd_content, warnings = _read_prd(prd_file)
     if prd_content is None:
         if format_type == "json":
@@ -370,6 +621,7 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
                 created=[],
                 skipped=[],
                 warnings=warnings,
+                template_info=template_info,
             )
             click.echo(json.dumps(payload, indent=2))
             return
@@ -382,14 +634,44 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
         click.echo("Nothing to plan yet.")
         return
 
-    titles, title_warnings = _extract_feature_titles(prd_content)
+    if analyze:
+        analysis = _analyze_prd(prd_content, template)
+        summary = cast(dict[str, int], analysis["summary"])
+        suggestions = cast(list[str], analysis["suggestions"])
+        if format_type == "json":
+            payload = {
+                "timestamp": datetime.now().isoformat(),
+                "status": "warning" if warnings else "ok",
+                "prd_path": str(prd_file),
+                "warnings": warnings,
+                **analysis,
+            }
+            if template_info:
+                payload["template"] = template_info
+            click.echo(json.dumps(payload, indent=2))
+            return
+
+        for warning in warnings:
+            _print_warning(warning)
+        _print_analyze_summary(summary)
+        if suggestions:
+            click.echo("Suggestions:")
+            for suggestion in suggestions:
+                click.echo(f"  - {suggestion}")
+        return
+
+    titles, title_warnings = _extract_feature_titles(prd_content, template)
     warnings.extend(title_warnings)
     (
         scenarios_by_feature,
         orphan_scenarios,
         feature_priorities,
         scenario_warnings,
-    ) = _extract_prd_scenarios(prd_content, require_step_keywords=True)
+    ) = _extract_prd_scenarios(
+        prd_content,
+        template=template,
+        require_step_keywords=True,
+    )
     warnings.extend(scenario_warnings)
     features_dir = Path("features")
 
@@ -414,6 +696,7 @@ def plan(prd_path: str, format_type: str, dry_run: bool) -> None:
             skipped=skipped,
             warnings=warnings,
             orphan_scenarios=orphan_scenarios,
+            template_info=template_info,
         )
         click.echo(json.dumps(payload, indent=2))
         return
