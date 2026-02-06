@@ -54,3 +54,12 @@
 - [x] Run full test suite and confirm green
 - [x] Update this file to mark all phases complete
 - **Status:** Complete
+
+### Phase 7: Template Match Mode + Contains
+- [x] Add `contains` + `match_mode` to feature/scenario template configs
+- [x] Update extraction + analysis logic for match mode semantics (case-insensitive)
+- [x] Update validation + defaults in templates
+- [x] Extend unit + acceptance tests for match_mode/contains
+- [x] Update template reference + docs
+- [ ] Run lint and full test suite
+- **Status:** In Progress

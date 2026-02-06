@@ -5,17 +5,21 @@ features:
   patterns:
     - "Feature: {title}"
     - "Feature {title}"
+  contains: []
+  match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
   exclude:
     - "Overview"
     - "Goals"
     - "Non-Goals"
-    - "Open Questions"
+    - "Open Questions (Post-MVP)"
     - "Notes"
 
 scenarios:
   heading_level: [3, 4]
   patterns:
     - "Scenario: {title}"
+  contains: []
+  match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
   step_keywords:
     - "Given"
     - "When"

@@ -286,6 +286,14 @@ specleft plan --analyze
 # Use a custom template
 specleft plan --template .specleft/templates/prd-template.yml
 
+# Use contains + match_mode in a template (case-insensitive)
+# features:
+#   contains: ["capability"]
+#   match_mode: "contains"
+# scenarios:
+#   contains: ["acceptance"]
+#   match_mode: "any"
+
 # Analyze with JSON output
 specleft plan --analyze --format json
 ```

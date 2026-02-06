@@ -101,6 +101,32 @@ features/
 
 Each file contains the scenarios extracted from your PRD.
 
+Short summary: `specleft plan` reads `prd.md`, detects feature/scenario headings, and writes one feature spec per feature. For custom formats, provide a PRD template YAML (see `.specleft/templates/prd-template.yml`) and use a template plus analyze mode to validate structure.
+
+```bash
+# Preview PRD structure without writing files
+specleft plan --analyze
+
+# Use a custom template for headings/contains matching
+specleft plan --template .specleft/templates/prd-template.yml
+```
+
+```yaml
+# Example PRD template excerpt
+features:
+  patterns:
+    - "Epic: {title}"
+  contains: ["capability"]
+  match_mode: "any"
+scenarios:
+  patterns:
+    - "AC: {title}"
+  contains: ["acceptance"]
+  match_mode: "contains"
+```
+
+match_mode options: `any` = pattern OR contains, `all` = pattern AND contains, `patterns` = pattern only, `contains` = contains only.
+
 ---
 
 ## 3. Inspect a feature file

@@ -18,6 +18,8 @@ class PRDFeaturesConfig(BaseModel):
     patterns: list[str] = Field(
         default_factory=lambda: ["Feature: {title}", "Feature {title}"]
     )
+    contains: list[str] = Field(default_factory=list)
+    match_mode: str = "any"
     exclude: list[str] = Field(
         default_factory=lambda: [
             "Overview",
@@ -34,10 +36,18 @@ class PRDFeaturesConfig(BaseModel):
         _validate_heading_levels(value)
         return value
 
+    @field_validator("match_mode")
+    @classmethod
+    def validate_match_mode(cls, value: str) -> str:
+        _validate_match_mode(value)
+        return value
+
 
 class PRDScenariosConfig(BaseModel):
     heading_level: list[int] = Field(default_factory=lambda: [3, 4])
     patterns: list[str] = Field(default_factory=lambda: ["Scenario: {title}"])
+    contains: list[str] = Field(default_factory=list)
+    match_mode: str = "any"
     step_keywords: list[str] = Field(
         default_factory=lambda: ["Given", "When", "Then", "And", "But"]
     )
@@ -46,6 +56,12 @@ class PRDScenariosConfig(BaseModel):
     @classmethod
     def validate_heading_level(cls, value: list[int]) -> list[int]:
         _validate_heading_levels(value)
+        return value
+
+    @field_validator("match_mode")
+    @classmethod
+    def validate_match_mode(cls, value: str) -> str:
+        _validate_match_mode(value)
         return value
 
 
@@ -74,6 +90,12 @@ def _validate_heading_levels(levels: int | list[int]) -> None:
     ]
     if invalid:
         raise ValueError("Heading levels must be integers between 1 and 6")
+
+
+def _validate_match_mode(mode: str) -> None:
+    valid = {"any", "all", "patterns", "contains"}
+    if mode not in valid:
+        raise ValueError("Match mode must be one of: any, all, patterns, contains")
 
 
 def _literal_to_regex(text: str) -> str:

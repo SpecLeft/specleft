@@ -135,6 +135,30 @@ class TestPlanTemplateExtraction:
         assert warnings == []
         assert titles == ["Epic: Billing"]
 
+    def test_extract_feature_titles_with_contains(self) -> None:
+        plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
+        prd_content = """
+        # PRD
+        ## Feature Overview
+        ## Platform Capability
+        """.strip()
+        template = PRDTemplate(
+            features=PRDFeaturesConfig(
+                heading_level=2,
+                patterns=["Epic: {title}"],
+                contains=["capability"],
+                match_mode="contains",
+            )
+        )
+
+        titles, warnings = plan_module._extract_feature_titles(
+            prd_content,
+            template,
+        )
+
+        assert warnings == []
+        assert titles == ["Platform Capability"]
+
     def test_extract_prd_scenarios_with_template_patterns(self) -> None:
         plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
         prd_content = """
@@ -185,6 +209,50 @@ class TestPlanTemplateExtraction:
             ]
         }
 
+    def test_extract_prd_scenarios_with_contains_only(self) -> None:
+        plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
+        prd_content = """
+        ## Feature: Billing
+        ### Refund Acceptance
+        - Given a customer
+        - When they request a refund
+        - Then we mark it pending
+        """.strip()
+        template = PRDTemplate(
+            features=PRDFeaturesConfig(heading_level=2),
+            scenarios=PRDScenariosConfig(
+                heading_level=[3],
+                patterns=["Scenario: {title}"],
+                contains=["acceptance"],
+                match_mode="contains",
+                step_keywords=["Given", "When", "Then"],
+            ),
+        )
+
+        scenarios_by_feature, orphan_scenarios, feature_priorities, warnings = (
+            plan_module._extract_prd_scenarios(
+                prd_content,
+                template=template,
+                require_step_keywords=True,
+            )
+        )
+
+        assert warnings == []
+        assert orphan_scenarios == []
+        assert feature_priorities == {}
+        assert scenarios_by_feature == {
+            "Feature: Billing": [
+                {
+                    "title": "Scenario",
+                    "steps": [
+                        "Given a customer",
+                        "When they request a refund",
+                        "Then we mark it pending",
+                    ],
+                }
+            ]
+        }
+
 
 class TestPlanAnalyzeMode:
     def test_analyze_flag_is_recognized(self) -> None:
@@ -210,6 +278,38 @@ class TestPlanAnalyzeMode:
             payload = json.loads(result.output)
             assert payload["summary"]["features"] == 1
             assert payload["headings"]
+
+    def test_analyze_respects_contains_matching(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text(
+                "# PRD\n\n## Capability: Billing\n\n### Acceptance Criteria\n"
+            )
+            Path("template.yml").write_text("""
+version: "1.0"
+features:
+  heading_level: 2
+  patterns:
+    - "Feature: {title}"
+  contains: ["capability"]
+  match_mode: "contains"
+scenarios:
+  heading_level: [3]
+  patterns:
+    - "Scenario: {title}"
+  contains: ["acceptance"]
+  match_mode: "contains"
+""".lstrip())
+
+            result = runner.invoke(
+                cli,
+                ["plan", "--analyze", "--format", "json", "--template", "template.yml"],
+            )
+
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["summary"]["features"] == 1
+            assert payload["summary"]["scenarios"] == 1
 
 
 class TestPlanTemplateMode:

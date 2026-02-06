@@ -25,6 +25,8 @@ class TestPRDTemplate:
             "Feature: {title}",
             "Feature {title}",
         ]
+        assert template.features.contains == []
+        assert template.features.match_mode == "any"
         assert template.features.exclude == [
             "Overview",
             "Goals",
@@ -34,6 +36,8 @@ class TestPRDTemplate:
         ]
         assert template.scenarios.heading_level == [3, 4]
         assert template.scenarios.patterns == ["Scenario: {title}"]
+        assert template.scenarios.contains == []
+        assert template.scenarios.match_mode == "any"
         assert template.scenarios.step_keywords == [
             "Given",
             "When",
@@ -69,12 +73,16 @@ features:
   heading_level: 2
   patterns:
     - "Feature: {title}"
+  contains: ["Capability"]
+  match_mode: "contains"
   exclude:
     - "Overview"
 scenarios:
   heading_level: [3]
   patterns:
     - "Scenario: {title}"
+  contains: ["Acceptance"]
+  match_mode: "any"
   step_keywords:
     - "Given"
 priorities:
@@ -90,6 +98,10 @@ priorities:
         assert template.features.heading_level == 2
         assert template.scenarios.heading_level == [3]
         assert template.priorities.mapping == {"p0": "critical"}
+        assert template.features.contains == ["Capability"]
+        assert template.features.match_mode == "contains"
+        assert template.scenarios.contains == ["Acceptance"]
+        assert template.scenarios.match_mode == "any"
 
     def test_load_template_rejects_invalid_yaml(self, tmp_path: Path) -> None:
         template_path = tmp_path / "template.yml"
@@ -136,6 +148,19 @@ priorities:
             "pattern" in str(excinfo.value).lower()
             or "template" in str(excinfo.value).lower()
         )
+
+    def test_load_template_rejects_invalid_match_mode(self, tmp_path: Path) -> None:
+        template_path = tmp_path / "template.yml"
+        template_path.write_text("""
+features:
+  heading_level: 2
+  match_mode: "either"
+""".lstrip())
+
+        with pytest.raises(click.ClickException) as excinfo:
+            load_template(template_path)
+
+        assert "match" in str(excinfo.value).lower()
 
     def test_heading_level_accepts_int_or_list(self) -> None:
         features = PRDTemplate().features.model_copy(update={"heading_level": 2})

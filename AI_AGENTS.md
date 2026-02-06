@@ -142,6 +142,8 @@ This is the **default** flow agents should follow.
 specleft plan
 ```
 
+For a quick walkthrough of plan/analyze/template usage, see [GET_STARTED.md](GET_STARTED.md).
+
 5. Generate feature specifications under:
 
 ```text

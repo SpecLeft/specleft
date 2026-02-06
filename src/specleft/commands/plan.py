@@ -53,6 +53,22 @@ def _compile_patterns(patterns: list[str]) -> list[re.Pattern[str]]:
     return compiled
 
 
+def _compile_contains(terms: list[str]) -> list[str]:
+    return [term.casefold() for term in terms if term]
+
+
+def _matches_mode(
+    *, pattern_match: bool, contains_match: bool, match_mode: str
+) -> bool:
+    if match_mode == "patterns":
+        return pattern_match
+    if match_mode == "contains":
+        return contains_match
+    if match_mode == "all":
+        return pattern_match and contains_match
+    return pattern_match or contains_match
+
+
 def _parse_heading(line: str) -> tuple[int, str] | None:
     stripped = line.lstrip()
     if not stripped.startswith("#"):
@@ -73,6 +89,8 @@ def _analyze_prd(
     scenario_levels = set(template.scenarios.heading_level)
     feature_patterns = _compile_patterns(template.features.patterns)
     scenario_patterns = _compile_patterns(template.scenarios.patterns)
+    feature_contains = _compile_contains(template.features.contains)
+    scenario_contains = _compile_contains(template.scenarios.contains)
     exclude = {value.casefold() for value in template.features.exclude}
 
     headings: list[dict[str, object]] = []
@@ -88,18 +106,34 @@ def _analyze_prd(
             parent_feature = current_feature
             if text.casefold() in exclude:
                 classification = "excluded"
-            elif level in feature_levels and any(
-                pattern.match(text) for pattern in feature_patterns
-            ):
-                classification = "feature"
-                current_feature = text
-                parent_feature = current_feature
-            elif level in scenario_levels and any(
-                pattern.match(text) for pattern in scenario_patterns
-            ):
-                classification = "scenario"
             elif level in feature_levels:
-                classification = "ambiguous"
+                pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+                contains_match = any(
+                    term in text.casefold() for term in feature_contains
+                )
+                if _matches_mode(
+                    pattern_match=pattern_match,
+                    contains_match=contains_match,
+                    match_mode=template.features.match_mode,
+                ):
+                    classification = "feature"
+                    current_feature = text
+                    parent_feature = current_feature
+                else:
+                    classification = "ambiguous"
+            elif level in scenario_levels:
+                pattern_match = any(
+                    pattern.match(text) for pattern in scenario_patterns
+                )
+                contains_match = any(
+                    term in text.casefold() for term in scenario_contains
+                )
+                if _matches_mode(
+                    pattern_match=pattern_match,
+                    contains_match=contains_match,
+                    match_mode=template.scenarios.match_mode,
+                ):
+                    classification = "scenario"
 
             headings.append(
                 {
@@ -162,6 +196,7 @@ def _extract_feature_titles(
     lines = [line.rstrip() for line in prd_content.splitlines()]
     feature_levels = _normalize_heading_levels(template.features.heading_level)
     feature_patterns = _compile_patterns(template.features.patterns)
+    feature_contains = _compile_contains(template.features.contains)
     exclude = {value.casefold() for value in template.features.exclude}
 
     h1_titles = [
@@ -181,11 +216,13 @@ def _extract_feature_titles(
             continue
         if text.casefold() in exclude:
             continue
-        matched = False
-        for pattern in feature_patterns:
-            if pattern.match(text):
-                matched = True
-                break
+        pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+        contains_match = any(term in text.casefold() for term in feature_contains)
+        matched = _matches_mode(
+            pattern_match=pattern_match,
+            contains_match=contains_match,
+            match_mode=template.features.match_mode,
+        )
         if matched and text:
             feature_titles.append(text)
 
@@ -222,6 +259,8 @@ def _extract_prd_scenarios(
     feature_patterns = _compile_patterns(template.features.patterns)
     scenario_patterns = _compile_patterns(template.scenarios.patterns)
     priority_patterns = _compile_patterns(template.priorities.patterns)
+    feature_contains = _compile_contains(template.features.contains)
+    scenario_contains = _compile_contains(template.scenarios.contains)
     exclude = {value.casefold() for value in template.features.exclude}
     step_keywords = tuple(
         keyword.casefold() for keyword in template.scenarios.step_keywords
@@ -235,10 +274,21 @@ def _extract_prd_scenarios(
             return False
         if text.casefold() in exclude:
             return False
-        return any(pattern.match(text) for pattern in feature_patterns)
+        pattern_match = any(pattern.match(text) for pattern in feature_patterns)
+        contains_match = any(term in text.casefold() for term in feature_contains)
+        return _matches_mode(
+            pattern_match=pattern_match,
+            contains_match=contains_match,
+            match_mode=template.features.match_mode,
+        )
 
     def extract_scenario_title(level: int, text: str) -> str | None:
         if level not in scenario_levels:
+            return None
+        contains_match = any(term in text.casefold() for term in scenario_contains)
+        if template.scenarios.match_mode == "contains" and not contains_match:
+            return None
+        if template.scenarios.match_mode == "all" and not contains_match:
             return None
         for pattern in scenario_patterns:
             match = pattern.match(text)
@@ -246,6 +296,10 @@ def _extract_prd_scenarios(
                 continue
             title = match.groupdict().get("title", "").strip()
             return title or "Scenario"
+        if template.scenarios.match_mode in {"patterns", "all"}:
+            return None
+        if contains_match:
+            return "Scenario"
         return None
 
     def is_step_line(text: str) -> bool:

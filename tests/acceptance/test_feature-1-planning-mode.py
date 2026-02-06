@@ -369,11 +369,15 @@ features:
   heading_level: 2
   patterns:
     - "Epic: {title}"
+  contains: []
+  match_mode: "any"
 
 scenarios:
   heading_level: [3]
   patterns:
     - "AC: {title}"
+  contains: []
+  match_mode: "any"
 
 priorities:
   patterns:
