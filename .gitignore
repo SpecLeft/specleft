@@ -9,6 +9,7 @@ examples/tests/
 archives/
 .licenses/
 .specleft/results
+PLAN.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
