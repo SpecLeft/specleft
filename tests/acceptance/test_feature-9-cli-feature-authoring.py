@@ -61,7 +61,7 @@ def test_create_feature_file_from_cli(
     with specleft.step("And a history entry is recorded for feature creation"):
         entries = load_feature_history("cli-history")
         assert entries
-        assert entries[-1]["action"] == "feature_created"
+        assert entries[-1]["action"] == "feature-created"
 
     with specleft.step(
         "Then a new feature markdown file is created with a scenario tag window"
@@ -168,7 +168,7 @@ def test_append_scenario_to_feature_file(
     with specleft.step("And a history entry is recorded for the scenario add"):
         entries = load_feature_history("cli-history")
         assert entries
-        assert entries[-1]["action"] == "scenario_added"
+        assert entries[-1]["action"] == "scenario-added"
 
     with specleft.step("Then the scenario is appended within the tag window"):
         content = Path("features/feature-cli-history.md").read_text()
@@ -300,7 +300,7 @@ def test_reject_skeleton_generation_without_steps(
 
     with specleft.step("And no history entry is recorded"):
         entries = load_feature_history("cli-history")
-        assert not any(entry["action"] == "scenario_added" for entry in entries)
+        assert not any(entry["action"] == "scenario-added" for entry in entries)
 
     with specleft.step(
         "Then the command reports that steps are required for skeleton generation"
@@ -357,7 +357,7 @@ def test_preview_test_content_for_a_scenario(
     with specleft.step("And a history entry is recorded for the scenario add"):
         entries = load_feature_history("cli-history")
         assert entries
-        assert entries[-1]["action"] == "scenario_added"
+        assert entries[-1]["action"] == "scenario-added"
 
     with specleft.step("Then the generated test preview is printed to stdout"):
         assert "Test preview:" in result.output

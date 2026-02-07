@@ -19,12 +19,12 @@ class TestHistory:
 
         entries = log_feature_event(
             "feature-cli-authoring",
-            "feature_created",
+            "feature-created",
             {"title": "CLI Feature Authoring"},
         )
 
         assert len(entries) == 1
-        assert entries[0]["action"] == "feature_created"
+        assert entries[0]["action"] == "feature-created"
 
         loaded = load_feature_history("feature-cli-authoring")
         assert len(loaded) == 1

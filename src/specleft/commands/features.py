@@ -767,7 +767,7 @@ def features_add(
     if result.success and not dry_run:
         log_feature_event(
             feature_id,
-            "feature_created",
+            "feature-created",
             {"title": title, "priority": priority, "description": description},
         )
 
@@ -971,7 +971,7 @@ def features_add_scenario(
     if result.success and not dry_run:
         log_feature_event(
             feature_id,
-            "scenario_added",
+            "scenario-added",
             {
                 "scenario_id": scenario_id,
                 "title": title,

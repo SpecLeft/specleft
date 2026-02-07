@@ -124,7 +124,7 @@ class TestFeaturesAddScenarioCommand:
             assert result.exit_code == 0, result.output
             entries = load_feature_history("cli-history")
             assert entries
-            assert entries[-1]["action"] == "scenario_added"
+            assert entries[-1]["action"] == "scenario-added"
 
     def test_add_scenario_skeleton_requires_steps(self) -> None:
         runner = CliRunner()
