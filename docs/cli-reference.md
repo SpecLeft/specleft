@@ -174,6 +174,19 @@ Options:
   --output PATH         Output file for badge format
 ```
 
+## Guide
+
+### `specleft guide`
+
+Display the SpecLeft workflow guide.
+
+```bash
+specleft guide [OPTIONS]
+
+Options:
+  --format [table|json] Output format (default: table)
+```
+
 ## Enforce
 
 ### `specleft enforce`

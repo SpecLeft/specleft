@@ -13,6 +13,7 @@ from specleft.commands import (
     doctor,
     enforce,
     features,
+    guide,
     init,
     license_group,
     next_command,
@@ -45,6 +46,7 @@ cli.add_command(init)
 cli.add_command(contract)
 cli.add_command(enforce)
 cli.add_command(license_group)
+cli.add_command(guide)
 
 
 __all__ = ["cli"]

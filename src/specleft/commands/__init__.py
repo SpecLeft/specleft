@@ -10,6 +10,7 @@ from specleft.commands.coverage import coverage
 from specleft.commands.doctor import doctor
 from specleft.commands.enforce import enforce
 from specleft.commands.features import features
+from specleft.commands.guide import guide
 from specleft.commands.init import init
 from specleft.commands.license import license_group
 from specleft.commands.next import next_command
@@ -23,6 +24,7 @@ __all__ = [
     "doctor",
     "enforce",
     "features",
+    "guide",
     "init",
     "license_group",
     "next_command",
