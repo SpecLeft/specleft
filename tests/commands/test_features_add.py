@@ -305,3 +305,136 @@ class TestFeaturesAddScenarioCommand:
             assert result.exit_code == 0, result.output
             test_path = Path("tests/test_cli_history.py")
             assert test_path.exists()
+
+    def test_add_scenario_add_test_stub_respects_tests_dir(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add",
+                    "--id",
+                    "cli-history",
+                    "--title",
+                    "CLI History",
+                ],
+            )
+
+            result = runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add-scenario",
+                    "--feature",
+                    "cli-history",
+                    "--title",
+                    "Stub scenario",
+                    "--add-test",
+                    "stub",
+                    "--tests-dir",
+                    "custom_tests",
+                ],
+            )
+            assert result.exit_code == 0, result.output
+            test_path = Path("custom_tests/test_cli_history.py")
+            assert test_path.exists()
+
+    def test_add_scenario_add_test_stub_rejects_tests_file_path(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add",
+                    "--id",
+                    "cli-history",
+                    "--title",
+                    "CLI History",
+                ],
+            )
+
+            result = runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add-scenario",
+                    "--feature",
+                    "cli-history",
+                    "--title",
+                    "Stub scenario",
+                    "--add-test",
+                    "stub",
+                    "--tests-dir",
+                    "tests/test_cli_history.py",
+                ],
+            )
+            assert result.exit_code == 2, result.output
+            assert "Tests directory must be a directory path" in result.output
+
+    def test_add_scenario_interactive_accepts_tests_dir_prompt(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add",
+                    "--id",
+                    "cli-history",
+                    "--title",
+                    "CLI History",
+                ],
+            )
+
+            result = runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add-scenario",
+                    "--feature",
+                    "cli-history",
+                    "--title",
+                    "Add scenario",
+                    "--step",
+                    "Given a scenario",
+                ],
+                input="y\nmy_tests\n",
+            )
+            assert result.exit_code == 0, result.output
+            test_path = Path("my_tests/test_cli_history.py")
+            assert test_path.exists()
+
+    def test_add_scenario_interactive_accepts_default_tests_dir(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add",
+                    "--id",
+                    "cli-history",
+                    "--title",
+                    "CLI History",
+                ],
+            )
+
+            result = runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add-scenario",
+                    "--feature",
+                    "cli-history",
+                    "--title",
+                    "Add scenario",
+                    "--step",
+                    "Given a scenario",
+                ],
+                input="y\n\n",
+            )
+            assert result.exit_code == 0, result.output
+            test_path = Path("tests/test_cli_history.py")
+            assert test_path.exists()

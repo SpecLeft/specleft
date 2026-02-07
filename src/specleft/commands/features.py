@@ -152,6 +152,23 @@ def _build_feature_test_path(feature_id: str, tests_dir: Path | None = None) -> 
     return base_dir / f"test_{to_snake_case(feature_id)}.py"
 
 
+def _parse_tests_dir(tests_dir: str | Path | None) -> Path | None:
+    if not tests_dir:
+        return None
+    path = tests_dir if isinstance(tests_dir, Path) else Path(tests_dir)
+    if path.suffix == ".py":
+        raise click.BadParameter(
+            "Tests directory must be a directory path, not a file path."
+        )
+    return path
+
+
+def _normalize_tests_dir(
+    _ctx: click.Context | None, _param: click.Parameter | None, value: Path | None
+) -> Path | None:
+    return _parse_tests_dir(value)
+
+
 def _build_stub_test_method(feature_id: str, scenario: ScenarioSpec) -> str:
     feature = FeatureSpec(feature_id=feature_id, name=feature_id)
     return generate_test_stub(feature=feature, scenario=scenario).rstrip()
@@ -803,6 +820,14 @@ def features_add(
     default="features",
     help="Path to features directory.",
 )
+@click.option(
+    "--tests-dir",
+    "tests_dir",
+    default=None,
+    type=click.Path(path_type=Path),
+    callback=_normalize_tests_dir,
+    help="Directory for generated test files (default: tests).",
+)
 @click.option("--dry-run", is_flag=True, help="Preview without writing files.")
 @click.option(
     "--format",
@@ -832,6 +857,7 @@ def features_add_scenario(
     priority: str | None,
     tags: str | None,
     features_dir: str,
+    tests_dir: Path | None,
     dry_run: bool,
     format_type: str,
     interactive: bool,
@@ -1006,7 +1032,7 @@ def features_add_scenario(
             generated_test = _build_skeleton_test_method(feature_id, scenario_spec)
 
     if add_test:
-        test_path = _build_feature_test_path(feature_id)
+        test_path = _build_feature_test_path(feature_id, tests_dir)
         if not generated_test:
             if add_test.lower() == "stub":
                 generated_test = _build_stub_test_method(feature_id, scenario_spec)
@@ -1024,7 +1050,19 @@ def features_add_scenario(
             click.secho(f"Warning: {error}", fg="yellow")
     elif format_type == "table" and not dry_run and not preview_test:
         if click.confirm("Generate test skeleton?", default=True):
-            test_path = _build_feature_test_path(feature_id)
+            default_tests_dir = tests_dir or Path("tests")
+            try:
+                selected_tests_dir = _parse_tests_dir(
+                    click.prompt(
+                        "Test output directory",
+                        default=default_tests_dir,
+                        type=click.Path(path_type=Path),
+                    )
+                )
+            except click.BadParameter as exc:
+                click.secho(str(exc), fg="red", err=True)
+                sys.exit(1)
+            test_path = _build_feature_test_path(feature_id, selected_tests_dir)
             generated_test = _build_skeleton_test_method(feature_id, scenario_spec)
             header = _build_test_header("skeleton")
             created, error = _write_or_append_test(

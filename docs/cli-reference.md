@@ -72,6 +72,7 @@ Options:
   --priority [critical|high|medium|low]  Scenario priority
   --tags TEXT             Comma-separated tags
   --dir PATH              Path to features directory (default: features)
+  --tests-dir PATH         Directory for generated test files (default: tests)
   --dry-run               Preview without writing files
   --format [table|json]   Output format (default: table)
   --interactive           Use guided prompts (requires TTY)
