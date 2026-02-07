@@ -34,6 +34,16 @@ def ensure_specs_tree(create_specs_tree: Path) -> None:
     _ = create_specs_tree
 
 
+@pytest.fixture(autouse=True)
+def configure_pytest_asyncio(pytester: Pytester) -> None:
+    """Configure pytest-asyncio defaults for nested test runs."""
+    pytester.makeini("""
+[pytest]
+asyncio_mode = auto
+asyncio_default_fixture_loop_scope = function
+""")
+
+
 class TestPytestConfigure:
     """Tests for pytest_configure hook."""
 
