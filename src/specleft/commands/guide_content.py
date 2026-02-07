@@ -85,7 +85,7 @@ COMMANDS = {
         "description": "Generate test stubs from specs",
     },
     "features_validate": {
-        "usage": "specleft features validate [--format json] ",
+        "usage": "specleft features validate [--format json]",
         "description": "Validate feature spec syntax",
     },
 }
