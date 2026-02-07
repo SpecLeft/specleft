@@ -35,6 +35,9 @@ specleft contract --format json
 
 See [AI_AGENTS.md](AI_AGENTS.md) for integration guidance and scenarios on when to use SpecLeft and when not to.
 
+SpecLeft also includes CLI commands to create feature specs and append scenarios directly from the terminal.
+See `specleft features add` and `specleft features add-scenario` in `docs/cli-reference.md`.
+
 
 ## What problem does SpecLeft solve?
 

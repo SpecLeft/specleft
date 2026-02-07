@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -13,9 +14,27 @@ from typing import Any, cast
 
 import click
 
-from specleft.schema import SpecsConfig
+from specleft.commands.test import generate_test_stub
+from specleft.schema import (
+    FeatureSpec,
+    Priority,
+    ScenarioSpec,
+    SpecStep,
+    SpecsConfig,
+    StepType,
+)
+from specleft.utils.feature_writer import (
+    add_scenario_to_feature,
+    create_feature_file,
+    generate_scenario_id,
+    validate_feature_id,
+    validate_scenario_id,
+    validate_step_keywords,
+)
+from specleft.utils.history import log_feature_event
 from specleft.utils.structure import warn_if_nested_structure
 from specleft.utils.test_discovery import TestDiscoveryResult, discover_pytest_tests
+from specleft.utils.text import to_snake_case
 from specleft.validator import SpecStats
 
 
@@ -100,6 +119,231 @@ def _build_features_stats_json(
         "specs": specs_payload,
         "coverage": coverage_payload,
     }
+
+
+def _ensure_interactive(interactive: bool) -> None:
+    if interactive and not sys.stdin.isatty():
+        click.secho(
+            "Interactive mode requires a terminal. Use explicit options instead.",
+            fg="red",
+            err=True,
+        )
+        sys.exit(1)
+
+
+def _parse_tags(tags: str | None) -> list[str] | None:
+    if not tags:
+        return None
+    cleaned = [tag.strip() for tag in tags.split(",") if tag.strip()]
+    return cleaned or None
+
+
+def _normalize_priority(value: str | None) -> Priority | None:
+    if not value:
+        return None
+    try:
+        return Priority(value.lower())
+    except ValueError:
+        return None
+
+
+def _build_feature_test_path(feature_id: str, tests_dir: Path | None = None) -> Path:
+    base_dir = tests_dir or Path("tests")
+    return base_dir / f"test_{to_snake_case(feature_id)}.py"
+
+
+def _parse_tests_dir(tests_dir: str | Path | None) -> Path | None:
+    if not tests_dir:
+        return None
+    path = tests_dir if isinstance(tests_dir, Path) else Path(tests_dir)
+    if path.suffix == ".py":
+        raise click.BadParameter(
+            "Tests directory must be a directory path, not a file path."
+        )
+    return path
+
+
+def _normalize_tests_dir(
+    _ctx: click.Context | None, _param: click.Parameter | None, value: Path | None
+) -> Path | None:
+    return _parse_tests_dir(value)
+
+
+def _build_stub_test_method(feature_id: str, scenario: ScenarioSpec) -> str:
+    feature = FeatureSpec(feature_id=feature_id, name=feature_id)
+    return generate_test_stub(feature=feature, scenario=scenario).rstrip()
+
+
+def _build_skeleton_test_method(feature_id: str, scenario: ScenarioSpec) -> str:
+    priority = scenario.priority or Priority.MEDIUM
+    doc_lines = [scenario.name, "", f"Priority: {priority.value}"]
+    if scenario.tags:
+        doc_lines.append(f"Tags: {', '.join(scenario.tags)}")
+    docstring = "\n".join(doc_lines)
+
+    lines = [
+        "@specleft(",
+        f'    feature_id="{feature_id}",',
+        f'    scenario_id="{scenario.scenario_id}",',
+        "    skip=True,",
+        '    reason="Skeleton test - not yet implemented",',
+        ")",
+        f"def test_{to_snake_case(scenario.scenario_id)}():",
+        f'    """{docstring}\n    """',
+    ]
+
+    for step in scenario.steps:
+        description = f"{step.type.value.capitalize()} {step.description}"
+        prefix = "f" if "{" in description or "}" in description else ""
+        lines.append(f"    with specleft.step({prefix}{description!r}):")
+        lines.append("        pass # TODO: Implement step")
+        lines.append("")
+
+    if not scenario.steps:
+        lines.append("    pass  # TODO: Implement test")
+
+    return "\n".join(lines).rstrip()
+
+
+def _write_or_append_test(
+    *,
+    test_path: Path,
+    method_content: str,
+    header: str,
+    scenario_id: str,
+    dry_run: bool,
+) -> tuple[bool, str | None]:
+    if test_path.exists():
+        content = test_path.read_text()
+        if f'scenario_id="{scenario_id}"' in content:
+            return False, "Test already exists for this scenario"
+        if dry_run:
+            return True, None
+        updated = content.rstrip() + "\n\n" + method_content.rstrip() + "\n"
+        test_path.write_text(updated)
+        return True, None
+
+    if dry_run:
+        return True, None
+
+    test_path.parent.mkdir(parents=True, exist_ok=True)
+    content = header.rstrip() + "\n\n" + method_content.rstrip() + "\n"
+    test_path.write_text(content)
+    return True, None
+
+
+def _build_test_header(kind: str) -> str:
+    if kind == "skeleton":
+        title = "skeleton"
+        regen = "specleft test skeleton"
+    else:
+        title = "stub"
+        regen = "specleft test stub"
+    return (
+        '"""\n'
+        f"Auto-generated {title} tests from Markdown specs.\n"
+        f"Regenerate using: {regen}\n\n"
+        "Generated by SpecLeft - https://github.com/SpecLeft/specleft\n"
+        '"""\n\n'
+        "import pytest\n\n"
+        "from specleft import specleft\n"
+    )
+
+
+def _parse_steps(steps: tuple[str, ...]) -> list[str]:
+    return [step for step in steps if step.strip()]
+
+
+def _build_scenario_spec(
+    *,
+    scenario_id: str,
+    title: str,
+    priority: Priority | None,
+    tags: list[str] | None,
+    steps: list[str],
+) -> ScenarioSpec:
+    parsed_steps: list[SpecStep] = []
+    pattern = r"^[-*]?\s*(?:\*\*)?(Given|When|Then|And|But)(?:\*\*)?\s+(.+)$"
+    for raw in steps:
+        cleaned = raw.strip()
+        match = re.match(pattern, cleaned, re.IGNORECASE)
+        if match:
+            step_type = StepType(match.group(1).lower())
+            description = match.group(2).strip()
+        else:
+            step_type = StepType.GIVEN
+            description = cleaned.lstrip("-").strip()
+        parsed_steps.append(SpecStep(type=step_type, description=description))
+
+    scenario_priority = priority or Priority.MEDIUM
+    return ScenarioSpec(
+        scenario_id=scenario_id,
+        name=title,
+        priority=scenario_priority,
+        priority_raw=priority,
+        tags=tags or [],
+        steps=parsed_steps,
+    )
+
+
+def _print_feature_add_result(
+    *,
+    result: dict[str, object],
+    format_type: str,
+    dry_run: bool,
+) -> None:
+    if format_type == "json":
+        click.echo(json.dumps(result, indent=2))
+        return
+
+    if result.get("success") is False:
+        click.secho(f"Error: {result.get('error')}", fg="red", err=True)
+        return
+
+    status = "Would create" if dry_run else "Created"
+    click.secho(f"{status} feature file:", fg="green")
+    click.echo(f"  {result.get('file_path')}")
+    if result.get("feature_id"):
+        click.echo(f"  Feature ID: {result.get('feature_id')}")
+    if result.get("title"):
+        click.echo(f"  Title: {result.get('title')}")
+    if result.get("priority"):
+        click.echo(f"  Priority: {result.get('priority')}")
+    click.echo("")
+
+
+def _print_scenario_add_result(
+    *,
+    result: dict[str, object],
+    format_type: str,
+    dry_run: bool,
+    warnings: list[str],
+) -> None:
+    if format_type == "json":
+        click.echo(json.dumps(result, indent=2))
+        return
+
+    if result.get("success") is False:
+        click.secho(f"Error: {result.get('error')}", fg="red", err=True)
+        return
+
+    status = "Would append" if dry_run else "Appended"
+    click.secho(f"{status} scenario:", fg="green")
+    click.echo(f"  {result.get('file_path')}")
+    click.echo(f"  Feature ID: {result.get('feature_id')}")
+    click.echo(f"  Scenario ID: {result.get('scenario_id')}")
+    if result.get("title"):
+        click.echo(f"  Title: {result.get('title')}")
+    if result.get("priority"):
+        click.echo(f"  Priority: {result.get('priority')}")
+    if result.get("steps_count") is not None:
+        click.echo(f"  Steps: {result.get('steps_count')}")
+    if warnings:
+        click.echo("")
+        click.secho("Warnings:", fg="yellow")
+        for warning in warnings:
+            click.echo(f"  - {warning}")
+    click.echo("")
 
 
 @click.group()
@@ -441,3 +685,406 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
         click.echo("  No scenarios defined in specs.")
     else:
         click.echo("  Cannot calculate coverage without specs.")
+
+
+@features.command("add")
+@click.option("--id", "feature_id", help="Feature ID (lowercase, dashes).")
+@click.option("--title", "title", help="Feature title.")
+@click.option(
+    "--priority",
+    "priority",
+    type=click.Choice([p.value for p in Priority], case_sensitive=False),
+    default="medium",
+    show_default=True,
+    help="Feature priority.",
+)
+@click.option("--description", "description", help="Feature description.")
+@click.option(
+    "--dir",
+    "features_dir",
+    default="features",
+    help="Path to features directory.",
+)
+@click.option("--dry-run", is_flag=True, help="Preview without writing files.")
+@click.option(
+    "--format",
+    "format_type",
+    type=click.Choice(["table", "json"], case_sensitive=False),
+    default="table",
+    show_default=True,
+    help="Output format.",
+)
+@click.option("--interactive", is_flag=True, help="Use guided prompts.")
+def features_add(
+    feature_id: str | None,
+    title: str | None,
+    priority: str,
+    description: str | None,
+    features_dir: str,
+    dry_run: bool,
+    format_type: str,
+    interactive: bool,
+) -> None:
+    """Create a new feature markdown file."""
+    _ensure_interactive(interactive)
+
+    if interactive:
+        feature_id = click.prompt("Feature ID", type=str).strip()
+        title = click.prompt("Feature title", type=str).strip()
+        priority = click.prompt(
+            "Priority",
+            type=click.Choice([p.value for p in Priority], case_sensitive=False),
+            default=priority,
+            show_default=True,
+        )
+        description = click.prompt("Description", default="", show_default=False)
+        description = description.strip() if description else None
+
+    if not feature_id or not title:
+        click.secho(
+            "Feature ID and title are required unless --interactive is used.",
+            fg="red",
+            err=True,
+        )
+        sys.exit(1)
+
+    try:
+        validate_feature_id(feature_id)
+    except ValueError as exc:
+        payload = {
+            "success": False,
+            "action": "add",
+            "error": str(exc),
+        }
+        _print_feature_add_result(
+            result=payload, format_type=format_type, dry_run=dry_run
+        )
+        sys.exit(1)
+
+    result = create_feature_file(
+        features_dir=Path(features_dir),
+        feature_id=feature_id,
+        title=title,
+        priority=priority,
+        description=description,
+        dry_run=dry_run,
+    )
+
+    payload = {
+        "success": result.success,
+        "action": "add",
+        "feature_id": feature_id,
+        "title": title,
+        "priority": priority,
+        "file_path": str(result.file_path),
+        "dry_run": dry_run,
+        "error": result.error,
+    }
+
+    if result.success and not dry_run:
+        log_feature_event(
+            feature_id,
+            "feature-created",
+            {"title": title, "priority": priority, "description": description},
+        )
+
+    _print_feature_add_result(result=payload, format_type=format_type, dry_run=dry_run)
+    if not result.success:
+        sys.exit(1)
+
+
+@features.command("add-scenario")
+@click.option(
+    "--feature",
+    "feature_id",
+    help="Feature ID to append scenario to.",
+)
+@click.option("--title", "title", help="Scenario title.")
+@click.option("--id", "scenario_id", help="Scenario ID (optional).")
+@click.option(
+    "--step",
+    "steps",
+    multiple=True,
+    help="Scenario step (repeatable).",
+)
+@click.option(
+    "--priority",
+    "priority",
+    type=click.Choice([p.value for p in Priority], case_sensitive=False),
+    help="Scenario priority.",
+)
+@click.option("--tags", "tags", help="Comma-separated tags.")
+@click.option(
+    "--dir",
+    "features_dir",
+    default="features",
+    help="Path to features directory.",
+)
+@click.option(
+    "--tests-dir",
+    "tests_dir",
+    default=None,
+    type=click.Path(path_type=Path),
+    callback=_normalize_tests_dir,
+    help="Directory for generated test files (default: tests).",
+)
+@click.option("--dry-run", is_flag=True, help="Preview without writing files.")
+@click.option(
+    "--format",
+    "format_type",
+    type=click.Choice(["table", "json"], case_sensitive=False),
+    default="table",
+    show_default=True,
+    help="Output format.",
+)
+@click.option("--interactive", is_flag=True, help="Use guided prompts.")
+@click.option(
+    "--add-test",
+    "add_test",
+    type=click.Choice(["stub", "skeleton"], case_sensitive=False),
+    help="Generate a test stub or skeleton.",
+)
+@click.option(
+    "--preview-test",
+    is_flag=True,
+    help="Print the generated test content.",
+)
+def features_add_scenario(
+    feature_id: str | None,
+    title: str | None,
+    scenario_id: str | None,
+    steps: tuple[str, ...],
+    priority: str | None,
+    tags: str | None,
+    features_dir: str,
+    tests_dir: Path | None,
+    dry_run: bool,
+    format_type: str,
+    interactive: bool,
+    add_test: str | None,
+    preview_test: bool,
+) -> None:
+    """Append a scenario to an existing feature file."""
+    _ensure_interactive(interactive)
+
+    if interactive:
+        feature_id = click.prompt("Feature ID", type=str).strip()
+        title = click.prompt("Scenario title", type=str).strip()
+        scenario_id_input = click.prompt("Scenario ID", default="", show_default=False)
+        scenario_id = scenario_id_input.strip() or None
+        priority = click.prompt(
+            "Priority",
+            type=click.Choice([p.value for p in Priority], case_sensitive=False),
+            default=priority or "medium",
+            show_default=True,
+        )
+        tags_input = click.prompt("Tags", default="", show_default=False)
+        tags = tags_input.strip() or None
+        steps_list: list[str] = []
+        click.echo("Enter steps (blank line to finish):")
+        while True:
+            step = click.prompt("Step", default="", show_default=False)
+            if not step.strip():
+                break
+            steps_list.append(step)
+        steps = tuple(steps_list)
+
+    if not feature_id or not title:
+        click.secho(
+            "Feature ID and scenario title are required unless --interactive is used.",
+            fg="red",
+            err=True,
+        )
+        sys.exit(1)
+
+    try:
+        validate_feature_id(feature_id)
+    except ValueError as exc:
+        payload = {
+            "success": False,
+            "action": "add_scenario",
+            "feature_id": feature_id,
+            "error": str(exc),
+        }
+        _print_scenario_add_result(
+            result=payload,
+            format_type=format_type,
+            dry_run=dry_run,
+            warnings=[],
+        )
+        sys.exit(1)
+
+    steps_list = _parse_steps(steps)
+    warnings = validate_step_keywords(steps_list) if steps_list else []
+    scenario_id = scenario_id or generate_scenario_id(title)
+
+    try:
+        validate_scenario_id(scenario_id)
+    except ValueError as exc:
+        payload = {
+            "success": False,
+            "action": "add_scenario",
+            "feature_id": feature_id,
+            "scenario_id": scenario_id,
+            "error": str(exc),
+        }
+        _print_scenario_add_result(
+            result=payload,
+            format_type=format_type,
+            dry_run=dry_run,
+            warnings=warnings,
+        )
+        sys.exit(1)
+
+    if add_test and add_test.lower() == "skeleton" and not steps_list:
+        payload = {
+            "success": False,
+            "action": "add_scenario",
+            "feature_id": feature_id,
+            "scenario_id": scenario_id,
+            "error": (
+                "No steps found for test skeleton. Add steps to scenario or select "
+                "'--add-test stub'"
+            ),
+        }
+        _print_scenario_add_result(
+            result=payload,
+            format_type=format_type,
+            dry_run=dry_run,
+            warnings=warnings,
+        )
+        sys.exit(1)
+
+    tags_list = _parse_tags(tags)
+    priority_value = _normalize_priority(priority)
+    result = add_scenario_to_feature(
+        features_dir=Path(features_dir),
+        feature_id=feature_id,
+        title=title,
+        scenario_id=scenario_id,
+        priority=priority,
+        tags=tags_list,
+        steps=steps_list,
+        dry_run=dry_run,
+    )
+
+    payload = {
+        "success": result.success,
+        "action": "add_scenario",
+        "feature_id": feature_id,
+        "scenario_id": scenario_id,
+        "title": title,
+        "priority": priority_value.value if priority_value else None,
+        "file_path": str(result.file_path),
+        "steps_count": len(steps_list),
+        "dry_run": dry_run,
+        "error": result.error,
+    }
+
+    if not result.success:
+        payload["suggestion"] = (
+            f"Run 'specleft features add --id {feature_id} --title "
+            f"\"{feature_id.replace('-', ' ').title()}\"' first"
+        )
+        _print_scenario_add_result(
+            result=payload,
+            format_type=format_type,
+            dry_run=dry_run,
+            warnings=warnings,
+        )
+        sys.exit(1)
+
+    if result.success and not dry_run:
+        log_feature_event(
+            feature_id,
+            "scenario-added",
+            {
+                "scenario_id": scenario_id,
+                "title": title,
+                "priority": priority_value.value if priority_value else None,
+                "tags": tags_list or [],
+                "steps": steps_list,
+            },
+        )
+
+    scenario_spec = _build_scenario_spec(
+        scenario_id=scenario_id,
+        title=title,
+        priority=priority_value,
+        tags=tags_list,
+        steps=steps_list,
+    )
+
+    generated_test = None
+    preview_kind: str | None = None
+    if preview_test:
+        if add_test:
+            preview_kind = add_test.lower()
+        elif steps_list:
+            preview_kind = "skeleton"
+        else:
+            preview_kind = "stub"
+
+    if preview_kind:
+        if preview_kind == "stub":
+            generated_test = _build_stub_test_method(feature_id, scenario_spec)
+        else:
+            generated_test = _build_skeleton_test_method(feature_id, scenario_spec)
+
+    if add_test:
+        test_path = _build_feature_test_path(feature_id, tests_dir)
+        if not generated_test:
+            if add_test.lower() == "stub":
+                generated_test = _build_stub_test_method(feature_id, scenario_spec)
+            else:
+                generated_test = _build_skeleton_test_method(feature_id, scenario_spec)
+        header = _build_test_header(add_test.lower())
+        created, error = _write_or_append_test(
+            test_path=test_path,
+            method_content=generated_test,
+            header=header,
+            scenario_id=scenario_id,
+            dry_run=dry_run,
+        )
+        if not created and error:
+            click.secho(f"Warning: {error}", fg="yellow")
+    elif format_type == "table" and not dry_run and not preview_test:
+        if click.confirm("Generate test skeleton?", default=True):
+            default_tests_dir = tests_dir or Path("tests")
+            try:
+                selected_tests_dir = _parse_tests_dir(
+                    click.prompt(
+                        "Test output directory",
+                        default=default_tests_dir,
+                        type=click.Path(path_type=Path),
+                    )
+                )
+            except click.BadParameter as exc:
+                click.secho(str(exc), fg="red", err=True)
+                sys.exit(1)
+            test_path = _build_feature_test_path(feature_id, selected_tests_dir)
+            generated_test = _build_skeleton_test_method(feature_id, scenario_spec)
+            header = _build_test_header("skeleton")
+            created, error = _write_or_append_test(
+                test_path=test_path,
+                method_content=generated_test,
+                header=header,
+                scenario_id=scenario_id,
+                dry_run=False,
+            )
+            if not created and error:
+                click.secho(f"Warning: {error}", fg="yellow")
+
+    if preview_test and generated_test:
+        if format_type == "json":
+            payload["test_preview"] = generated_test
+        else:
+            click.echo("\nTest preview:\n")
+            click.echo(generated_test)
+
+    _print_scenario_add_result(
+        result=payload,
+        format_type=format_type,
+        dry_run=dry_run,
+        warnings=warnings,
+    )

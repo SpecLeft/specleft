@@ -43,6 +43,7 @@ from fixtures.feature_8 import (
     feature_8_contract_minimal,
     feature_8_contract_test,
 )
+from fixtures.feature_9 import feature_9_cli_authoring
 
 __all__ = [
     # Common
@@ -79,4 +80,6 @@ __all__ = [
     "feature_8_contract",
     "feature_8_contract_minimal",
     "feature_8_contract_test",
+    # Feature 9
+    "feature_9_cli_authoring",
 ]

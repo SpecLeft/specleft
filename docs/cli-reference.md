@@ -38,6 +38,47 @@ Options:
   --dir PATH            Path to features directory (default: features)
   -t, --tests-dir PATH  Path to tests directory (default: tests)
   --format [table|json] Output format (default: table)
+
+### `specleft features add`
+
+Create a new feature markdown file.
+
+```bash
+specleft features add [OPTIONS]
+
+Options:
+  --id TEXT               Feature ID (lowercase, dashes)
+  --title TEXT            Feature title
+  --priority [critical|high|medium|low]  Feature priority (default: medium)
+  --description TEXT      Feature description
+  --dir PATH              Path to features directory (default: features)
+  --dry-run               Preview without writing files
+  --format [table|json]   Output format (default: table)
+  --interactive           Use guided prompts (requires TTY)
+```
+
+### `specleft features add-scenario`
+
+Append a scenario to an existing feature file.
+
+```bash
+specleft features add-scenario [OPTIONS]
+
+Options:
+  --feature TEXT          Feature ID to append scenario to
+  --title TEXT            Scenario title
+  --id TEXT               Scenario ID (optional)
+  --step TEXT             Scenario step (repeatable)
+  --priority [critical|high|medium|low]  Scenario priority
+  --tags TEXT             Comma-separated tags
+  --dir PATH              Path to features directory (default: features)
+  --tests-dir PATH         Directory for generated test files (default: tests)
+  --dry-run               Preview without writing files
+  --format [table|json]   Output format (default: table)
+  --interactive           Use guided prompts (requires TTY)
+  --add-test [stub|skeleton]  Generate a test stub or skeleton
+  --preview-test          Print the generated test content
+```
 ```
 
 ## Contract
