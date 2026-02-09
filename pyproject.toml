@@ -7,7 +7,7 @@ specleft = ["py.typed", "templates/*.jinja2"]
 
 [project]
 name = "specleft"
-version = "0.1.2"
+version = "0.2.0"
 description = "A planning-first CLI for AI coding agents to externalize intent before writing code, with optional CI enforcement for Python projects."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -54,7 +54,8 @@ keywords=[
     "pytest",
     "plugin",
     "ci",
-    "feature-specs"
+    "feature-specs",
+    "sdd
 ]
 [project.urls]
 Homepage = "https://github.com/SpecLeft/specleft"
