@@ -67,7 +67,7 @@ SpecLeft closes that gap by making feature intent **visible, executable, and ver
 | Have Jira/ADO stories to track | ✅ Yes | Specs mirror story structure |
 
 **Quick Decision:**
-- Do you have features/stories/scenarios to track? → **Use SpecLeft**
+- Do you have feature stories/scenarios to track? → **Use SpecLeft**
 - Are you just writing ad-hoc unit tests? → **Use plain pytest**
 
 ---
