@@ -55,8 +55,7 @@ def _init_example_content() -> dict[str, str]:
             owner: dev-team
             component: identity
             ---
-            """).strip()
-        + "\n",
+            """).strip() + "\n",
     }
 
 

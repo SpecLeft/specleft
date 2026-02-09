@@ -21,7 +21,6 @@ from specleft.license.repo_identity import detect_repo_identity
 from specleft.utils.messaging import print_support_footer
 from specleft.utils.specs_dir import resolve_specs_dir
 
-
 DEFAULT_POLICY_PATH = Path(".specleft/policies/policy.yml")
 POLICY_DIR = Path(".specleft/policies")
 

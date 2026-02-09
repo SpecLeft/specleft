@@ -538,18 +538,15 @@ priority: medium
 # Feature: No Tags Feature
 """.strip()
         )
-        (scenario_dir / "_story.md").write_text(
-            """
+        (scenario_dir / "_story.md").write_text("""
 ---
 story_id: story
 priority: medium
 ---
 
 # Story: Story
-""".strip()
-        )
-        (scenario_dir / "no_tags.md").write_text(
-            """
+""".strip())
+        (scenario_dir / "no_tags.md").write_text("""
 ---
 scenario_id: no-tags
 priority: medium
@@ -557,8 +554,7 @@ tags: []
 ---
 
 # Scenario: No tags scenario
-""".strip()
-        )
+""".strip())
 
         pytester.makepyfile("""
             from specleft import specleft
@@ -650,33 +646,27 @@ class TestFilterBehavior:
         features_dir = pytester.path / ".specleft" / "specs"
         story_dir = features_dir / "auth" / "login"
         story_dir.mkdir(parents=True, exist_ok=True)
-        (features_dir / "auth" / "_feature.md").write_text(
-            """
+        (features_dir / "auth" / "_feature.md").write_text("""
 ---
 feature_id: auth
 ---
 
 # Feature: Auth
-""".strip()
-        )
-        (story_dir / "_story.md").write_text(
-            """
+""".strip())
+        (story_dir / "_story.md").write_text("""
 ---
 story_id: login
 ---
 
 # Story: Login
-""".strip()
-        )
-        (story_dir / "login_success.md").write_text(
-            """
+""".strip())
+        (story_dir / "login_success.md").write_text("""
 ---
 scenario_id: login-success
 ---
 
 # Scenario: Login Success
-""".strip()
-        )
+""".strip())
         pytester.makepyfile("""
             from specleft import specleft
 

@@ -285,8 +285,7 @@ class TestPlanAnalyzeMode:
             Path("prd.md").write_text(
                 "# PRD\n\n## Capability: Billing\n\n### Acceptance Criteria\n"
             )
-            Path("template.yml").write_text(
-                """
+            Path("template.yml").write_text("""
 version: "1.0"
 features:
   heading_level: 2
@@ -300,8 +299,7 @@ scenarios:
     - "Scenario: {title}"
   contains: ["acceptance"]
   match_mode: "contains"
-""".lstrip()
-            )
+""".lstrip())
 
             result = runner.invoke(
                 cli,
@@ -321,8 +319,7 @@ class TestPlanTemplateMode:
             Path("prd.md").write_text(
                 "# PRD\n\n## Epic: Billing\n\n### AC: Refund requested\n- Priority = p0\n"
             )
-            Path("template.yml").write_text(
-                """
+            Path("template.yml").write_text("""
 version: "1.0"
 
 features:
@@ -341,8 +338,7 @@ priorities:
     - "Priority = {value}"
   mapping:
     p0: critical
-""".lstrip()
-            )
+""".lstrip())
 
             result = runner.invoke(cli, ["plan", "--template", "template.yml"])
 
@@ -356,16 +352,14 @@ priorities:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path("prd.md").write_text("# PRD\n\n## Epic: Billing\n")
-            Path("template.yml").write_text(
-                """
+            Path("template.yml").write_text("""
 version: "1.0"
 
 features:
   heading_level: 2
   patterns:
     - "Epic: {title}"
-""".lstrip()
-            )
+""".lstrip())
 
             result = runner.invoke(
                 cli,

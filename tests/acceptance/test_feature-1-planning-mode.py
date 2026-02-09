@@ -210,9 +210,11 @@ def test_handle_missing_prd_gracefully(acceptance_workspace) -> None:
 
     with specleft.step("And no feature files are created"):
         # .specleft/specs/ directory should not be created
-        assert (
-            not Path(".specleft/specs").exists()
-        ), ".specleft/specs/ directory should not be created when PRD is missing"
+        assert not Path(
+            ".specleft/specs"
+        ).exists(), (
+            ".specleft/specs/ directory should not be created when PRD is missing"
+        )
 
 
 @specleft(
@@ -275,24 +277,20 @@ def test_validate_prd_template_definitions(tmp_path: Path) -> None:
     with clear errors when loading PRD templates.
     """
     invalid_heading = tmp_path / "invalid-heading.yml"
-    invalid_heading.write_text(
-        """
+    invalid_heading.write_text("""
 version: "1.0"
 features:
   heading_level: 0
-""".lstrip()
-    )
+""".lstrip())
 
     invalid_pattern = tmp_path / "invalid-pattern.yml"
-    invalid_pattern.write_text(
-        """
+    invalid_pattern.write_text("""
 version: "1.0"
 features:
   heading_level: 2
   patterns:
     - "Feature: {title"
-""".lstrip()
-    )
+""".lstrip())
 
     with specleft.step("Given a PRD template file defines headings and patterns"):
         assert invalid_heading.exists()
@@ -368,8 +366,7 @@ def test_generate_features_with_custom_prd_template() -> None:
         Path("prd.md").write_text(
             "# PRD\n\n## Epic: Billing\n\n### AC: Refund requested\n- Priority = p0\n"
         )
-        Path("template.yml").write_text(
-            """
+        Path("template.yml").write_text("""
 version: "1.0"
 
 features:
@@ -391,8 +388,7 @@ priorities:
     - "Priority = {value}"
   mapping:
     p0: critical
-""".lstrip()
-        )
+""".lstrip())
 
         with specleft.step(
             "Given a PRD template defines custom feature and scenario patterns"
