@@ -55,7 +55,7 @@ keywords=[
     "plugin",
     "ci",
     "feature-specs",
-    "sdd
+    "sdd"
 ]
 [project.urls]
 Homepage = "https://github.com/SpecLeft/specleft"
