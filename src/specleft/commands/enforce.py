@@ -55,15 +55,21 @@ def load_policy(path: str) -> SignedPolicy | None:
         return SignedPolicy.model_validate(content)
     except FileNotFoundError:
         click.echo(f"Error: Policy file not found: {path}", err=True)
-        print_support_footer(documentation_url="https://specleft.dev/docs/guides/enforcement")
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
     except yaml.YAMLError as e:
         click.echo(f"Error: Invalid YAML in policy file: {e}", err=True)
-        print_support_footer(documentation_url="https://specleft.dev/docs/guides/enforcement")
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
-        print_support_footer(documentation_url="https://specleft.dev/docs/guides/enforcement")
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
 
 
@@ -103,7 +109,9 @@ def handle_verification_failure(result: VerifyResult) -> None:
             err=True,
         )
     click.echo("", err=True)
-    print_support_footer(documentation_url="https://specleft.dev/docs/guides/enforcement")
+    print_support_footer(
+        documentation_url="https://specleft.dev/docs/guides/enforcement"
+    )
 
 
 def display_policy_status(policy: SignedPolicy) -> None:
@@ -266,7 +274,9 @@ def enforce(
             "Error: --ignore-feature-id requires Enforce policy",
             err=True,
         )
-        print_support_footer(documentation_url="https://specleft.dev/docs/guides/enforcement")
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         sys.exit(1)
 
     # Verify signature, expiry, evaluation

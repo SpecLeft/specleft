@@ -47,8 +47,8 @@ Create a new feature markdown file.
 specleft features add [OPTIONS]
 
 Options:
-  --id TEXT               Feature ID (lowercase, dashes)
-  --title TEXT            Feature title
+  --id TEXT               Feature ID (optional; defaults to a slug from the title)
+  --title TEXT            Feature title (required)
   --priority [critical|high|medium|low]  Feature priority (default: medium)
   --description TEXT      Feature description
   --dir PATH              Path to features directory (default: features)
@@ -67,7 +67,7 @@ specleft features add-scenario [OPTIONS]
 Options:
   --feature TEXT          Feature ID to append scenario to
   --title TEXT            Scenario title
-  --id TEXT               Scenario ID (optional)
+  --id TEXT               Scenario ID (optional; defaults to a slug from the title)
   --step TEXT             Scenario step (repeatable)
   --priority [critical|high|medium|low]  Scenario priority
   --tags TEXT             Comma-separated tags

@@ -41,7 +41,7 @@ def test_create_feature_file_from_cli(
     _runner, _workspace, _files = feature_9_cli_authoring
 
     with specleft.step("Given no feature file exists for the requested feature id"):
-        feature_file = Path(".specleft/specs/feature-cli-history.md")
+        feature_file = Path(".specleft/specs/cli-history.md")
         assert not feature_file.exists()
 
     with specleft.step("When specleft features add is executed with an id and title"):
@@ -87,7 +87,7 @@ def test_reject_invalid_feature_ids(
     _runner, _workspace, _files = feature_9_cli_authoring
 
     with specleft.step("Given a feature id that contains uppercase or spaces"):
-        feature_file = Path(".specleft/specs/feature-Bad-Id.md")
+        feature_file = Path(".specleft/specs/Bad-Id.md")
         assert not feature_file.exists()
 
     with specleft.step("When specleft features add is executed"):
@@ -179,7 +179,7 @@ def test_append_scenario_to_feature_file(
         assert entries[-1]["action"] == "scenario-added"
 
     with specleft.step("Then the scenario is appended within the tag window"):
-        content = Path(".specleft/specs/feature-cli-history.md").read_text()
+        content = Path(".specleft/specs/cli-history.md").read_text()
         assert "### Scenario: Append scenario" in content
 
 
@@ -197,7 +197,7 @@ def test_reject_add_scenario_when_feature_missing(
     _runner, _workspace, _files = feature_9_cli_authoring
 
     with specleft.step("Given no feature markdown file exists for the requested id"):
-        missing_path = Path(".specleft/specs/feature-missing-feature.md")
+        missing_path = Path(".specleft/specs/missing-feature.md")
         assert not missing_path.exists()
 
     with specleft.step("When specleft features add-scenario is executed"):

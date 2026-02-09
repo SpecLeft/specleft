@@ -26,6 +26,7 @@ from specleft.schema import (
 from specleft.utils.feature_writer import (
     add_scenario_to_feature,
     create_feature_file,
+    generate_feature_id,
     generate_scenario_id,
     validate_feature_id,
     validate_scenario_id,
@@ -721,8 +722,12 @@ def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -
 
 
 @features.command("add")
-@click.option("--id", "feature_id", help="Feature ID (lowercase, dashes).")
-@click.option("--title", "title", help="Feature title.")
+@click.option(
+    "--id",
+    "feature_id",
+    help="Feature ID (optional; defaults to a slug from the title).",
+)
+@click.option("--title", "title", help="Feature title (required).")
 @click.option(
     "--priority",
     "priority",
@@ -762,8 +767,15 @@ def features_add(
     _ensure_interactive(interactive)
 
     if interactive:
-        feature_id = click.prompt("Feature ID", type=str).strip()
-        title = click.prompt("Feature title", type=str).strip()
+        title_input = click.prompt("Feature title", type=str).strip()
+        title = title_input
+        default_feature_id = generate_feature_id(title_input)
+        feature_id_input = click.prompt(
+            "Feature ID",
+            default=default_feature_id,
+            show_default=True,
+        )
+        feature_id = feature_id_input.strip()
         priority = click.prompt(
             "Priority",
             type=click.Choice([p.value for p in Priority], case_sensitive=False),
@@ -773,9 +785,21 @@ def features_add(
         description = click.prompt("Description", default="", show_default=False)
         description = description.strip() if description else None
 
-    if not feature_id or not title:
+    if not title:
         click.secho(
-            "Feature ID and title are required unless --interactive is used.",
+            "Feature title is required unless --interactive is used.",
+            fg="red",
+            err=True,
+        )
+        print_support_footer()
+        sys.exit(1)
+
+    assert title is not None
+
+    feature_id = feature_id or generate_feature_id(title)
+    if not feature_id:
+        click.secho(
+            "Feature ID could not be generated from the title.",
             fg="red",
             err=True,
         )
@@ -904,8 +928,14 @@ def features_add_scenario(
 
     if interactive:
         feature_id = click.prompt("Feature ID", type=str).strip()
-        title = click.prompt("Scenario title", type=str).strip()
-        scenario_id_input = click.prompt("Scenario ID", default="", show_default=False)
+        title_input = click.prompt("Scenario title", type=str).strip()
+        title = title_input
+        default_scenario_id = generate_scenario_id(title_input)
+        scenario_id_input = click.prompt(
+            "Scenario ID",
+            default=default_scenario_id,
+            show_default=True,
+        )
         scenario_id = scenario_id_input.strip() or None
         priority = click.prompt(
             "Priority",
@@ -932,6 +962,8 @@ def features_add_scenario(
         )
         print_support_footer()
         sys.exit(1)
+
+    assert title is not None
 
     try:
         validate_feature_id(feature_id)

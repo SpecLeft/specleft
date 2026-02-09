@@ -21,8 +21,6 @@ class TestFeaturesAddCommand:
                 [
                     "features",
                     "add",
-                    "--id",
-                    "cli-authoring",
                     "--title",
                     "CLI Authoring",
                     "--dir",
@@ -30,7 +28,7 @@ class TestFeaturesAddCommand:
                 ],
             )
             assert result.exit_code == 0
-            feature_path = Path(".specleft/specs/feature-cli-authoring.md")
+            feature_path = Path(".specleft/specs/cli-authoring.md")
             assert feature_path.exists()
             content = feature_path.read_text()
             assert "# Feature: CLI Authoring" in content
@@ -72,7 +70,7 @@ class TestFeaturesAddCommand:
                 ],
             )
             assert result.exit_code == 0
-            assert not Path(".specleft/specs/feature-dry-run.md").exists()
+            assert not Path(".specleft/specs/dry-run.md").exists()
 
     def test_add_json_output(self) -> None:
         runner = CliRunner()
