@@ -8,7 +8,7 @@ from __future__ import annotations
 import click
 
 DEFAULT_DOCUMENTATION_URL = "https://specleft.dev/docs"
-DEFAULT_SUPPORT_URL = "https://specleft.dev/contact"
+DEFAULT_SUPPORT_URL = "support@specleft.dev"
 
 
 def print_support_footer(
