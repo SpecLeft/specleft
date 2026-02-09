@@ -45,7 +45,7 @@ def test_identify_the_next_required_scenario_to_implement(
     """
     runner, _workspace, _files = feature_7_next_scenario
 
-    with specleft.step("Given feature scenarios exist under features/"):
+    with specleft.step("Given feature scenarios exist under .specleft/specs/"):
         # Feature file is already created by fixture
         pass
 

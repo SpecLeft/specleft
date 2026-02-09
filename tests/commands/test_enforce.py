@@ -36,7 +36,7 @@ def write_policy_file(
     base_dir: Path, policy_data: dict, filename: str = "policy.yml"
 ) -> Path:
     """Write a policy file to .specleft directory."""
-    specleft_dir = base_dir / ".specleft"
+    specleft_dir = base_dir / ".specleft" / "policies"
     specleft_dir.mkdir(parents=True, exist_ok=True)
     policy_path = specleft_dir / filename
 
@@ -91,7 +91,7 @@ def test_login_success():
             # Mock repo detection by using repo override in verify
             runner.invoke(
                 cli,
-                ["enforce", ".specleft/policy.yml"],
+                ["enforce", ".specleft/policies/policy.yml"],
                 catch_exceptions=False,
             )
 
@@ -117,7 +117,7 @@ def test_login_success():
             )
             write_policy_file(Path("."), policy_data)
 
-            runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+            runner.invoke(cli, ["enforce", ".specleft/policies/policy.yml"])
             # Should fail on repo detection or policy violations
 
     def test_enforce_core_rejects_ignore_flag(self) -> None:
@@ -136,7 +136,12 @@ def test_login_success():
 
             result = runner.invoke(
                 cli,
-                ["enforce", ".specleft/policy.yml", "--ignore-feature-id", "auth"],
+                [
+                    "enforce",
+                    ".specleft/policies/policy.yml",
+                    "--ignore-feature-id",
+                    "auth",
+                ],
             )
 
             # Should fail because Core doesn't support ignore
@@ -159,7 +164,7 @@ def test_login_success():
             policy_data["license"]["license_id"] = "lic_tampered1234"
             write_policy_file(Path("."), policy_data)
 
-            result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+            result = runner.invoke(cli, ["enforce", ".specleft/policies/policy.yml"])
 
             assert result.exit_code == 2
             assert "Signature" in result.output or "signature" in result.output
@@ -183,7 +188,7 @@ def test_login_success():
             )
             write_policy_file(Path("."), policy_data)
 
-            result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+            result = runner.invoke(cli, ["enforce", ".specleft/policies/policy.yml"])
 
             assert result.exit_code == 2
             assert "expired" in result.output.lower()
@@ -208,7 +213,7 @@ def test_login_success():
 
             result = runner.invoke(
                 cli,
-                ["enforce", ".specleft/policy.yml", "--format", "json"],
+                ["enforce", ".specleft/policies/policy.yml", "--format", "json"],
             )
 
             # Will fail on repo detection, but if it gets to JSON output
@@ -227,6 +232,58 @@ def test_login_success():
 
             assert result.exit_code == 2
             assert "not found" in result.output.lower() or "Error" in result.output
+
+    def test_enforce_default_policy_path(self) -> None:
+        """Default policy path uses .specleft/policies/policy.yml."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+                scenario_priority="critical",
+            )
+
+            policy_data = create_core_policy_data(
+                licensed_to="test-owner/test-repo",
+                priorities={"critical": {"must_be_implemented": True}},
+            )
+            write_policy_file(Path("."), policy_data)
+
+            with patch(
+                "specleft.commands.enforce.detect_repo_identity",
+                return_value=RepoIdentity(owner="test-owner", name="test-repo"),
+            ):
+                result = runner.invoke(cli, ["enforce"])
+
+            assert result.exit_code in (0, 1)
+
+    def test_enforce_fallback_single_policy_file(self) -> None:
+        """Falls back to the single policy in .specleft/policies."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+                scenario_priority="critical",
+            )
+
+            policy_data = create_core_policy_data(
+                licensed_to="test-owner/test-repo",
+                priorities={"critical": {"must_be_implemented": True}},
+            )
+            write_policy_file(Path("."), policy_data, filename="custom.yml")
+
+            with patch(
+                "specleft.commands.enforce.detect_repo_identity",
+                return_value=RepoIdentity(owner="test-owner", name="test-repo"),
+            ):
+                result = runner.invoke(cli, ["enforce"])
+
+            assert result.exit_code in (0, 1)
 
 
 class TestEnforceEnforcePolicy:
@@ -251,7 +308,12 @@ class TestEnforceEnforcePolicy:
 
             result = runner.invoke(
                 cli,
-                ["enforce", ".specleft/policy.yml", "--ignore-feature-id", "auth"],
+                [
+                    "enforce",
+                    ".specleft/policies/policy.yml",
+                    "--ignore-feature-id",
+                    "auth",
+                ],
             )
 
             # Should not fail due to ignore flag rejection
@@ -280,7 +342,9 @@ class TestEnforceEnforcePolicy:
                 "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
 
             assert result.exit_code == 2
             assert "Evaluation" in result.output and "ended" in result.output

@@ -175,7 +175,8 @@ def feature_7_next_scenario(
     """Feature with unimplemented scenarios for testing `specleft next`."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")
@@ -205,7 +206,8 @@ def feature_7_skeleton(
     """Feature for testing `specleft test skeleton` generation."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")
@@ -238,7 +240,8 @@ def feature_7_agent_implements(
     """Feature with implemented test for testing status reflection."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")
@@ -268,7 +271,8 @@ def feature_7_coverage(
     """Feature with partial implementation for testing coverage reporting."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")

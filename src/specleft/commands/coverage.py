@@ -26,6 +26,8 @@ from specleft.commands.types import (
     ScenarioStatusEntry,
 )
 from specleft.schema import ExecutionTime, Priority
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.utils.structure import warn_if_nested_structure
 
 
@@ -181,13 +183,14 @@ def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
         data = metrics.by_execution_time.get(execution_time.value, CoverageTally())
         click.echo(_summary_row(execution_time.value, data))
     click.echo("━" * 58)
+    click.echo("To enforce intent coverage in CI, see: https://specleft.dev/enforce")
 
 
 @click.command("coverage")
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -212,7 +215,7 @@ def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
     help="Output file for badge format.",
 )
 def coverage(
-    features_dir: str,
+    features_dir: str | None,
     format_type: str,
     threshold: int | None,
     output_path: str | None,
@@ -220,18 +223,21 @@ def coverage(
     """Show high-level coverage metrics."""
     from specleft.validator import load_specs_directory
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
     except FileNotFoundError:
-        click.secho(f"Directory not found: {features_dir}", fg="red", err=True)
+        click.secho(f"Directory not found: {resolved_features_dir}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
     except ValueError as exc:
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     entries = build_status_entries(config, Path("tests"))
     metrics = _build_coverage_metrics(entries)
@@ -242,6 +248,7 @@ def coverage(
     elif format_type == "badge":
         if not output_path:
             click.secho("Badge format requires --output.", fg="red", err=True)
+            print_support_footer()
             sys.exit(1)
         percent = metrics.overall.percent
         message = "n/a" if percent is None else f"{percent:.0f}%"

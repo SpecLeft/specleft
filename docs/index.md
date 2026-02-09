@@ -39,7 +39,7 @@
 ```
 examples/
 ├── basic-calculator/
-│   ├── features/
+│   ├── .specleft/specs/
 │   │   └── calculator/
 │   │       ├── _feature.md
 │   │       └── addition/
@@ -49,7 +49,7 @@ examples/
 │   │   └── (generated)
 │   └── README.md
 ├── api-testing/
-│   ├── features/
+│   ├── .specleft/specs/
 │   │   └── auth/
 │   │       ├── _feature.md
 │   │       ├── login/

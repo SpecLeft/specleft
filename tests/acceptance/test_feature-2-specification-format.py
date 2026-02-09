@@ -44,7 +44,7 @@ def test_minimal_valid_feature_file(
     """
     runner, _workspace, _files = feature_2_minimal
 
-    with specleft.step("Given a feature file exists under features/"):
+    with specleft.step("Given a feature file exists under .specleft/specs/"):
         # Feature file is already created by fixture
         pass
 

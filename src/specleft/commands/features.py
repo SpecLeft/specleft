@@ -26,12 +26,15 @@ from specleft.schema import (
 from specleft.utils.feature_writer import (
     add_scenario_to_feature,
     create_feature_file,
+    generate_feature_id,
     generate_scenario_id,
     validate_feature_id,
     validate_scenario_id,
     validate_step_keywords,
 )
 from specleft.utils.history import log_feature_event
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.utils.structure import warn_if_nested_structure
 from specleft.utils.test_discovery import TestDiscoveryResult, discover_pytest_tests
 from specleft.utils.text import to_snake_case
@@ -63,7 +66,7 @@ def _build_features_list_json(config: SpecsConfig) -> dict[str, object]:
 
 def _build_features_stats_json(
     *,
-    features_dir: str,
+    features_dir: Path,
     tests_dir: str,
     stats: SpecStats | None,
     spec_scenario_ids: set[str],
@@ -128,6 +131,7 @@ def _ensure_interactive(interactive: bool) -> None:
             fg="red",
             err=True,
         )
+        print_support_footer()
         sys.exit(1)
 
 
@@ -298,6 +302,7 @@ def _print_feature_add_result(
 
     if result.get("success") is False:
         click.secho(f"Error: {result.get('error')}", fg="red", err=True)
+        print_support_footer()
         return
 
     status = "Would create" if dry_run else "Created"
@@ -325,6 +330,7 @@ def _print_scenario_add_result(
 
     if result.get("success") is False:
         click.secho(f"Error: {result.get('error')}", fg="red", err=True)
+        print_support_footer()
         return
 
     status = "Would append" if dry_run else "Appended"
@@ -356,7 +362,7 @@ def features() -> None:
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -372,18 +378,19 @@ def features() -> None:
     is_flag=True,
     help="Treat warnings as errors.",
 )
-def features_validate(features_dir: str, format_type: str, strict: bool) -> None:
+def features_validate(features_dir: str | None, format_type: str, strict: bool) -> None:
     """Validate Markdown specs in a features directory."""
     from specleft.validator import collect_spec_stats, load_specs_directory
 
     warnings: list[dict[str, object]] = []
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
         stats = collect_spec_stats(config)
 
         # Gentle nudge for nested structures (table output only)
         if format_type != "json":
-            warn_if_nested_structure(Path(features_dir))
+            warn_if_nested_structure(resolved_features_dir)
 
         if format_type == "json":
             payload = {
@@ -397,7 +404,9 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
             }
             click.echo(json.dumps(payload, indent=2))
         else:
-            click.secho(f"✅ Features directory '{features_dir}/' is valid", bold=True)
+            click.secho(
+                f"✅ Features directory '{resolved_features_dir}/' is valid", bold=True
+            )
             click.echo("")
             click.secho("Summary:", fg="cyan")
             click.echo(f"  Features: {stats.feature_count}")
@@ -417,15 +426,20 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
                 "scenarios": 0,
                 "errors": [
                     {
-                        "file": str(features_dir),
-                        "message": f"Directory not found: {features_dir}",
+                        "file": str(resolved_features_dir),
+                        "message": f"Directory not found: {resolved_features_dir}",
                     }
                 ],
                 "warnings": warnings,
             }
             click.echo(json.dumps(payload, indent=2))
         else:
-            click.secho(f"✗ Directory not found: {features_dir}", fg="red", err=True)
+            click.secho(
+                f"✗ Directory not found: {resolved_features_dir}",
+                fg="red",
+                err=True,
+            )
+            print_support_footer()
         sys.exit(1)
     except ValueError as e:
         if format_type == "json":
@@ -445,6 +459,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
             click.echo(json.dumps(payload, indent=2))
         else:
             click.secho(f"✗ Validation failed: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
     except Exception as e:
         if format_type == "json":
@@ -464,6 +479,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
             click.echo(json.dumps(payload, indent=2))
         else:
             click.secho(f"✗ Unexpected validation failure: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
 
 
@@ -471,7 +487,7 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -482,21 +498,27 @@ def features_validate(features_dir: str, format_type: str, strict: bool) -> None
     show_default=True,
     help="Output format: 'table' or 'json'.",
 )
-def features_list(features_dir: str, format_type: str) -> None:
+def features_list(features_dir: str | None, format_type: str) -> None:
     """List features, stories, and scenarios."""
     from specleft.validator import load_specs_directory
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
     except FileNotFoundError:
         if format_type == "json":
             error_payload = {
                 "status": "error",
-                "message": f"Directory not found: {features_dir}",
+                "message": f"Directory not found: {resolved_features_dir}",
             }
             click.echo(json.dumps(error_payload, indent=2))
         else:
-            click.secho(f"✗ Directory not found: {features_dir}", fg="red", err=True)
+            click.secho(
+                f"✗ Directory not found: {resolved_features_dir}",
+                fg="red",
+                err=True,
+            )
+            print_support_footer()
         sys.exit(1)
     except ValueError as e:
         if format_type == "json":
@@ -507,6 +529,7 @@ def features_list(features_dir: str, format_type: str) -> None:
             click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
     except Exception as e:
         if format_type == "json":
@@ -517,6 +540,7 @@ def features_list(features_dir: str, format_type: str) -> None:
             click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
 
     if format_type == "json":
@@ -525,7 +549,7 @@ def features_list(features_dir: str, format_type: str) -> None:
         return
 
     # Gentle nudge for nested structures
-    warn_if_nested_structure(Path(features_dir))
+    warn_if_nested_structure(resolved_features_dir)
 
     click.echo(f"Features ({len(config.features)}):")
     for feature in config.features:
@@ -540,7 +564,7 @@ def features_list(features_dir: str, format_type: str) -> None:
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -557,16 +581,17 @@ def features_list(features_dir: str, format_type: str) -> None:
     show_default=True,
     help="Output format: 'table' or 'json'.",
 )
-def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
+def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -> None:
     """Show aggregate statistics for specs and test coverage."""
     from specleft.validator import collect_spec_stats, load_specs_directory
 
     config = None
     stats = None
     spec_scenario_ids: set[str] = set()
+    resolved_features_dir = resolve_specs_dir(features_dir)
 
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
         stats = collect_spec_stats(config)
         for feature in config.features:
             for story in feature.stories:
@@ -576,18 +601,23 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
         if format_type == "json":
             error_payload = {
                 "status": "error",
-                "message": f"Directory not found: {features_dir}",
+                "message": f"Directory not found: {resolved_features_dir}",
             }
             click.echo(json.dumps(error_payload, indent=2))
         else:
-            click.secho(f"✗ Directory not found: {features_dir}", fg="red", err=True)
+            click.secho(
+                f"✗ Directory not found: {resolved_features_dir}",
+                fg="red",
+                err=True,
+            )
+            print_support_footer()
         sys.exit(1)
     except ValueError as e:
         if "No feature specs found" in str(e):
             if format_type == "json":
                 stats = None
             else:
-                click.secho(f"No specs found in {features_dir}.", fg="yellow")
+                click.secho(f"No specs found in {resolved_features_dir}.", fg="yellow")
             stats = None
         else:
             if format_type == "json":
@@ -598,6 +628,7 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
                 click.echo(json.dumps(error_payload, indent=2))
             else:
                 click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
+                print_support_footer()
             sys.exit(1)
     except Exception as e:
         if format_type == "json":
@@ -608,17 +639,18 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
             click.echo(json.dumps(error_payload, indent=2))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     test_discovery = discover_pytest_tests(tests_dir)
 
     if format_type == "json":
         payload = _build_features_stats_json(
-            features_dir=features_dir,
+            features_dir=resolved_features_dir,
             tests_dir=tests_dir,
             stats=stats,
             spec_scenario_ids=spec_scenario_ids,
@@ -632,7 +664,7 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
     click.echo("")
 
     click.secho("Target Directories:", fg="cyan")
-    click.echo(f"  Features Directory: {features_dir}/")
+    click.echo(f"  Features Directory: {resolved_features_dir}/")
     click.secho(f"  Tests Directory: {tests_dir}/")
     click.echo("")
 
@@ -685,11 +717,17 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
         click.echo("  No scenarios defined in specs.")
     else:
         click.echo("  Cannot calculate coverage without specs.")
+    click.echo("")
+    click.echo("To enforce intent coverage in CI, see: https://specleft.dev/enforce")
 
 
 @features.command("add")
-@click.option("--id", "feature_id", help="Feature ID (lowercase, dashes).")
-@click.option("--title", "title", help="Feature title.")
+@click.option(
+    "--id",
+    "feature_id",
+    help="Feature ID (optional; defaults to a slug from the title).",
+)
+@click.option("--title", "title", help="Feature title (required).")
 @click.option(
     "--priority",
     "priority",
@@ -702,7 +740,7 @@ def features_stats(features_dir: str, tests_dir: str, format_type: str) -> None:
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option("--dry-run", is_flag=True, help="Preview without writing files.")
@@ -720,7 +758,7 @@ def features_add(
     title: str | None,
     priority: str,
     description: str | None,
-    features_dir: str,
+    features_dir: str | None,
     dry_run: bool,
     format_type: str,
     interactive: bool,
@@ -729,8 +767,15 @@ def features_add(
     _ensure_interactive(interactive)
 
     if interactive:
-        feature_id = click.prompt("Feature ID", type=str).strip()
-        title = click.prompt("Feature title", type=str).strip()
+        title_input = click.prompt("Feature title", type=str).strip()
+        title = title_input
+        default_feature_id = generate_feature_id(title_input)
+        feature_id_input = click.prompt(
+            "Feature ID",
+            default=default_feature_id,
+            show_default=True,
+        )
+        feature_id = feature_id_input.strip()
         priority = click.prompt(
             "Priority",
             type=click.Choice([p.value for p in Priority], case_sensitive=False),
@@ -740,12 +785,25 @@ def features_add(
         description = click.prompt("Description", default="", show_default=False)
         description = description.strip() if description else None
 
-    if not feature_id or not title:
+    if not title:
         click.secho(
-            "Feature ID and title are required unless --interactive is used.",
+            "Feature title is required unless --interactive is used.",
             fg="red",
             err=True,
         )
+        print_support_footer()
+        sys.exit(1)
+
+    assert title is not None
+
+    feature_id = feature_id or generate_feature_id(title)
+    if not feature_id:
+        click.secho(
+            "Feature ID could not be generated from the title.",
+            fg="red",
+            err=True,
+        )
+        print_support_footer()
         sys.exit(1)
 
     try:
@@ -761,8 +819,9 @@ def features_add(
         )
         sys.exit(1)
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     result = create_feature_file(
-        features_dir=Path(features_dir),
+        features_dir=resolved_features_dir,
         feature_id=feature_id,
         title=title,
         priority=priority,
@@ -817,7 +876,7 @@ def features_add(
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -856,7 +915,7 @@ def features_add_scenario(
     steps: tuple[str, ...],
     priority: str | None,
     tags: str | None,
-    features_dir: str,
+    features_dir: str | None,
     tests_dir: Path | None,
     dry_run: bool,
     format_type: str,
@@ -869,8 +928,14 @@ def features_add_scenario(
 
     if interactive:
         feature_id = click.prompt("Feature ID", type=str).strip()
-        title = click.prompt("Scenario title", type=str).strip()
-        scenario_id_input = click.prompt("Scenario ID", default="", show_default=False)
+        title_input = click.prompt("Scenario title", type=str).strip()
+        title = title_input
+        default_scenario_id = generate_scenario_id(title_input)
+        scenario_id_input = click.prompt(
+            "Scenario ID",
+            default=default_scenario_id,
+            show_default=True,
+        )
         scenario_id = scenario_id_input.strip() or None
         priority = click.prompt(
             "Priority",
@@ -895,7 +960,10 @@ def features_add_scenario(
             fg="red",
             err=True,
         )
+        print_support_footer()
         sys.exit(1)
+
+    assert title is not None
 
     try:
         validate_feature_id(feature_id)
@@ -957,8 +1025,9 @@ def features_add_scenario(
 
     tags_list = _parse_tags(tags)
     priority_value = _normalize_priority(priority)
+    resolved_features_dir = resolve_specs_dir(features_dir)
     result = add_scenario_to_feature(
-        features_dir=Path(features_dir),
+        features_dir=resolved_features_dir,
         feature_id=feature_id,
         title=title,
         scenario_id=scenario_id,
@@ -1061,6 +1130,7 @@ def features_add_scenario(
                 )
             except click.BadParameter as exc:
                 click.secho(str(exc), fg="red", err=True)
+                print_support_footer()
                 sys.exit(1)
             test_path = _build_feature_test_path(feature_id, selected_tests_dir)
             generated_test = _build_skeleton_test_method(feature_id, scenario_spec)

@@ -52,8 +52,8 @@ def setup_test_key():
 def write_policy_file(
     base_dir: Path, policy_data: dict, filename: str = "policy.yml"
 ) -> Path:
-    """Write a policy file to .specleft/licenses directory."""
-    licenses_dir = base_dir / ".specleft" / "licenses"
+    """Write a policy file to .specleft/policies directory."""
+    licenses_dir = base_dir / ".specleft" / "policies"
     licenses_dir.mkdir(parents=True, exist_ok=True)
     policy_path = licenses_dir / filename
 
@@ -117,7 +117,7 @@ def test_enforce_critical_and_high_priority_scenarios(
     ):
         result = runner.invoke(
             cli,
-            ["enforce", ".specleft/licenses/policy.yml", "--format", "json"],
+            ["enforce", ".specleft/policies/policy.yml", "--format", "json"],
         )
 
     with specleft.step("Then the command exits with a non-zero status"):
@@ -187,7 +187,7 @@ def test_pass_enforcement_when_intent_is_satisfied(
     ):
         result = runner.invoke(
             cli,
-            ["enforce", ".specleft/licenses/policy.yml", "--format", "json"],
+            ["enforce", ".specleft/policies/policy.yml", "--format", "json"],
         )
 
     with specleft.step("Then the command exits successfully"):
@@ -249,7 +249,7 @@ def test_reject_invalid_or_unsigned_policies(
     ):
         result = runner.invoke(
             cli,
-            ["enforce", ".specleft/licenses/policy-invalid.yml"],
+            ["enforce", ".specleft/policies/policy-invalid.yml"],
         )
 
     with specleft.step("Then enforcement fails with a clear error"):

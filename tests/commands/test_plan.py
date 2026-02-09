@@ -37,10 +37,10 @@ class TestPlanCommand:
             result = runner.invoke(cli, ["plan"])
 
             assert result.exit_code == 0
-            assert Path("features/feature-user-authentication.md").exists()
-            assert Path("features/feature-payments.md").exists()
+            assert Path(".specleft/specs/feature-user-authentication.md").exists()
+            assert Path(".specleft/specs/feature-payments.md").exists()
             assert "Features planned: 2" in result.output
-            content = Path("features/feature-user-authentication.md").read_text()
+            content = Path(".specleft/specs/feature-user-authentication.md").read_text()
             # breakpoint()
             assert "# Feature: User Authentication" in content
             assert "priority: medium" in content
@@ -53,7 +53,7 @@ class TestPlanCommand:
             Path("prd.md").write_text("# User Authentication\n")
             result = runner.invoke(cli, ["plan"])
             assert result.exit_code == 0
-            assert Path("features/user-authentication.md").exists()
+            assert Path(".specleft/specs/user-authentication.md").exists()
             assert "using top-level title" in result.output
 
     def test_plan_defaults_to_prd_file_when_no_headings(self) -> None:
@@ -62,8 +62,8 @@ class TestPlanCommand:
             Path("prd.md").write_text("No headings here")
             result = runner.invoke(cli, ["plan"])
             assert result.exit_code == 0
-            assert Path("features/prd.md").exists()
-            assert "creating features/prd.md" in result.output
+            assert Path(".specleft/specs/prd.md").exists()
+            assert "creating .specleft/specs/prd.md" in result.output
 
     def test_plan_dry_run_creates_nothing(self) -> None:
         runner = CliRunner()
@@ -71,7 +71,7 @@ class TestPlanCommand:
             Path("prd.md").write_text("# User Authentication\n")
             result = runner.invoke(cli, ["plan", "--dry-run"])
             assert result.exit_code == 0
-            assert not Path("features").exists()
+            assert not Path(".specleft/specs").exists()
             assert "Dry run" in result.output
             assert "Would create:" in result.output
 
@@ -99,8 +99,8 @@ class TestPlanCommand:
     def test_plan_skips_existing_feature(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            features_dir = Path("features")
-            features_dir.mkdir()
+            features_dir = Path(".specleft/specs")
+            features_dir.mkdir(parents=True)
             feature_file = features_dir / "user-authentication.md"
             feature_file.write_text("# Feature: User Authentication\n")
 
@@ -343,7 +343,7 @@ priorities:
             result = runner.invoke(cli, ["plan", "--template", "template.yml"])
 
             assert result.exit_code == 0
-            feature_file = Path("features/epic-billing.md")
+            feature_file = Path(".specleft/specs/epic-billing.md")
             assert feature_file.exists()
             content = feature_file.read_text()
             assert "priority: critical" in content

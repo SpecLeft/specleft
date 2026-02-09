@@ -33,7 +33,11 @@ class TestStubCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "stub", "--single-file"], input="y\n")
+            result = runner.invoke(
+                cli,
+                ["test", "stub", "--single-file"],
+                input="y\n",
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -105,7 +109,14 @@ class TestStubCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "stub", "--output-dir", "custom_tests"], input="y\n"
+                cli,
+                [
+                    "test",
+                    "stub",
+                    "--output-dir",
+                    "custom_tests",
+                ],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -160,7 +171,14 @@ class TestStubCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "stub", "--format", "json", "--dry-run"]
+                cli,
+                [
+                    "test",
+                    "stub",
+                    "--format",
+                    "json",
+                    "--dry-run",
+                ],
             )
             assert result.exit_code == 0
             assert '"would_create"' in result.output
@@ -182,7 +200,11 @@ class TestStubCommand:
             assert generated_file.exists()
             initial_content = generated_file.read_text()
 
-            second_run = runner.invoke(cli, ["test", "stub", "--force"], input="y\n")
+            second_run = runner.invoke(
+                cli,
+                ["test", "stub", "--force"],
+                input="y\n",
+            )
             assert second_run.exit_code == 0
             assert generated_file.read_text() == initial_content
 
@@ -196,7 +218,11 @@ class TestStubCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "stub", "--single-file"], input="y\n")
+            result = runner.invoke(
+                cli,
+                ["test", "stub", "--single-file"],
+                input="y\n",
+            )
             assert result.exit_code == 0
 
             content = Path("tests/test_generated.py").read_text()
@@ -212,7 +238,11 @@ class TestStubCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "stub", "--single-file"], input="y\n")
+            result = runner.invoke(
+                cli,
+                ["test", "stub", "--single-file"],
+                input="y\n",
+            )
             assert result.exit_code == 0
 
             content = Path("tests/test_generated.py").read_text()
@@ -230,7 +260,11 @@ class TestStubCommand:
                 include_test_data=True,
             )
 
-            result = runner.invoke(cli, ["test", "stub", "--single-file"], input="y\n")
+            result = runner.invoke(
+                cli,
+                ["test", "stub", "--single-file"],
+                input="y\n",
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output

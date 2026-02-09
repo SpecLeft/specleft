@@ -4,7 +4,7 @@ priority: high
 ## Scenarios
 
 ### Scenario: Identify the next required scenario to implement
-- Given feature scenarios exist under `features/`
+- Given feature scenarios exist under `.specleft/specs/`
 - And some scenarios are unimplemented
 - When `specleft next --format json` is executed
 - Then the next unimplemented scenario is identified deterministically

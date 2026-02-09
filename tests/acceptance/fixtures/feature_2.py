@@ -65,7 +65,8 @@ def feature_2_minimal(
     """Minimal valid feature file with one scenario."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -94,7 +95,8 @@ def feature_2_metadata_variants(
     """Feature files with and without metadata for testing metadata handling."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 

@@ -45,6 +45,10 @@ def generate_scenario_id(title: str) -> str:
     return slugify(title, lowercase=True)
 
 
+def generate_feature_id(title: str) -> str:
+    return slugify(title, lowercase=True)
+
+
 def validate_feature_id(feature_id: str) -> None:
     if not ID_PATTERN.match(feature_id):
         raise ValueError(
@@ -70,11 +74,7 @@ def validate_step_keywords(steps: list[str]) -> list[str]:
 
 
 def _feature_file_path(features_dir: Path, feature_id: str) -> Path:
-    if feature_id.startswith("feature-"):
-        filename = f"{feature_id}.md"
-    else:
-        filename = f"feature-{feature_id}.md"
-    return features_dir / filename
+    return features_dir / f"{feature_id}.md"
 
 
 def create_feature_file(

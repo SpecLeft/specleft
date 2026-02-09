@@ -16,8 +16,8 @@ from specleft.license.repo_identity import detect_repo_identity
 from specleft.specleft_signing.schema import SignedPolicy
 from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
 
-DEFAULT_LICENSE_PATH = Path(".specleft/licenses/policy.yml")
-LICENSE_DIR = Path(".specleft/licenses")
+DEFAULT_LICENSE_PATH = Path(".specleft/policies/policy.yml")
+LICENSE_DIR = Path(".specleft/policies")
 
 
 @dataclass

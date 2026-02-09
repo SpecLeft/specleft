@@ -42,5 +42,5 @@ def acceptance_workspace() -> Iterator[tuple[CliRunner, Path]]:
     runner = CliRunner()
     with runner.isolated_filesystem():
         workspace = Path.cwd()
-        (workspace / "features").mkdir(exist_ok=True)
+        (workspace / ".specleft" / "specs").mkdir(parents=True, exist_ok=True)
         yield runner, workspace

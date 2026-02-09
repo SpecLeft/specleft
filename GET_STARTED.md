@@ -81,8 +81,8 @@ Planning feature specs...
 Dry run: no files will be created.
 Features planned: 2
 Would create:
-  - features/feature-user-authentication.md
-  - features/feature-password-reset.md
+  - .specleft/specs/feature-user-authentication.md
+  - .specleft/specs/feature-password-reset.md
 ```
 
 When ready, run without `--dry-run`:
@@ -91,10 +91,10 @@ When ready, run without `--dry-run`:
 specleft plan
 ```
 
-SpecLeft creates one file per feature under `features/`:
+SpecLeft creates one file per feature under `.specleft/specs/`:
 
 ```
-features/
+.specleft/specs/
 ├── feature-user-authentication.md
 └── feature-password-reset.md
 ```
@@ -131,7 +131,7 @@ match_mode options: `any` = pattern OR contains, `all` = pattern AND contains, `
 
 ## 3. Inspect a feature file
 
-Open `features/feature-user-authentication.md`:
+Open `.specleft/specs/feature-user-authentication.md`:
 
 ```markdown
 # Feature: User Authentication
@@ -158,7 +158,7 @@ This is your **intent specification** — what the system should do, independent
 Run:
 
 ```bash
-specleft test skeleton --dry-run
+specleft test skeleton --dry-run --features-dir .specleft/specs
 ```
 
 SpecLeft shows the test files it would generate:
@@ -174,7 +174,7 @@ Will generate: tests/test_feature_user_authentication.py
 When ready:
 
 ```bash
-specleft test skeleton
+specleft test skeleton --features-dir .specleft/specs
 ```
 
 The generated test includes the `@specleft` decorator linking it to the spec:
@@ -267,7 +267,7 @@ If you don't have a PRD yet, you can see an example feature file:
 specleft init
 ```
 
-This creates `features/example-feature.md` with a sample structure — useful for understanding the format before writing your own specs.
+This creates `.specleft/specs/example-feature.md` with a sample structure — useful for understanding the format before writing your own specs.
 
 ---
 

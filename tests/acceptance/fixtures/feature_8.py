@@ -42,7 +42,8 @@ def feature_8_contract(
     """Minimal feature for testing `specleft contract` output."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -75,7 +76,8 @@ def feature_8_contract_minimal(
     """
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     feature_path = features_dir / "feature-test.md"
     feature_path.write_text(_FEATURE_8_TEST)
 
@@ -96,7 +98,8 @@ def feature_8_contract_test(
     """Feature for testing `specleft contract test` compliance."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")

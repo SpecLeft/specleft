@@ -7,6 +7,7 @@ from pathlib import Path
 from specleft.utils.feature_writer import (
     add_scenario_to_feature,
     create_feature_file,
+    generate_feature_id,
     generate_scenario_id,
     validate_feature_id,
     validate_step_keywords,
@@ -21,6 +22,9 @@ class TestFeatureWriter:
             generate_scenario_id("User Logs In Successfully")
             == "user-logs-in-successfully"
         )
+
+    def test_generate_feature_id(self) -> None:
+        assert generate_feature_id("CLI Authoring") == "cli-authoring"
 
     def test_validate_feature_id_invalid(self) -> None:
         try:
@@ -56,7 +60,7 @@ class TestFeatureWriter:
         base_dir = tmp_path
         features_dir = base_dir / "features"
         features_dir.mkdir(exist_ok=True)
-        feature_path = features_dir / "feature-cli-authoring.md"
+        feature_path = features_dir / "cli-authoring.md"
         feature_path.write_text("# Feature: CLI Authoring\n\n## Scenarios\n\n")
 
         result = add_scenario_to_feature(

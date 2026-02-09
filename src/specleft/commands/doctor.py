@@ -17,6 +17,8 @@ from typing import Any, cast
 import click
 
 from specleft.commands.constants import CLI_VERSION
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 
 
 def _load_dependency_names() -> list[str]:
@@ -120,7 +122,7 @@ def _build_doctor_checks() -> dict[str, Any]:
     if plugin_error:
         plugin_check["error"] = plugin_error
 
-    features_dir = Path("features")
+    features_dir = resolve_specs_dir(None)
     tests_dir = Path("tests")
     features_readable = features_dir.exists() and os.access(features_dir, os.R_OK)
     tests_writable = tests_dir.exists() and os.access(tests_dir, os.W_OK)
@@ -228,7 +230,8 @@ def _print_doctor_table(checks: dict[str, Any], *, verbose: bool) -> None:
     directory_check = checks_map.get("directories", {})
     features_marker = "✓" if directory_check.get("features_readable") else "✗"
     tests_marker = "✓" if directory_check.get("tests_writable") else "✗"
-    click.echo(f"{features_marker} Can read feature directory (features/)")
+    features_dir = resolve_specs_dir(None)
+    click.echo(f"{features_marker} Can read feature directory ({features_dir}/)")
     click.echo(f"{tests_marker} Can write to test directory (tests/)")
 
     if verbose and plugin_check.get("error"):
@@ -268,5 +271,8 @@ def doctor(format_type: str, verbose: bool) -> None:
         click.echo(json.dumps(output, indent=2))
     else:
         _print_doctor_table(output, verbose=verbose)
+        if not output.get("healthy"):
+            click.echo("")
+            print_support_footer()
 
     sys.exit(0 if output.get("healthy") else 1)

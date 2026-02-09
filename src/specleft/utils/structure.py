@@ -32,15 +32,15 @@ def detect_features_layout(features_dir: Path) -> LayoutType:
     """Detect the layout type of the features directory.
 
     Returns:
-        - "single-file": Features are defined as `features/<feature>.md` files directly
-        - "nested": Features use `features/<feature>/<story>/scenario.md` directories
+        - "single-file": Features are defined as `.specleft/specs/<feature>.md` files directly
+        - "nested": Features use `.specleft/specs/<feature>/<story>/scenario.md` directories
         - "mixed": Both layouts detected (may need migration)
         - "empty": No feature files found
     """
     if not features_dir.exists():
         return "empty"
 
-    # Look for single-file features (*.md files directly in features/)
+    # Look for single-file features (*.md files directly in specs/)
     single_file_features = list(features_dir.glob("*.md"))
 
     # Look for nested structure indicators (_feature.md or _story.md files)
@@ -79,8 +79,8 @@ def is_nested_structure(features_dir: Path) -> bool:
 def get_feature_file_path(features_dir: Path, feature_id: str) -> Path | None:
     """Get the path to a feature's source file.
 
-    For single-file layout: features/<feature_id>.md
-    For nested layout: features/<feature_id>/_feature.md
+    For single-file layout: .specleft/specs/<feature_id>.md
+    For nested layout: .specleft/specs/<feature_id>/_feature.md
 
     Returns None if neither exists.
     """
@@ -121,7 +121,7 @@ def warn_if_nested_structure(features_dir: Path, *, force: bool = False) -> None
         fg="yellow",
     )
     click.echo(
-        "      Consider using single-file features (features/<feature>.md) for better"
+        "      Consider using single-file features (.specleft/specs/<feature>.md) for better"
     )
     click.echo("      agent compatibility. See: https://specleft.dev/docs")
     click.echo()

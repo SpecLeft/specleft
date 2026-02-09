@@ -24,6 +24,8 @@ from specleft.commands.types import (
     SkeletonSummary,
 )
 from specleft.schema import FeatureSpec, ScenarioSpec, SpecsConfig, StorySpec
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.utils.structure import detect_features_layout, warn_if_nested_structure
 from specleft.utils.text import to_snake_case
 from specleft.validator import load_specs_directory
@@ -432,7 +434,7 @@ def test() -> None:
 @click.option(
     "--features-dir",
     "-f",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -470,7 +472,7 @@ def test() -> None:
     help="Overwrite existing test files.",
 )
 def skeleton(
-    features_dir: str,
+    features_dir: str | None,
     output_dir: str,
     single_file: bool,
     skip_preview: bool,
@@ -485,31 +487,42 @@ def skeleton(
             fg="red",
             err=True,
         )
+        print_support_footer()
         sys.exit(1)
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir, warn_on_duplicate_scenarios=True)
+        config = load_specs_directory(
+            resolved_features_dir, warn_on_duplicate_scenarios=True
+        )
     except FileNotFoundError:
-        click.secho(f"Error: {features_dir} not found", fg="red", err=True)
+        click.secho(f"Error: {resolved_features_dir} not found", fg="red", err=True)
         click.echo("Create a features directory with Markdown specs to continue.")
+        print_support_footer()
         sys.exit(1)
     except ValueError as e:
         if "No feature specs found" in str(e):
-            click.secho(f"No specs found in {features_dir}.", fg="yellow")
+            click.secho(f"No specs found in {resolved_features_dir}.", fg="yellow")
             return
-        click.secho(f"Error loading specs from {features_dir}: {e}", fg="red", err=True)
-        sys.exit(1)
-    except Exception as e:
         click.secho(
-            f"Unexpected error loading specs from {features_dir}: {e}",
+            f"Error loading specs from {resolved_features_dir}: {e}",
             fg="red",
             err=True,
         )
+        print_support_footer()
+        sys.exit(1)
+    except Exception as e:
+        click.secho(
+            f"Unexpected error loading specs from {resolved_features_dir}: {e}",
+            fg="red",
+            err=True,
+        )
+        print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     template = _load_test_template("skeleton_test.py.jinja2")
     output_path = Path(output_dir)
@@ -519,7 +532,7 @@ def skeleton(
         template=template,
         single_file=single_file,
         force=force,
-        features_dir=Path(features_dir),
+        features_dir=resolved_features_dir,
     )
 
     flattened = _flatten_skeleton_entries(plan_result)
@@ -574,7 +587,7 @@ def skeleton(
 @click.option(
     "--features-dir",
     "-f",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -612,7 +625,7 @@ def skeleton(
     help="Overwrite existing test files.",
 )
 def stub(
-    features_dir: str,
+    features_dir: str | None,
     output_dir: str,
     single_file: bool,
     skip_preview: bool,
@@ -627,30 +640,41 @@ def stub(
             fg="red",
             err=True,
         )
+        print_support_footer()
         sys.exit(1)
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir, warn_on_duplicate_scenarios=True)
+        config = load_specs_directory(
+            resolved_features_dir, warn_on_duplicate_scenarios=True
+        )
     except FileNotFoundError:
-        click.secho(f"Error: {features_dir} not found", fg="red", err=True)
+        click.secho(f"Error: {resolved_features_dir} not found", fg="red", err=True)
         click.echo("Create a features directory with Markdown specs to continue.")
+        print_support_footer()
         sys.exit(1)
     except ValueError as e:
         if "No feature specs found" in str(e):
-            click.secho(f"No specs found in {features_dir}.", fg="yellow")
+            click.secho(f"No specs found in {resolved_features_dir}.", fg="yellow")
             return
-        click.secho(f"Error loading specs from {features_dir}: {e}", fg="red", err=True)
-        sys.exit(1)
-    except Exception as e:
         click.secho(
-            f"Unexpected error loading specs from {features_dir}: {e}",
+            f"Error loading specs from {resolved_features_dir}: {e}",
             fg="red",
             err=True,
         )
+        print_support_footer()
+        sys.exit(1)
+    except Exception as e:
+        click.secho(
+            f"Unexpected error loading specs from {resolved_features_dir}: {e}",
+            fg="red",
+            err=True,
+        )
+        print_support_footer()
         sys.exit(1)
 
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     template = _load_test_template("stub_test.py.jinja2")
     output_path = Path(output_dir)
@@ -660,7 +684,7 @@ def stub(
         template=template,
         single_file=single_file,
         force=force,
-        features_dir=Path(features_dir),
+        features_dir=resolved_features_dir,
     )
 
     flattened = _flatten_skeleton_entries(plan_result)
@@ -755,6 +779,7 @@ def report(
                 click.secho(
                     f"Error: Results file not found: {results_file}", fg="red", err=True
                 )
+                print_support_footer()
             sys.exit(1)
     else:
         if not results_dir.exists():
@@ -770,6 +795,7 @@ def report(
                     fg="yellow",
                     err=True,
                 )
+                print_support_footer()
             sys.exit(1)
 
         json_files = sorted(results_dir.glob("results_*.json"))
@@ -782,6 +808,7 @@ def report(
                 click.echo(json.dumps(payload, indent=2))
             else:
                 click.secho("No results files found.", fg="yellow", err=True)
+                print_support_footer()
             sys.exit(1)
 
         results_path = json_files[-1]
@@ -800,6 +827,7 @@ def report(
             click.echo(json.dumps(payload, indent=2))
         else:
             click.secho(f"Invalid JSON in results file: {e}", fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
 
     if format_type == "json":

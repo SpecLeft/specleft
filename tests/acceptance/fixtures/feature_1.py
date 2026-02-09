@@ -80,7 +80,7 @@ def feature_1_prd_multi_feature(
         workspace,
         PrdFiles(
             prd_path=prd_path,
-            features_dir=workspace / "features",
+            features_dir=workspace / ".specleft" / "specs",
         ),
     )
 
@@ -97,15 +97,15 @@ def feature_1_prd_slug_test(
 
     # Pre-create an existing feature file to test non-overwrite behaviour
     existing_content = "# Feature: User Authentication & Login\n\nCustom content that should NOT be overwritten.\n"
-    (workspace / "features" / "feature-user-authentication-login.md").write_text(
-        existing_content
-    )
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
+    (features_dir / "feature-user-authentication-login.md").write_text(existing_content)
 
     yield (
         runner,
         workspace,
         PrdFiles(
             prd_path=prd_path,
-            features_dir=workspace / "features",
+            features_dir=workspace / ".specleft" / "specs",
         ),
     )

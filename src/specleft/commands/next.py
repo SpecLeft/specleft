@@ -16,6 +16,8 @@ import click
 from specleft.commands.formatters import get_priority_value
 from specleft.commands.status import build_status_entries
 from specleft.commands.types import ScenarioStatusEntry, StatusSummary
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.utils.structure import warn_if_nested_structure
 
 
@@ -116,7 +118,7 @@ def _build_next_json(
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -143,7 +145,7 @@ def _build_next_json(
 @click.option("--feature", "feature_id", help="Filter by feature ID.")
 @click.option("--story", "story_id", help="Filter by story ID.")
 def next_command(
-    features_dir: str,
+    features_dir: str | None,
     limit: int,
     format_type: str,
     priority_filter: str | None,
@@ -153,18 +155,21 @@ def next_command(
     """Show the next tests to implement."""
     from specleft.validator import load_specs_directory
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
     except FileNotFoundError:
-        click.secho(f"Directory not found: {features_dir}", fg="red", err=True)
+        click.secho(f"Directory not found: {resolved_features_dir}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
     except ValueError as exc:
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     entries = build_status_entries(
         config,

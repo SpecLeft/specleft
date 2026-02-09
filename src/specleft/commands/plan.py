@@ -16,6 +16,7 @@ import click
 from slugify import slugify
 
 from specleft.license.status import resolve_license
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.templates.prd_template import (
     PRDTemplate,
     compile_pattern,
@@ -233,7 +234,7 @@ def _extract_feature_titles(
         warnings.append("No secondary headings found; using top-level title.")
         return [h1_titles[0]], warnings
 
-    warnings.append("No usable headings found; creating features/prd.md.")
+    warnings.append("No usable headings found; creating .specleft/specs/prd.md.")
     return [], warnings
 
 
@@ -673,7 +674,7 @@ def plan(
         require_step_keywords=True,
     )
     warnings.extend(scenario_warnings)
-    features_dir = Path("features")
+    features_dir = resolve_specs_dir(None)
 
     if not titles:
         titles = ["PRD"]

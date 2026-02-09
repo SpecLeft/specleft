@@ -46,7 +46,13 @@ class TestSkeletonCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "--single-file"], input="y\n"
+                cli,
+                [
+                    "test",
+                    "skeleton",
+                    "--single-file",
+                ],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -121,7 +127,14 @@ class TestSkeletonCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "--output-dir", "custom_tests"], input="y\n"
+                cli,
+                [
+                    "test",
+                    "skeleton",
+                    "--output-dir",
+                    "custom_tests",
+                ],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -162,7 +175,13 @@ class TestSkeletonCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "--single-file"], input="y\n"
+                cli,
+                [
+                    "test",
+                    "skeleton",
+                    "--single-file",
+                ],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -179,9 +198,11 @@ class TestSkeletonCommand:
         """Test skeleton command with invalid features directory."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
+            Path(".specleft/specs").mkdir(parents=True)
 
-            result = runner.invoke(cli, ["test", "skeleton"])
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--features-dir", ".specleft/specs"]
+            )
             assert result.exit_code == 0
             assert "No specs found" in result.output
 
@@ -189,13 +210,15 @@ class TestSkeletonCommand:
         """Test skeleton command with invalid spec schema."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            features_dir = Path("features")
-            features_dir.mkdir()
+            features_dir = Path(".specleft/specs")
+            features_dir.mkdir(parents=True)
             feature_dir = features_dir / "invalid"
             feature_dir.mkdir()
             (feature_dir / "_feature.md").write_text("---\nfeature_id: INVALID\n---")
 
-            result = runner.invoke(cli, ["test", "skeleton"])
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--features-dir", ".specleft/specs"]
+            )
             assert result.exit_code == 1
             assert "Error loading" in result.output
 

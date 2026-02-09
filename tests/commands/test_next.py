@@ -60,7 +60,10 @@ class TestNextCommand:
                 scenario_id="issue-refund",
                 scenario_priority="critical",
             )
-            result = runner.invoke(cli, ["next", "--format", "json", "--limit", "1"])
+            result = runner.invoke(
+                cli,
+                ["next", "--format", "json", "--limit", "1"],
+            )
             payload = json.loads(result.output)
             assert payload["showing"] == 1
             assert payload["tests"][0]["scenario_id"] == "issue-refund"
@@ -83,7 +86,14 @@ class TestNextCommand:
                 scenario_priority="low",
             )
             result = runner.invoke(
-                cli, ["next", "--format", "json", "--priority", "high"]
+                cli,
+                [
+                    "next",
+                    "--format",
+                    "json",
+                    "--priority",
+                    "high",
+                ],
             )
             payload = json.loads(result.output)
             assert payload["showing"] == 1

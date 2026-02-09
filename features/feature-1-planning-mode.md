@@ -8,7 +8,7 @@ priority: critical
 priority: critical
 - Given a repository contains a `prd.md`
 - When `specleft plan` is executed
-- Then feature files are created under `features/`
+- Then feature files are created under `.specleft/specs/`
 - And each feature maps to a user-visible capability
 - And no code or test files are modified
 

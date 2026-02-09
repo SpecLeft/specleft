@@ -63,9 +63,11 @@ dependencies = [
         assert result.exit_code in {0, 1}
         assert "Checking SpecLeft installation" in result.output
         assert "specleft CLI available" in result.output
+        assert "feature directory" in result.output
 
     def test_doctor_verbose_output(self) -> None:
         runner = CliRunner()
         result = runner.invoke(cli, ["doctor", "--verbose"])
         assert result.exit_code in {0, 1}
         assert "pytest plugin" in result.output
+        assert "feature directory" in result.output

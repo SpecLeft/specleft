@@ -86,7 +86,7 @@ class TestMissingSpecsDirectory:
 
     def test_no_specs_directory_runs_all_tests(self, pytester: Pytester) -> None:
         """Test that tests run without validation when specs are missing."""
-        features_dir = pytester.path / "features"
+        features_dir = pytester.path / ".specleft" / "specs"
         if features_dir.exists():
             for path in features_dir.rglob("*"):
                 if path.is_file():
@@ -103,7 +103,7 @@ class TestMissingSpecsDirectory:
 
     def test_metadata_defaults_when_no_specs(self, pytester: Pytester) -> None:
         """Test metadata defaults when specs are missing."""
-        features_dir = pytester.path / "features"
+        features_dir = pytester.path / ".specleft" / "specs"
         if features_dir.exists():
             for path in features_dir.rglob("*"):
                 if path.is_file():
@@ -525,17 +525,19 @@ class TestTagsInMetadata:
     ) -> None:
         """Test that empty tags list is included when scenario has no tags."""
         # Create a scenario without tags
-        scenario_dir = pytester.path / "features" / "notags" / "story"
+        scenario_dir = pytester.path / ".specleft" / "specs" / "notags" / "story"
         scenario_dir.mkdir(parents=True)
 
-        (pytester.path / "features" / "notags" / "_feature.md").write_text("""
+        (pytester.path / ".specleft" / "specs" / "notags" / "_feature.md").write_text(
+            """
 ---
 feature_id: notags
 priority: medium
 ---
 
 # Feature: No Tags Feature
-""".strip())
+""".strip()
+        )
         (scenario_dir / "_story.md").write_text("""
 ---
 story_id: story
@@ -582,7 +584,7 @@ class TestFilterBehavior:
 
     def test_filters_skip_without_specs(self, pytester: Pytester) -> None:
         """Test that filters skip tests when specs are missing."""
-        features_dir = pytester.path / "features"
+        features_dir = pytester.path / ".specleft" / "specs"
         if features_dir.exists():
             for path in features_dir.rglob("*"):
                 if path.is_file():
@@ -641,7 +643,7 @@ class TestFilterBehavior:
 
     def test_load_specs_config_uses_rootpath(self, pytester: Pytester) -> None:
         """Test that specs are found via config rootpath."""
-        features_dir = pytester.path / "features"
+        features_dir = pytester.path / ".specleft" / "specs"
         story_dir = features_dir / "auth" / "login"
         story_dir.mkdir(parents=True, exist_ok=True)
         (features_dir / "auth" / "_feature.md").write_text("""

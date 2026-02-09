@@ -14,16 +14,16 @@ def create_feature_specs(
     story_id: str,
     scenario_id: str,
     include_test_data: bool = False,
-    features_dir_name: str = "features",
+    features_dir_name: str = ".specleft/specs",
     scenario_priority: str = "high",
     execution_time: str = "fast",
 ) -> Path:
     """Create a nested feature spec structure for testing.
 
     Creates:
-        features/<feature_id>/_feature.md
-        features/<feature_id>/<story_id>/_story.md
-        features/<feature_id>/<story_id>/<scenario_id>.md
+        .specleft/specs/<feature_id>/_feature.md
+        .specleft/specs/<feature_id>/<story_id>/_story.md
+        .specleft/specs/<feature_id>/<story_id>/<scenario_id>.md
 
     Args:
         base_dir: Base directory to create features in.
@@ -31,14 +31,14 @@ def create_feature_specs(
         story_id: The story ID.
         scenario_id: The scenario ID.
         include_test_data: Whether to include test data table.
-        features_dir_name: Name of features directory (default: "features").
+        features_dir_name: Name of features directory (default: ".specleft/specs").
         scenario_priority: Priority level for the scenario.
         execution_time: Execution time for the scenario.
 
     Returns:
-        Path to the features directory.
+        Path to the specs directory.
     """
-    features_dir = base_dir / features_dir_name
+    features_dir = base_dir / Path(features_dir_name)
     feature_dir = features_dir / feature_id
     story_dir = feature_dir / story_id
     story_dir.mkdir(parents=True, exist_ok=True)
@@ -108,25 +108,25 @@ def create_single_file_feature_spec(
     *,
     feature_id: str,
     scenario_id: str,
-    features_dir_name: str = "features",
+    features_dir_name: str = ".specleft/specs",
     scenario_priority: str = "high",
 ) -> Path:
     """Create a single-file feature spec for testing.
 
     Creates:
-        features/<feature_id>.md
+        .specleft/specs/<feature_id>.md
 
     Args:
         base_dir: Base directory to create features in.
         feature_id: The feature ID.
         scenario_id: The scenario ID.
-        features_dir_name: Name of features directory (default: "features").
+        features_dir_name: Name of features directory (default: ".specleft/specs").
         scenario_priority: Priority level for the scenario.
 
     Returns:
-        Path to the features directory.
+        Path to the specs directory.
     """
-    features_dir = base_dir / features_dir_name
+    features_dir = base_dir / Path(features_dir_name)
     features_dir.mkdir(parents=True, exist_ok=True)
 
     write_file(
@@ -157,9 +157,9 @@ def write_specs_tree(base_dir: Path) -> Path:
         base_dir: Base directory to create specs in.
 
     Returns:
-        Path to the features directory.
+        Path to the specs directory.
     """
-    features_dir = base_dir / "features"
+    features_dir = base_dir / ".specleft" / "specs"
     auth_story_dir = features_dir / "auth" / "login"
     parse_story_dir = features_dir / "parse" / "units"
     auth_story_dir.mkdir(parents=True, exist_ok=True)

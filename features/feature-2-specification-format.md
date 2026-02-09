@@ -4,7 +4,7 @@ priority: critical
 ## Scenarios
 
 ### Scenario: Minimal valid feature file
-- Given a feature file exists under `features/`
+- Given a feature file exists under `.specleft/specs/`
 - When it contains at least one scenario with a priority
 - Then it is considered valid by SpecLeft
 - And missing metadata fields are treated as null

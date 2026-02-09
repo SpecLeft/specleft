@@ -18,6 +18,27 @@ from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify
 
 from specleft.enforcement.engine import evaluate_policy
 from specleft.license.repo_identity import detect_repo_identity
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
+
+DEFAULT_POLICY_PATH = Path(".specleft/policies/policy.yml")
+POLICY_DIR = Path(".specleft/policies")
+
+
+def resolve_policy_path(preferred: str | None) -> Path:
+    if preferred:
+        return Path(preferred)
+
+    if DEFAULT_POLICY_PATH.exists():
+        return DEFAULT_POLICY_PATH
+
+    if POLICY_DIR.exists():
+        candidates = sorted(POLICY_DIR.glob("*.yml"))
+        candidates.extend(sorted(POLICY_DIR.glob("*.yaml")))
+        if len(candidates) == 1:
+            return candidates[0]
+
+    return DEFAULT_POLICY_PATH
 
 
 def load_policy(path: str) -> SignedPolicy | None:
@@ -34,12 +55,21 @@ def load_policy(path: str) -> SignedPolicy | None:
         return SignedPolicy.model_validate(content)
     except FileNotFoundError:
         click.echo(f"Error: Policy file not found: {path}", err=True)
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
     except yaml.YAMLError as e:
         click.echo(f"Error: Invalid YAML in policy file: {e}", err=True)
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
+        )
         return None
 
 
@@ -60,7 +90,7 @@ def handle_verification_failure(result: VerifyResult) -> None:
         click.echo("", err=True)
         click.echo("  Option 2: Switch to Core Policy", err=True)
         click.echo(
-            "    Update your CI to use: specleft enforce .specleft/licenses/policy-core.yml",
+            "    Update your CI to use: specleft enforce .specleft/policies/policy-core.yml",
             err=True,
         )
         click.echo("", err=True)
@@ -78,6 +108,10 @@ def handle_verification_failure(result: VerifyResult) -> None:
             "Contact support@specleft.dev if you need to transfer your license.",
             err=True,
         )
+    click.echo("", err=True)
+    print_support_footer(
+        documentation_url="https://specleft.dev/docs/guides/enforcement"
+    )
 
 
 def display_policy_status(policy: SignedPolicy) -> None:
@@ -150,16 +184,14 @@ def display_violations(violations: dict[str, Any]) -> None:
         click.secho("\u2713 All checks passed", fg="green")
 
     click.echo()
-    click.echo("Documentation: https://specleft.dev/docs/enforce")
-    click.echo("Support: https://specleft.dev/contact")
+    print_support_footer(
+        documentation_url="https://specleft.dev/docs/guides/enforcement",
+        err=False,
+    )
 
 
 @click.command("enforce")
-@click.argument(
-    "policy_file",
-    type=click.Path(exists=False),
-    default=".specleft/licenses/policy.yml",
-)
+@click.argument("policy_file", type=click.Path(exists=False), default=None)
 @click.option(
     "--format",
     "fmt",
@@ -177,7 +209,7 @@ def display_violations(violations: dict[str, Any]) -> None:
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -187,10 +219,10 @@ def display_violations(violations: dict[str, Any]) -> None:
     help="Path to tests directory.",
 )
 def enforce(
-    policy_file: str,
+    policy_file: str | None,
     fmt: str,
     ignored: tuple[str, ...],
-    features_dir: str,
+    features_dir: str | None,
     test_dir: str,
 ) -> None:
     """Enforce policy against the source code.
@@ -206,17 +238,21 @@ def enforce(
     from specleft.validator import load_specs_directory
 
     # Load policy
-    policy = load_policy(policy_file)
+    policy_path = resolve_policy_path(policy_file)
+    policy = load_policy(str(policy_path))
     if not policy:
         sys.exit(2)
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
+
     try:
-        features = load_specs_directory(features_dir).features
+        features = load_specs_directory(resolved_features_dir).features
         if not features:
             sys.exit(2)
     except (FileNotFoundError, ValueError):
         click.secho(
-            f"Warning: No feature units found in directory: {features_dir}/. Nothing to enforce.",
+            "Warning: No feature units found in directory: "
+            f"{resolved_features_dir}/. Nothing to enforce.",
             fg="yellow",
             err=True,
         )
@@ -224,10 +260,12 @@ def enforce(
         click.echo("Have you defined your features files correctly?")
         click.echo()
         click.echo("You can list detected features with:")
-        click.echo(f"  > specleft features list --dir {features_dir}")
+        click.echo(f"  > specleft features list --dir {resolved_features_dir}")
         click.echo("")
-        click.echo("Documentation: https://specleft.dev/docs/enforce")
-        click.echo("Support: https://specleft.dev/contact")
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement",
+            err=False,
+        )
         sys.exit(2)
 
     # Reject --ignore-feature-id for Core
@@ -235,6 +273,9 @@ def enforce(
         click.echo(
             "Error: --ignore-feature-id requires Enforce policy",
             err=True,
+        )
+        print_support_footer(
+            documentation_url="https://specleft.dev/docs/guides/enforcement"
         )
         sys.exit(1)
 
@@ -276,7 +317,7 @@ def enforce(
     violations = evaluate_policy(
         policy=policy,
         ignored_features=list(ignored),
-        features_dir=features_dir,
+        features_dir=str(resolved_features_dir),
         tests_dir=test_dir,
     )
 

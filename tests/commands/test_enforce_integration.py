@@ -38,7 +38,7 @@ def write_policy_file(
     base_dir: Path, policy_data: dict, filename: str = "policy.yml"
 ) -> Path:
     """Write a policy file to .specleft directory."""
-    specleft_dir = base_dir / ".specleft"
+    specleft_dir = base_dir / ".specleft" / "policies"
     specleft_dir.mkdir(parents=True, exist_ok=True)
     policy_path = specleft_dir / filename
 
@@ -95,7 +95,9 @@ def test_login_success():
                 "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
 
             assert result.exit_code == 0
             assert "All checks passed" in result.output
@@ -125,7 +127,9 @@ def test_login_success():
                 "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
 
             assert result.exit_code == 1
             assert "Priority violations" in result.output
@@ -168,7 +172,9 @@ def test_login_success():
                 "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
 
             assert result.exit_code == 0
             assert "ℹ Enforce policy running in evaluation mode" in result.output
@@ -207,7 +213,9 @@ def test_login_success():
                 "specleft.commands.enforce.detect_repo_identity",
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
 
             assert result.exit_code == 0
             assert "Enforce Policy active" in result.output
@@ -256,12 +264,16 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 # Enforce policy should fail (expired evaluation)
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
                 assert result.exit_code == 2
                 assert "Evaluation" in result.output and "ended" in result.output
 
                 # Core policy should work
-                result = runner.invoke(cli, ["enforce", ".specleft/policy-core.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy-core.yml"]
+                )
                 assert result.exit_code == 0
                 assert "Core Policy (downgraded from Enforce)" in result.output
 
@@ -309,7 +321,9 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 # Without ignore - should fail (legacy not implemented)
-                result = runner.invoke(cli, ["enforce", ".specleft/policy.yml"])
+                result = runner.invoke(
+                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                )
                 assert result.exit_code == 1
 
                 # With ignore - should pass
@@ -317,7 +331,7 @@ def test_login_success():
                     cli,
                     [
                         "enforce",
-                        ".specleft/policy.yml",
+                        ".specleft/policies/policy.yml",
                         "--ignore-feature-id",
                         "legacy",
                     ],
