@@ -10,6 +10,7 @@ import sys
 
 import click
 
+from specleft.utils.messaging import print_support_footer
 from specleft.commands.contracts.payloads import (
     build_contract_payload,
     build_contract_test_payload,
@@ -76,4 +77,7 @@ def contract_test(format_type: str, verbose: bool) -> None:
             click.echo("Errors:")
             for error in errors:
                 click.echo(f"  - {error}")
+        if not passed:
+            click.echo("")
+            print_support_footer()
     sys.exit(0 if passed else 1)

@@ -40,7 +40,7 @@ class TestStatusCommand:
             )
             result = runner.invoke(cli, ["status"])
             assert result.exit_code == 0
-            assert "features/auth.md" in result.output
+            assert ".specleft/specs/auth.md" in result.output
             assert "login-success" in result.output
 
     def test_status_unimplemented_table_output(self) -> None:

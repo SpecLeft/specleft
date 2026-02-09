@@ -17,6 +17,8 @@ import click
 from specleft.commands.formatters import get_priority_value
 from specleft.commands.types import ScenarioStatus, ScenarioStatusEntry, StatusSummary
 from specleft.schema import SpecsConfig
+from specleft.utils.messaging import print_support_footer
+from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.utils.structure import warn_if_nested_structure
 from specleft.utils.test_discovery import extract_specleft_calls
 
@@ -311,7 +313,7 @@ def print_status_table(
             else (
                 str(feature.source_dir / "_feature.md")
                 if feature.source_dir
-                else f"features/{feature_id}.md"
+                else str(resolve_specs_dir(None) / f"{feature_id}.md")
             )
         )
         click.secho(
@@ -353,7 +355,7 @@ def _is_single_file_feature(feature: object) -> bool:
 @click.option(
     "--dir",
     "features_dir",
-    default="features",
+    default=None,
     help="Path to features directory.",
 )
 @click.option(
@@ -371,7 +373,7 @@ def _is_single_file_feature(feature: object) -> bool:
 )
 @click.option("--implemented", is_flag=True, help="Show only implemented scenarios.")
 def status(
-    features_dir: str,
+    features_dir: str | None,
     format_type: str,
     feature_id: str | None,
     story_id: str | None,
@@ -385,25 +387,30 @@ def status(
         click.secho(
             "Cannot use --implemented and --unimplemented together.", fg="red", err=True
         )
+        print_support_footer()
         sys.exit(1)
 
+    resolved_features_dir = resolve_specs_dir(features_dir)
     try:
-        config = load_specs_directory(features_dir)
+        config = load_specs_directory(resolved_features_dir)
     except FileNotFoundError:
-        click.secho(f"Directory not found: {features_dir}", fg="red", err=True)
+        click.secho(f"Directory not found: {resolved_features_dir}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
     except ValueError as exc:
         click.secho(f"Unable to load specs: {exc}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
     if format_type == "table":
-        warn_if_nested_structure(Path(features_dir))
+        warn_if_nested_structure(resolved_features_dir)
 
     if feature_id and not any(
         feature.feature_id == feature_id for feature in config.features
     ):
         click.secho(f"Unknown feature ID: {feature_id}", fg="red", err=True)
+        print_support_footer()
         sys.exit(1)
 
     if story_id:
@@ -415,6 +422,7 @@ def status(
         ]
         if not stories:
             click.secho(f"Unknown story ID: {story_id}", fg="red", err=True)
+            print_support_footer()
             sys.exit(1)
 
     entries = build_status_entries(

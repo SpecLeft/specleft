@@ -60,21 +60,23 @@ def test_generate_feature_files_from_prd(
     with specleft.step("When specleft plan is executed"):
         result = runner.invoke(cli, ["plan"])
 
-    with specleft.step("Then feature files are created under features/"):
+    with specleft.step("Then feature files are created under .specleft/specs/"):
         assert result.exit_code == 0, f"Command failed: {result.output}"
-        assert Path("features").exists(), "features/ directory not created"
-        assert Path("features").is_dir(), "features/ is not a directory"
+        assert Path(
+            ".specleft/specs"
+        ).exists(), ".specleft/specs/ directory not created"
+        assert Path(".specleft/specs").is_dir(), ".specleft/specs/ is not a directory"
 
         # Should have created feature files
-        feature_files = list(Path("features").glob("*.md"))
+        feature_files = list(Path(".specleft/specs").glob("*.md"))
         assert (
             len(feature_files) >= 2
         ), f"Expected at least 2 feature files, got {len(feature_files)}"
 
     with specleft.step("And each feature maps to a user-visible capability"):
         # Check that feature files correspond to PRD headings
-        auth_feature = Path("features/feature-1-user-authentication.md")
-        payment_feature = Path("features/feature-2-payment-processing.md")
+        auth_feature = Path(".specleft/specs/feature-1-user-authentication.md")
+        payment_feature = Path(".specleft/specs/feature-2-payment-processing.md")
 
         assert auth_feature.exists(), f"Expected {auth_feature} to exist"
         assert payment_feature.exists(), f"Expected {payment_feature} to exist"
@@ -129,14 +131,14 @@ def test_derive_feature_filenames_from_prd_headings(
         # Slugs should be lowercase, hyphenated, without special characters
         # "User Authentication & Login" -> "feature-user-authentication-login"
         # "Data Export (CSV/JSON)" -> "feature-data-export-csv-json"
-        auth_file = Path("features/feature-user-authentication-login.md")
-        export_file = Path("features/feature-data-export-csv-json.md")
+        auth_file = Path(".specleft/specs/feature-user-authentication-login.md")
+        export_file = Path(".specleft/specs/feature-data-export-csv-json.md")
 
         # At minimum, the export file should be created (auth was pre-existing)
         assert export_file.exists(), f"Expected {export_file} to be created as slug"
 
         # Verify slug naming - no uppercase, no special chars
-        for feature_file in Path("features").glob("*.md"):
+        for feature_file in Path(".specleft/specs").glob("*.md"):
             filename = feature_file.stem
             assert (
                 filename == filename.lower()
@@ -148,7 +150,7 @@ def test_derive_feature_filenames_from_prd_headings(
 
     with specleft.step("And existing feature files are not overwritten"):
         # The pre-existing file should retain its original content
-        auth_file = Path("features/feature-user-authentication-login.md")
+        auth_file = Path(".specleft/specs/feature-user-authentication-login.md")
         current_content = auth_file.read_text()
         assert current_content == existing_content, (
             "Existing feature file was overwritten.\n"
@@ -177,10 +179,10 @@ def test_handle_missing_prd_gracefully(acceptance_workspace) -> None:
     runner, _workspace = acceptance_workspace
 
     with specleft.step("Given no PRD file exists in the repository"):
-        # Remove the features/ directory created by the fixture
-        # (this test verifies features/ is NOT created when PRD is missing)
-        if Path("features").exists():
-            shutil.rmtree("features")
+        # Remove the .specleft/specs/ directory created by the fixture
+        # (this test verifies .specleft/specs/ is NOT created when PRD is missing)
+        if Path(".specleft/specs").exists():
+            shutil.rmtree(".specleft/specs")
 
         # Ensure no prd.md exists in the isolated filesystem
         assert not Path("prd.md").exists(), "prd.md should not exist"
@@ -207,10 +209,10 @@ def test_handle_missing_prd_gracefully(acceptance_workspace) -> None:
         ), f"Expected suggestion of PRD locations in output:\n{result.output}"
 
     with specleft.step("And no feature files are created"):
-        # features/ directory should not be created
-        assert not Path(
-            "features"
-        ).exists(), "features/ directory should not be created when PRD is missing"
+        # .specleft/specs/ directory should not be created
+        assert (
+            not Path(".specleft/specs").exists()
+        ), ".specleft/specs/ directory should not be created when PRD is missing"
 
 
 @specleft(
@@ -273,20 +275,24 @@ def test_validate_prd_template_definitions(tmp_path: Path) -> None:
     with clear errors when loading PRD templates.
     """
     invalid_heading = tmp_path / "invalid-heading.yml"
-    invalid_heading.write_text("""
+    invalid_heading.write_text(
+        """
 version: "1.0"
 features:
   heading_level: 0
-""".lstrip())
+""".lstrip()
+    )
 
     invalid_pattern = tmp_path / "invalid-pattern.yml"
-    invalid_pattern.write_text("""
+    invalid_pattern.write_text(
+        """
 version: "1.0"
 features:
   heading_level: 2
   patterns:
     - "Feature: {title"
-""".lstrip())
+""".lstrip()
+    )
 
     with specleft.step("Given a PRD template file defines headings and patterns"):
         assert invalid_heading.exists()
@@ -362,7 +368,8 @@ def test_generate_features_with_custom_prd_template() -> None:
         Path("prd.md").write_text(
             "# PRD\n\n## Epic: Billing\n\n### AC: Refund requested\n- Priority = p0\n"
         )
-        Path("template.yml").write_text("""
+        Path("template.yml").write_text(
+            """
 version: "1.0"
 
 features:
@@ -384,7 +391,8 @@ priorities:
     - "Priority = {value}"
   mapping:
     p0: critical
-""".lstrip())
+""".lstrip()
+        )
 
         with specleft.step(
             "Given a PRD template defines custom feature and scenario patterns"
@@ -396,7 +404,7 @@ priorities:
 
         with specleft.step("Then features are generated using the custom patterns"):
             assert result.exit_code == 0, f"Command failed: {result.output}"
-            feature_file = Path("features/epic-billing.md")
+            feature_file = Path(".specleft/specs/epic-billing.md")
             assert feature_file.exists()
 
         with specleft.step("And priorities are normalized using the template mapping"):

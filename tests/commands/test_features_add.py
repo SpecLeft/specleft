@@ -25,10 +25,12 @@ class TestFeaturesAddCommand:
                     "cli-authoring",
                     "--title",
                     "CLI Authoring",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0
-            feature_path = Path("features/feature-cli-authoring.md")
+            feature_path = Path(".specleft/specs/feature-cli-authoring.md")
             assert feature_path.exists()
             content = feature_path.read_text()
             assert "# Feature: CLI Authoring" in content
@@ -45,6 +47,8 @@ class TestFeaturesAddCommand:
                     "Invalid ID",
                     "--title",
                     "Bad",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 1
@@ -63,10 +67,12 @@ class TestFeaturesAddCommand:
                     "--title",
                     "Dry Run",
                     "--dry-run",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0
-            assert not Path("features/feature-dry-run.md").exists()
+            assert not Path(".specleft/specs/feature-dry-run.md").exists()
 
     def test_add_json_output(self) -> None:
         runner = CliRunner()
@@ -82,6 +88,8 @@ class TestFeaturesAddCommand:
                     "JSON Feature",
                     "--format",
                     "json",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0
@@ -104,6 +112,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -118,6 +128,8 @@ class TestFeaturesAddScenarioCommand:
                     "Add scenario",
                     "--step",
                     "Given a scenario",
+                    "--dir",
+                    ".specleft/specs",
                 ],
                 input="n\n",
             )
@@ -138,6 +150,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -152,6 +166,8 @@ class TestFeaturesAddScenarioCommand:
                     "No steps",
                     "--add-test",
                     "skeleton",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 1
@@ -169,6 +185,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -184,6 +202,8 @@ class TestFeaturesAddScenarioCommand:
                     "--step",
                     "Given a preview",
                     "--preview-test",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0, result.output
@@ -201,6 +221,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -218,6 +240,8 @@ class TestFeaturesAddScenarioCommand:
                     "--preview-test",
                     "--format",
                     "json",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0, result.output
@@ -237,6 +261,8 @@ class TestFeaturesAddScenarioCommand:
                     "Missing feature",
                     "--format",
                     "json",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 1
@@ -255,6 +281,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -269,6 +297,8 @@ class TestFeaturesAddScenarioCommand:
                     "Bad scenario",
                     "--id",
                     "Bad ID",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 1
@@ -286,6 +316,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -300,6 +332,8 @@ class TestFeaturesAddScenarioCommand:
                     "Stub scenario",
                     "--add-test",
                     "stub",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0, result.output
@@ -318,6 +352,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -334,6 +370,8 @@ class TestFeaturesAddScenarioCommand:
                     "stub",
                     "--tests-dir",
                     "custom_tests",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 0, result.output
@@ -352,6 +390,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -368,6 +408,8 @@ class TestFeaturesAddScenarioCommand:
                     "stub",
                     "--tests-dir",
                     "tests/test_cli_history.py",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
             assert result.exit_code == 2, result.output
@@ -385,6 +427,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -399,6 +443,8 @@ class TestFeaturesAddScenarioCommand:
                     "Add scenario",
                     "--step",
                     "Given a scenario",
+                    "--dir",
+                    ".specleft/specs",
                 ],
                 input="y\nmy_tests\n",
             )
@@ -418,6 +464,8 @@ class TestFeaturesAddScenarioCommand:
                     "cli-history",
                     "--title",
                     "CLI History",
+                    "--dir",
+                    ".specleft/specs",
                 ],
             )
 
@@ -432,6 +480,8 @@ class TestFeaturesAddScenarioCommand:
                     "Add scenario",
                     "--step",
                     "Given a scenario",
+                    "--dir",
+                    ".specleft/specs",
                 ],
                 input="y\n\n",
             )

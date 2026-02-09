@@ -160,7 +160,7 @@ class TestFeaturesListCommand:
             result = runner.invoke(cli, ["features", "list"])
             assert result.exit_code == 0
             assert "Detected nested feature structure" in result.output
-            assert "features/legacy/_feature.md" not in result.output
+            assert ".specleft/specs/legacy/_feature.md" not in result.output
 
     def test_features_list_missing_dir(self) -> None:
         runner = CliRunner()
@@ -273,7 +273,7 @@ def test_login_success():
             )
 
             # Add a second scenario manually
-            scenario_dir = Path("features/auth/login")
+            scenario_dir = Path(".specleft/specs/auth/login")
             (scenario_dir / "login-failure.md").write_text("""---
 scenario_id: login-failure
 name: Login Failure

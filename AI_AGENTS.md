@@ -147,7 +147,7 @@ For a quick walkthrough of plan/analyze/template usage, see [GET_STARTED.md](GET
 5. Generate feature specifications under:
 
 ```text
-features/<feature>.md
+.specleft/specs/<feature>.md
 ```
 
 6. Define scenarios and priorities.

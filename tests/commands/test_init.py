@@ -17,7 +17,7 @@ class TestInitCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["init"], input="1\n")
             assert result.exit_code == 0
-            assert Path("features/example-feature.md").exists()
+            assert Path(".specleft/specs/example-feature.md").exists()
 
     def test_init_json_dry_run(self) -> None:
         runner = CliRunner()
@@ -27,7 +27,7 @@ class TestInitCommand:
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
             assert payload["summary"]["directories"] == 4
-            assert "features/example-feature.md" in payload["would_create"]
+            assert ".specleft/specs/example-feature.md" in payload["would_create"]
 
     def test_init_json_requires_dry_run(self) -> None:
         runner = CliRunner()
@@ -42,10 +42,10 @@ class TestInitCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["init", "--blank"])
             assert result.exit_code == 0
-            assert Path("features").exists()
+            assert Path(".specleft/specs").exists()
             assert Path("tests").exists()
             assert Path(".specleft").exists()
-            assert Path(".specleft/licenses").exists()
+            assert Path(".specleft/policies").exists()
             assert "Creating SpecLeft directory structure" in result.output
 
     def test_init_example_and_blank_conflict(self) -> None:
@@ -58,25 +58,25 @@ class TestInitCommand:
     def test_init_existing_features_skip(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
+            Path(".specleft/specs").mkdir(parents=True)
             result = runner.invoke(cli, ["init"], input="1\n")
             assert result.exit_code == 0
             assert "Skipping initialization" in result.output
-            assert Path("features").exists()
+            assert Path(".specleft/specs").exists()
             assert not Path("tests").exists()
 
     def test_init_existing_features_merge(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
+            Path(".specleft/specs").mkdir(parents=True)
             result = runner.invoke(cli, ["init"], input="2\n")
             assert result.exit_code == 0
-            assert Path("features/example-feature.md").exists()
+            assert Path(".specleft/specs/example-feature.md").exists()
 
     def test_init_existing_features_cancel(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
+            Path(".specleft/specs").mkdir(parents=True)
             result = runner.invoke(cli, ["init"], input="3\n")
             assert result.exit_code == 2
             assert "Cancelled" in result.output

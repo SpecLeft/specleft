@@ -3,7 +3,7 @@
 SpecLeft uses Markdown files with YAML frontmatter to describe features, stories, and scenarios. The directory structure mirrors the hierarchy:
 
 ```
-features/
+.specleft/specs/
 ├── <feature>/
 │   ├── _feature.md
 │   └── <story>/

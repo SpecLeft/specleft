@@ -145,7 +145,7 @@ specleft plan
 5. Generate feature specifications under:
 
 ```text
-features/<feature>.md
+.specleft/specs/<feature>.md
 ```
 
 6. Define scenarios and priorities.

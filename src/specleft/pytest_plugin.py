@@ -14,6 +14,7 @@ import pytest
 
 from specleft.decorators import get_current_steps
 from specleft.schema import FeatureSpec, Priority, ScenarioSpec, SpecsConfig
+from specleft.utils.specs_dir import DEFAULT_SPECS_DIR, FALLBACK_SPECS_DIR
 
 
 def _get_priority_value(scenario: ScenarioSpec) -> str:
@@ -63,7 +64,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addini(
         "specleft_features_dir",
         "Directory containing SpecLeft specs",
-        default="features",
+        default=".specleft/specs",
     )
     parser.addini(
         "specleft_output_dir",
@@ -297,7 +298,13 @@ def _collect_all_tags(specs_config: SpecsConfig) -> set[str]:
 
 
 def _load_specs_config(config: pytest.Config) -> SpecsConfig | None:
-    features_dir = config.getini("specleft_features_dir") or "features"
+    features_dir = config.getini("specleft_features_dir") or str(DEFAULT_SPECS_DIR)
+    default_spec_dir = str(DEFAULT_SPECS_DIR)
+    fallback_spec_dir = str(FALLBACK_SPECS_DIR)
+    if features_dir == default_spec_dir:
+        candidate_dirs = [default_spec_dir, fallback_spec_dir]
+    else:
+        candidate_dirs = [features_dir]
     search_roots = [
         Path(str(config.rootpath)),
         Path.cwd(),
@@ -306,25 +313,26 @@ def _load_specs_config(config: pytest.Config) -> SpecsConfig | None:
 
     for root in search_roots:
         root_path = Path(str(root))
-        features_path = Path(features_dir)
-        if not features_path.is_absolute():
-            features_path = root_path / features_path
+        for candidate in candidate_dirs:
+            features_path = Path(candidate)
+            if not features_path.is_absolute():
+                features_path = root_path / features_path
 
-        if not features_path.exists():
-            continue
-
-        try:
-            from specleft.validator import load_specs_directory
-
-            return load_specs_directory(features_path)
-        except Exception:
-            try:
-                from specleft.schema import SpecsConfig
-
-                parsed = SpecsConfig.from_directory(features_path)
-                return parsed if parsed.features else None
-            except Exception:
+            if not features_path.exists():
                 continue
+
+            try:
+                from specleft.validator import load_specs_directory
+
+                return load_specs_directory(features_path)
+            except Exception:
+                try:
+                    from specleft.schema import SpecsConfig
+
+                    parsed = SpecsConfig.from_directory(features_path)
+                    return parsed if parsed.features else None
+                except Exception:
+                    continue
 
     return None
 

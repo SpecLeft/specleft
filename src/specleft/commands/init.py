@@ -13,11 +13,13 @@ from typing import cast
 
 import click
 
+from specleft.utils.messaging import print_support_footer
+
 
 def _init_example_content() -> dict[str, str]:
     """Generate single-file example feature using canonical template."""
     return {
-        "features/example-feature.md": textwrap.dedent("""
+        ".specleft/specs/example-feature.md": textwrap.dedent("""
             # Feature: Example Feature
 
             ## Scenarios
@@ -53,23 +55,24 @@ def _init_example_content() -> dict[str, str]:
             owner: dev-team
             component: identity
             ---
-            """).strip() + "\n",
+            """).strip()
+        + "\n",
     }
 
 
 def _init_plan(example: bool) -> tuple[list[Path], list[tuple[Path, str]]]:
     directories = [
-        Path("features"),
+        Path(".specleft/specs"),
         Path("tests"),
         Path(".specleft"),
-        Path(".specleft/licenses"),
+        Path(".specleft/policies"),
     ]
     files: list[tuple[Path, str]] = []
     if example:
         for rel_path, content in _init_example_content().items():
             files.append((Path(rel_path), content))
     files.append((Path(".specleft/.gitkeep"), ""))
-    files.append((Path(".specleft/licenses/.gitkeep"), ""))
+    files.append((Path(".specleft/policies/.gitkeep"), ""))
     return directories, files
 
 
@@ -105,7 +108,7 @@ def _print_license_notice() -> None:
     click.echo("commercial license policy.yml.")
     click.echo("")
     click.echo("To register a license:")
-    click.echo("  store the policy file in .specleft/licenses/")
+    click.echo("  store the policy file in .specleft/policies/")
     click.echo("")
     click.echo("For details:")
     click.echo("  https://specleft.dev/enforce")
@@ -149,6 +152,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
             click.echo(json.dumps(payload, indent=2))
         else:
             click.secho(message, fg="red", err=True)
+            print_support_footer()
         sys.exit(1)
 
     if not example and not blank:
@@ -157,7 +161,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     if blank:
         example = False
 
-    features_dir = Path("features")
+    features_dir = Path(".specleft/specs")
     if features_dir.exists():
         if format_type == "json":
             payload_cancelled = {
@@ -228,7 +232,7 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         click.echo("Example project ready!")
         click.echo("")
         click.echo("Next steps:")
-        click.echo("  1. Review the example: cat features/example-feature.md")
+        click.echo("  1. Review the example: cat .specleft/specs/example-feature.md")
         click.echo("  2. Generate tests: specleft test skeleton")
         click.echo("  3. Run tests: pytest")
         click.echo("  4. Check status: specleft status")
@@ -236,6 +240,6 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         click.echo("Directory structure ready!")
         click.echo("")
         click.echo("Next steps:")
-        click.echo("  1. Create your first feature: features/<feature-name>.md")
+        click.echo("  1. Create your first feature: .specleft/specs/<feature-name>.md")
         click.echo("  2. Add scenarios with Given/When/Then steps")
         click.echo("  3. Generate tests: specleft test skeleton")

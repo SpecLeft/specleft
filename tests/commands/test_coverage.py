@@ -55,8 +55,10 @@ class TestCoverageCommand:
     def test_coverage_json_empty_entries(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
-            Path("features/empty.md").write_text("# Feature: Empty\n\n## Scenarios\n")
+            Path(".specleft/specs").mkdir(parents=True)
+            Path(".specleft/specs/empty.md").write_text(
+                "# Feature: Empty\n\n## Scenarios\n"
+            )
             result = runner.invoke(cli, ["coverage", "--format", "json"])
             assert result.exit_code == 0
             payload = json.loads(result.output)
@@ -83,7 +85,13 @@ def test_login_success():
 """)
             result = runner.invoke(
                 cli,
-                ["coverage", "--format", "json", "--threshold", "90"],
+                [
+                    "coverage",
+                    "--format",
+                    "json",
+                    "--threshold",
+                    "90",
+                ],
             )
             assert result.exit_code == 0
 
@@ -134,7 +142,15 @@ def test_login_success():
             )
             result = runner.invoke(
                 cli,
-                ["coverage", "--format", "json", "--threshold", "90"],
+                [
+                    "coverage",
+                    "--format",
+                    "json",
+                    "--threshold",
+                    "90",
+                    "--dir",
+                    "features",
+                ],
             )
             assert result.exit_code == 1
 
@@ -148,7 +164,7 @@ def test_login_success():
     def test_coverage_invalid_specs(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            Path("features").mkdir()
+            Path(".specleft/specs").mkdir(parents=True)
             result = runner.invoke(cli, ["coverage", "--format", "json"])
             assert result.exit_code == 1
             assert "Unable to load specs" in result.output

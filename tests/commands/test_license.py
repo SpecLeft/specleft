@@ -32,8 +32,8 @@ def setup_test_key():
 def write_policy_file(
     base_dir: Path, policy_data: dict, filename: str = "policy.yml"
 ) -> Path:
-    """Write a policy file to .specleft/licenses/ directory."""
-    license_dir = base_dir / ".specleft" / "licenses"
+    """Write a policy file to .specleft/policies/ directory."""
+    license_dir = base_dir / ".specleft" / "policies"
     license_dir.mkdir(parents=True, exist_ok=True)
     policy_path = license_dir / filename
 
@@ -70,7 +70,7 @@ class TestLicenseCommand:
             assert "Commercial License: Active" in result.output
             assert "License Type: Core" in result.output
             assert "License ID: lic_test12345678" in result.output
-            assert "Validated File: .specleft/licenses/policy.yml" in result.output
+            assert "Validated File: .specleft/policies/policy.yml" in result.output
 
     def test_license_status_file_override(self) -> None:
         runner = CliRunner()
@@ -88,18 +88,18 @@ class TestLicenseCommand:
                         "license",
                         "status",
                         "--file",
-                        ".specleft/licenses/custom.yml",
+                        ".specleft/policies/custom.yml",
                     ],
                 )
 
             assert result.exit_code == 0
             assert "Commercial License: Active" in result.output
-            assert "Validated File: .specleft/licenses/custom.yml" in result.output
+            assert "Validated File: .specleft/policies/custom.yml" in result.output
 
     def test_license_status_multiple_files_negative(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            license_dir = Path(".specleft/licenses")
+            license_dir = Path(".specleft/policies")
             license_dir.mkdir(parents=True, exist_ok=True)
             (license_dir / "01-invalid.yml").write_text("not: [valid: yaml")
 
@@ -118,5 +118,5 @@ class TestLicenseCommand:
 
             assert result.exit_code == 0
             assert "Commercial License: Inactive" in result.output
-            assert "Validated File: .specleft/licenses/02-expired.yml" in result.output
+            assert "Validated File: .specleft/policies/02-expired.yml" in result.output
             assert "Valid Until: N/A" in result.output

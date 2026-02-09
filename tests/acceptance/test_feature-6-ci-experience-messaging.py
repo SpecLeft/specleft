@@ -51,8 +51,8 @@ def setup_test_key():
 def write_policy_file(
     base_dir: Path, policy_data: dict, filename: str = "policy.yml"
 ) -> Path:
-    """Write a policy file to .specleft/licenses directory."""
-    licenses_dir = base_dir / ".specleft" / "licenses"
+    """Write a policy file to .specleft/policies directory."""
+    licenses_dir = base_dir / ".specleft" / "policies"
     licenses_dir.mkdir(parents=True, exist_ok=True)
     policy_path = licenses_dir / filename
 
@@ -109,7 +109,7 @@ def test_ci_failure_explains_intent_mismatch(
         ):
             result = runner.invoke(
                 cli,
-                ["enforce", ".specleft/licenses/policy.yml"],
+                ["enforce", ".specleft/policies/policy.yml"],
             )
 
         output = result.output
@@ -213,7 +213,7 @@ def test_documentation_and_support_links_on_ci_failure(
                 cli,
                 [
                     "enforce",
-                    f".specleft/licenses/{policy_filename}",
+                    f".specleft/policies/{policy_filename}",
                 ],
             )
 

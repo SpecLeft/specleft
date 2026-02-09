@@ -2,7 +2,7 @@
 
 **A planning buffer for AI coding agents — externalize intent before writing code.**
 
-SpecLeft lets teams capture intended behaviour as feature specs (`features/*.md`) before implementation, then optionally enforce that intent in CI.
+SpecLeft lets teams capture intended behaviour as feature specs (`.specleft/specs/*.md`) before implementation, then optionally enforce that intent in CI.
 
 Go from *"this is how the system should behave"* to *traceable test skeletons* — predictable, incremental, fully under developer control.
 
@@ -21,7 +21,7 @@ Create a `prd.md` describing the intended behaviour of your system, then run:
 pip install specleft
 specleft plan
 ```
-This converts `prd.md` into feature specifications under features/
+This converts `prd.md` into feature specifications under .specleft/specs/
 without writing code or tests.
 
 ## For AI Coding Agents
@@ -210,10 +210,11 @@ specleft features stats --format json
 specleft plan
 
 # This will create files like:
-# features/feature-auth.md
+# .specleft/specs/feature-auth.md
 
 # 6. Example: feature specification (single file per feature)
-cat > features/feature-auth.md << EOF
+mkdir -p .specleft/specs
+cat > .specleft/specs/feature-auth.md << EOF
 # Feature: Authentication
 
 ## Scenarios

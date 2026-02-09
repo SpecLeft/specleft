@@ -113,7 +113,8 @@ def feature_5_policy_violation(
     """Feature with unimplemented critical/high scenarios for policy violation test."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
     (tests_dir / "__init__.py").write_text("")
@@ -143,7 +144,8 @@ def feature_5_policy_satisfied(
     """Feature with all critical/high scenarios implemented for passing enforcement."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -172,7 +174,8 @@ def feature_5_invalid_signature(
     """Feature for testing invalid policy signature rejection."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 

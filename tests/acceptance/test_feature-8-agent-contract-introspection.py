@@ -318,15 +318,15 @@ def test_clear_failures_when_contract_is_violated(
         # (beyond what we set up in the Given step)
         all_files = list(Path(".").rglob("*"))
         expected_paths = {
-            Path("features"),
-            Path("features/feature-test.md"),
+            Path(".specleft/specs"),
+            Path(".specleft/specs/feature-test.md"),
         }
 
         # Filter to only regular files and directories we care about
         actual_paths = {
             p
             for p in all_files
-            if not str(p).startswith(".") and p.name != "__pycache__"
+            if p.parts and p.parts[0] == ".specleft" and p.name != "__pycache__"
         }
 
         assert expected_paths.issubset(actual_paths), (
@@ -337,7 +337,7 @@ def test_clear_failures_when_contract_is_violated(
 
         # The contract test should not create additional files
         # (e.g., should not auto-generate tests or reports)
-        unexpected_dirs = {"tests", ".specleft", "reports"}
+        unexpected_dirs = {"tests", "reports"}
         for unexpected in unexpected_dirs:
             unexpected_path = Path(unexpected)
             assert not unexpected_path.exists() or (

@@ -75,7 +75,8 @@ def feature_3_canonical_json(
     """Feature with scenarios for testing canonical JSON output shape."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -104,7 +105,8 @@ def feature_3_slugification(
     """Feature with varied title formats for testing ID slugification."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 

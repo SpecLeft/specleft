@@ -9,15 +9,15 @@ pip install -e ".[dev]"
 ## Create Specs
 
 ```bash
-mkdir -p features/calculator/addition
+mkdir -p .specleft/specs/calculator/addition
 ```
 
-Create `features/calculator/_feature.md`, `features/calculator/addition/_story.md`, and a scenario file like `features/calculator/addition/basic_addition.md`.
+Create `.specleft/specs/calculator/_feature.md`, `.specleft/specs/calculator/addition/_story.md`, and a scenario file like `.specleft/specs/calculator/addition/basic_addition.md`.
 
 ## Generate Tests
 
 ```bash
-specleft test skeleton --features-dir features --output-dir tests
+specleft test skeleton --features-dir .specleft/specs --output-dir tests
 ```
 
 Preview without writing files:

@@ -149,7 +149,8 @@ def feature_4_unimplemented(
     """Feature with partial implementation for testing --unimplemented filter."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -178,7 +179,8 @@ def feature_4_implemented(
     """Feature with partial implementation for testing --implemented filter."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
@@ -207,7 +209,8 @@ def feature_4_multi_feature_filter(
     """Multiple features for testing --feature filter."""
     runner, workspace = acceptance_workspace
 
-    features_dir = workspace / "features"
+    features_dir = workspace / ".specleft" / "specs"
+    features_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = workspace / "tests"
     tests_dir.mkdir(exist_ok=True)
 
