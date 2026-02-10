@@ -15,6 +15,43 @@ import click
 
 from specleft.utils.messaging import print_support_footer
 
+_PRD_TEMPLATE_CONTENT = """\
+version: "1.0"
+
+features:
+  heading_level: 2
+  patterns:
+    - "Feature: {title}"
+    - "Feature {title}"
+  contains: []
+  match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
+  exclude:
+    - "Overview"
+    - "Goals"
+    - "Non-Goals"
+    - "Open Questions"
+    - "Notes"
+
+scenarios:
+  heading_level: [3, 4]
+  patterns:
+    - "Scenario: {title}"
+  contains: []
+  match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
+  step_keywords:
+    - "Given"
+    - "When"
+    - "Then"
+    - "And"
+    - "But"
+
+priorities:
+  patterns:
+    - "priority: {value}"
+    - "Priority: {value}"
+  mapping: {}
+"""
+
 
 def _init_example_content() -> dict[str, str]:
     """Generate single-file example feature using canonical template."""
@@ -65,6 +102,7 @@ def _init_plan(example: bool) -> tuple[list[Path], list[tuple[Path, str]]]:
         Path("tests"),
         Path(".specleft"),
         Path(".specleft/policies"),
+        Path(".specleft/templates"),
     ]
     files: list[tuple[Path, str]] = []
     if example:
@@ -72,6 +110,7 @@ def _init_plan(example: bool) -> tuple[list[Path], list[tuple[Path, str]]]:
             files.append((Path(rel_path), content))
     files.append((Path(".specleft/.gitkeep"), ""))
     files.append((Path(".specleft/policies/.gitkeep"), ""))
+    files.append((Path(".specleft/templates/prd-template.yml"), _PRD_TEMPLATE_CONTENT))
     return directories, files
 
 

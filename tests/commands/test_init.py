@@ -18,6 +18,7 @@ class TestInitCommand:
             result = runner.invoke(cli, ["init"], input="1\n")
             assert result.exit_code == 0
             assert Path(".specleft/specs/example-feature.md").exists()
+            assert Path(".specleft/templates/prd-template.yml").exists()
 
     def test_init_json_dry_run(self) -> None:
         runner = CliRunner()
@@ -26,8 +27,9 @@ class TestInitCommand:
             assert result.exit_code == 0
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
-            assert payload["summary"]["directories"] == 4
+            assert payload["summary"]["directories"] == 5
             assert ".specleft/specs/example-feature.md" in payload["would_create"]
+            assert ".specleft/templates/prd-template.yml" in payload["would_create"]
 
     def test_init_json_requires_dry_run(self) -> None:
         runner = CliRunner()
@@ -46,6 +48,8 @@ class TestInitCommand:
             assert Path("tests").exists()
             assert Path(".specleft").exists()
             assert Path(".specleft/policies").exists()
+            assert Path(".specleft/templates").exists()
+            assert Path(".specleft/templates/prd-template.yml").exists()
             assert "Creating SpecLeft directory structure" in result.output
 
     def test_init_example_and_blank_conflict(self) -> None:
