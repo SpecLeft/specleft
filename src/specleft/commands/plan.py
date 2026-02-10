@@ -400,7 +400,7 @@ def _render_scenarios(scenarios: list[dict[str, object]]) -> str:
     blocks: list[str] = []
     for scenario in scenarios:
         title = str(scenario.get("title", "Scenario"))
-        priority = scenario.get("priority")
+        priority = scenario.get("priority", "medium")
         steps_value = scenario.get("steps")
         steps: list[str] = []
         if isinstance(steps_value, list):
@@ -606,12 +606,25 @@ def plan(
     prd_file = Path(prd_path)
     template = default_template()
     template_info: dict[str, str] | None = None
+
+    default_template_path = Path(".specleft/templates/prd-template.yml")
     if template_path is not None:
         template = load_template(template_path)
         template_info = {
             "path": str(template_path),
             "version": template.version,
         }
+    elif default_template_path.exists():
+        template = load_template(default_template_path)
+        template_path = default_template_path
+        template_info = {
+            "path": str(default_template_path),
+            "version": template.version,
+        }
+
+    if template_path is not None and format_type != "json":
+        click.echo(f"Using template: {template_path}")
+        click.echo("")
     prd_content, warnings = _read_prd(prd_file)
     if prd_content is None:
         if format_type == "json":

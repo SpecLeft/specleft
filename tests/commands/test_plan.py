@@ -253,6 +253,36 @@ class TestPlanTemplateExtraction:
             ]
         }
 
+    def test_render_scenarios_defaults_priority_to_medium(self) -> None:
+        plan_module: ModuleType = importlib.import_module("specleft.commands.plan")
+        scenarios: list[dict[str, object]] = [
+            {
+                "title": "No explicit priority",
+                "steps": ["Given something", "When action", "Then result"],
+            },
+        ]
+        rendered = plan_module._render_scenarios(scenarios)
+        assert "priority: medium" in rendered
+
+    def test_plan_scenario_without_priority_gets_medium(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text(
+                "# PRD\n\n## Feature: Billing\n\n"
+                "### Scenario: Refund requested\n"
+                "- Given a customer\n"
+                "- When they request a refund\n"
+                "- Then we mark it pending\n"
+            )
+            result = runner.invoke(cli, ["plan"])
+
+            assert result.exit_code == 0
+            feature_file = Path(".specleft/specs/feature-billing.md")
+            assert feature_file.exists()
+            content = feature_file.read_text()
+            assert "### Scenario: Refund requested" in content
+            assert "priority: medium" in content
+
 
 class TestPlanAnalyzeMode:
     def test_analyze_flag_is_recognized(self) -> None:
@@ -370,3 +400,67 @@ features:
             payload = json.loads(result.output)
             assert payload["template"]["path"] == "template.yml"
             assert payload["template"]["version"] == "1.0"
+
+
+class TestPlanTemplateAutoDetect:
+    def _write_default_template(self) -> None:
+        template_dir = Path(".specleft/templates")
+        template_dir.mkdir(parents=True, exist_ok=True)
+        (template_dir / "prd-template.yml").write_text(
+            'version: "1.0"\n'
+            "features:\n"
+            "  heading_level: 2\n"
+            "  patterns:\n"
+            '    - "Feature: {title}"\n'
+        )
+
+    def test_auto_detects_template_when_present(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
+            self._write_default_template()
+            result = runner.invoke(cli, ["plan"])
+
+            assert result.exit_code == 0
+            assert (
+                "Using template: .specleft/templates/prd-template.yml" in result.output
+            )
+
+    def test_auto_detect_template_json_includes_metadata(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
+            self._write_default_template()
+            result = runner.invoke(cli, ["plan", "--format", "json"])
+
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["template"]["path"] == ".specleft/templates/prd-template.yml"
+            assert payload["template"]["version"] == "1.0"
+
+    def test_no_template_message_when_file_absent(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
+            result = runner.invoke(cli, ["plan"])
+
+            assert result.exit_code == 0
+            assert "Using template:" not in result.output
+
+    def test_explicit_template_overrides_auto_detect(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("prd.md").write_text("# PRD\n\n## Epic: Billing\n")
+            self._write_default_template()
+            Path("custom.yml").write_text(
+                'version: "2.0"\n'
+                "features:\n"
+                "  heading_level: 2\n"
+                "  patterns:\n"
+                '    - "Epic: {title}"\n'
+            )
+            result = runner.invoke(cli, ["plan", "--template", "custom.yml"])
+
+            assert result.exit_code == 0
+            assert "Using template: custom.yml" in result.output
+            assert Path(".specleft/specs/epic-billing.md").exists()
