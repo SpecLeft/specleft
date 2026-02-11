@@ -27,7 +27,7 @@ jobs:
           cache: 'pip'
 
       - name: Configure SSH for private repo access
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Install dependencies
@@ -65,7 +65,7 @@ jobs:
           cache: 'pip'
 
       - name: Configure SSH for private repo access
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -120,7 +120,7 @@ jobs:
           cache: 'pip'
 
       - name: Configure SSH for private repo access
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -180,7 +180,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Configure SSH for private repo access
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -216,7 +216,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - name: Configure SSH for private repo access
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
