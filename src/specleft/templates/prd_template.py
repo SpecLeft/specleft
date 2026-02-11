@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 class PRDFeaturesConfig(BaseModel):
     heading_level: int | list[int] = 2
     patterns: list[str] = Field(
-        default_factory=lambda: ["Feature: {title}", "Feature {title}"]
+        default_factory=lambda: ["Feature: {title}", "Feature {title}", "{title}"]
     )
     contains: list[str] = Field(default_factory=list)
     match_mode: str = "any"
@@ -45,7 +45,9 @@ class PRDFeaturesConfig(BaseModel):
 
 class PRDScenariosConfig(BaseModel):
     heading_level: list[int] = Field(default_factory=lambda: [3, 4])
-    patterns: list[str] = Field(default_factory=lambda: ["Scenario: {title}"])
+    patterns: list[str] = Field(
+        default_factory=lambda: ["Scenario: {title}", "{title}"]
+    )
     contains: list[str] = Field(default_factory=list)
     match_mode: str = "any"
     step_keywords: list[str] = Field(

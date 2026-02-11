@@ -26,6 +26,11 @@ from specleft.schema import (
     StepType,
     StorySpec,
 )
+from specleft.templates.prd_template import (
+    PRDTemplate,
+    compile_pattern,
+    default_template,
+)
 
 
 class SpecParser:
@@ -38,6 +43,12 @@ class SpecParser:
         r"^\s*[-*]\s+\*\*(Given|When|Then|And|But)\*\*\s+(.+)$",
         re.IGNORECASE | re.MULTILINE,
     )
+
+    def __init__(self, template: PRDTemplate | None = None) -> None:
+        self._template = template or default_template()
+        self._feature_patterns = [
+            compile_pattern(p) for p in self._template.features.patterns
+        ]
 
     def parse_directory(self, features_dir: Path) -> SpecsConfig:
         """Parse all specifications from a features directory."""
@@ -84,7 +95,7 @@ class SpecParser:
         """Parse a single feature markdown file."""
         raw_content = filepath.read_text()
         body, metadata = self._split_metadata_block(raw_content)
-        title = self._extract_heading(body, prefix="Feature")
+        title = self._extract_feature_heading(body)
         if not title:
             return None
 
@@ -338,9 +349,28 @@ class SpecParser:
             raw_metadata={},
         )
 
-    def _extract_heading(self, content: str, *, prefix: str) -> str | None:
-        match = re.search(rf"^#\s+{prefix}:\s*(.+)$", content, re.MULTILINE)
-        return match.group(1).strip() if match else None
+    def _extract_feature_heading(self, content: str) -> str | None:
+        """Extract the feature title from an H1 heading.
+
+        Tries each compiled feature pattern from the PRD template against
+        the first ``# …`` line.  When no pattern matches, falls back to
+        using the raw H1 text so that files produced by ``specleft plan``
+        (which may omit the ``Feature:`` prefix) are still parsed.
+        """
+        h1_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+        if not h1_match:
+            return None
+
+        heading_text = h1_match.group(1).strip()
+
+        # Try each compiled template pattern against the heading text.
+        for pattern in self._feature_patterns:
+            m = pattern.match(heading_text)
+            if m and "title" in m.groupdict():
+                return m.group("title").strip()
+
+        # Fallback: use the raw heading as the title.
+        return heading_text
 
     def _extract_description_from_body(self, content: str) -> str | None:
         lines = [line.rstrip() for line in content.split("\n")]

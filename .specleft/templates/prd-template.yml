@@ -5,13 +5,14 @@ features:
   patterns:
     - "Feature: {title}"
     - "Feature {title}"
+    - "{title}"
   contains: []
   match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
   exclude:
     - "Overview"
     - "Goals"
     - "Non-Goals"
-    - "Open Questions (Post-MVP)"
+    - "Open Questions"
     - "Notes"
 
 scenarios:

@@ -23,6 +23,7 @@ features:
   patterns:
     - "Feature: {title}"
     - "Feature {title}"
+    - "{title}"
   contains: []
   match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
   exclude:
@@ -36,6 +37,7 @@ scenarios:
   heading_level: [3, 4]
   patterns:
     - "Scenario: {title}"
+    - "{title}"
   contains: []
   match_mode: "any" # any=pattern OR contains, all=pattern AND contains, patterns=pattern only, contains=contains only
   step_keywords:
