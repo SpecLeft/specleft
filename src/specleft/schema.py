@@ -146,8 +146,10 @@ class SpecsConfig(BaseModel):
     def from_directory(cls, features_dir: str | Path) -> SpecsConfig:
         from specleft.parser import SpecParser
 
-        parser = SpecParser()
-        return parser.parse_directory(Path(features_dir))
+        features_path = Path(features_dir)
+        template = _resolve_prd_template(features_path)
+        parser = SpecParser(template=template)
+        return parser.parse_directory(features_path)
 
     def get_scenario(self, scenario_id: str) -> ScenarioSpec | None:
         for feature in self.features:
@@ -165,3 +167,25 @@ class SpecsConfig(BaseModel):
             for scenario in story.scenarios
             if tag in scenario.tags
         ]
+
+
+def _resolve_prd_template(features_dir: Path) -> Any:
+    """Try to load a PRD template from the conventional location.
+
+    Looks for ``<features_dir>/../templates/prd-template.yml`` which
+    matches the standard ``.specleft/specs`` → ``.specleft/templates/``
+    layout.  Returns ``None`` (causing ``SpecParser`` to use the
+    built-in default template) when no file is found or the file is
+    invalid.
+    """
+    from specleft.templates.prd_template import load_template
+
+    template_path = features_dir.parent / "templates" / "prd-template.yml"
+    if not template_path.is_file():
+        return None
+
+    try:
+        return load_template(template_path)
+    except Exception:
+        # Invalid template should not prevent parsing; fall back to default.
+        return None

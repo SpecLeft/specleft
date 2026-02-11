@@ -355,3 +355,66 @@ class TestSkeletonCommand:
             assert pytest_result.returncode == 0
             # Check for the skip reason (may be truncated in verbose output)
             assert "Skeleton test" in output
+
+    def test_skeleton_from_plan_style_spec(self) -> None:
+        """Skeleton generation works with plan-generated specs (raw PRD heading)."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            specs_dir = Path(".specleft/specs")
+            specs_dir.mkdir(parents=True)
+
+            # Simulate what ``specleft plan`` generates: the heading is the
+            # raw PRD text, e.g. ``Feature 1: User Auth`` (no ``Feature:`` prefix).
+            (specs_dir / "document-lifecycle.md").write_text(
+                "# Document Lifecycle\n"
+                "\n"
+                "## Scenarios\n"
+                "\n"
+                "### Scenario: Create document\n"
+                "priority: medium\n"
+                "\n"
+                "- Given the system is ready\n"
+                "- When a document is created\n"
+                "- Then it should be stored\n"
+            )
+
+            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            assert result.exit_code == 0
+            assert "Created 1 test files" in result.output
+
+            generated = Path("tests/test_document-lifecycle.py")
+            assert generated.exists()
+            content = generated.read_text()
+            assert 'feature_id="document-lifecycle"' in content
+            assert 'scenario_id="create-document"' in content
+
+    def test_skeleton_from_bare_heading_spec(self) -> None:
+        """Skeleton generation works with specs having bare headings (no prefix)."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            specs_dir = Path(".specleft/specs")
+            specs_dir.mkdir(parents=True)
+
+            # Bare heading — no ``Feature:`` prefix.  Parser fallback kicks in.
+            (specs_dir / "notifications.md").write_text(
+                "# Push Notifications\n"
+                "\n"
+                "## Scenarios\n"
+                "\n"
+                "### Scenario: Send alert\n"
+                "priority: high\n"
+                "\n"
+                "- Given a subscriber\n"
+                "- When an event fires\n"
+                "- Then a push notification is sent\n"
+            )
+
+            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            assert result.exit_code == 0
+            assert "Created 1 test files" in result.output
+
+            generated = Path("tests/test_notifications.py")
+            assert generated.exists()
+            content = generated.read_text()
+            assert 'feature_id="notifications"' in content
+            assert 'scenario_id="send-alert"' in content

@@ -24,6 +24,7 @@ class TestPRDTemplate:
         assert template.features.patterns == [
             "Feature: {title}",
             "Feature {title}",
+            "{title}",
         ]
         assert template.features.contains == []
         assert template.features.match_mode == "any"
@@ -35,7 +36,7 @@ class TestPRDTemplate:
             "Notes",
         ]
         assert template.scenarios.heading_level == [3, 4]
-        assert template.scenarios.patterns == ["Scenario: {title}"]
+        assert template.scenarios.patterns == ["Scenario: {title}", "{title}"]
         assert template.scenarios.contains == []
         assert template.scenarios.match_mode == "any"
         assert template.scenarios.step_keywords == [
