@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from click.testing import CliRunner
+
+from specleft import __version__
 from specleft.cli.main import cli
 
 
@@ -14,7 +16,7 @@ class TestCLIBase:
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "0.2.0" in result.output
+        assert __version__ in result.output
 
     def test_cli_help(self) -> None:
         """Test --help flag."""

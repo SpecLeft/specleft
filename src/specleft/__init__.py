@@ -3,6 +3,7 @@
 
 """SpecLeft - Specification-driven test management for pytest."""
 
+from specleft.version import SPECLEFT_VERSION
 from specleft.decorators import StepResult, shared_step, specleft, step
 from specleft.schema import (
     ExecutionTime,
@@ -16,7 +17,7 @@ from specleft.schema import (
     StorySpec,
 )
 
-__version__ = "0.2.0"
+__version__ = SPECLEFT_VERSION
 __all__ = [
     "ExecutionTime",
     "FeatureSpec",
