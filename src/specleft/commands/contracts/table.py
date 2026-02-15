@@ -20,6 +20,7 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
     execution = cast(dict[str, Any], guarantees.get("execution", {}))
     determinism = cast(dict[str, Any], guarantees.get("determinism", {}))
     cli_api = cast(dict[str, Any], guarantees.get("cli_api", {}))
+    skill_security = cast(dict[str, Any], guarantees.get("skill_security", {}))
     click.echo("SpecLeft Agent Contract")
     click.echo("─" * 40)
     click.echo(f"Contract version: {payload.get('contract_version')}")
@@ -83,6 +84,18 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
         else "  - JSON compatibility guarantee missing"
     )
     click.echo("  - Stable exit codes: 0=success, 1=error, 2=cancel")
+    click.echo("")
+    click.echo("Skill Security:")
+    click.echo(
+        "  - Skill file integrity is verifiable"
+        if skill_security.get("skill_file_integrity_check")
+        else "  - Skill integrity guarantee missing"
+    )
+    click.echo(
+        "  - Skill commands are simple invocations (no shell metacharacters)"
+        if skill_security.get("skill_file_commands_are_simple")
+        else "  - Skill command simplicity guarantee missing"
+    )
     click.echo("")
     click.echo(f"For full details, see: {CONTRACT_DOC_PATH}")
     click.echo("─" * 40)

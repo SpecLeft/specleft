@@ -72,3 +72,34 @@ dependencies = [
         assert result.exit_code in {0, 1}
         assert "pytest plugin" in result.output
         assert "feature directory" in result.output
+
+    def test_doctor_verify_skill_json_pass(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            init_result = runner.invoke(cli, ["init"], input="1\n")
+            assert init_result.exit_code == 0
+
+            result = runner.invoke(
+                cli, ["doctor", "--verify-skill", "--format", "json"]
+            )
+            assert result.exit_code in {0, 1}
+            payload = json.loads(result.output)
+            skill_check = payload["checks"]["skill_file_integrity"]
+            assert skill_check["integrity"] == "pass"
+            assert skill_check["status"] == "pass"
+
+    def test_doctor_verify_skill_json_modified(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path(".specleft").mkdir(parents=True, exist_ok=True)
+            Path(".specleft/SKILL.md").write_text("# tampered\n")
+            Path(".specleft/SKILL.md.sha256").write_text("a" * 64 + "\n")
+
+            result = runner.invoke(
+                cli, ["doctor", "--verify-skill", "--format", "json"]
+            )
+            assert result.exit_code == 1
+            payload = json.loads(result.output)
+            skill_check = payload["checks"]["skill_file_integrity"]
+            assert skill_check["integrity"] == "modified"
+            assert skill_check["status"] == "fail"

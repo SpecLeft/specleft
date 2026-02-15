@@ -18,6 +18,11 @@ import click
 
 from specleft.commands.constants import CLI_VERSION
 from specleft.utils.messaging import print_support_footer
+from specleft.utils.skill_integrity import (
+    INTEGRITY_MODIFIED,
+    INTEGRITY_OUTDATED,
+    verify_skill_integrity,
+)
 from specleft.utils.specs_dir import resolve_specs_dir
 
 
@@ -49,7 +54,7 @@ def _load_dependency_names() -> list[str]:
     return parsed or dependencies
 
 
-def _build_doctor_checks() -> dict[str, Any]:
+def _build_doctor_checks(*, verify_skill: bool) -> dict[str, Any]:
     import importlib.metadata as metadata
 
     cli_check = {"status": "pass", "version": CLI_VERSION}
@@ -137,15 +142,28 @@ def _build_doctor_checks() -> dict[str, Any]:
         "tests_writable": tests_writable,
     }
 
+    checks: dict[str, Any] = {
+        "cli_available": cli_check,
+        "pytest_plugin": plugin_check,
+        "python_version": python_check,
+        "dependencies": dependency_check,
+        "directories": directory_check,
+    }
+    if verify_skill:
+        integrity_payload = verify_skill_integrity().to_payload()
+        integrity_status = str(integrity_payload.get("integrity"))
+        checks["skill_file_integrity"] = {
+            "status": (
+                "fail"
+                if integrity_status == INTEGRITY_MODIFIED
+                else ("warn" if integrity_status == INTEGRITY_OUTDATED else "pass")
+            ),
+            **integrity_payload,
+        }
+
     return {
         "version": CLI_VERSION,
-        "checks": {
-            "cli_available": cli_check,
-            "pytest_plugin": plugin_check,
-            "python_version": python_check,
-            "dependencies": dependency_check,
-            "directories": directory_check,
-        },
+        "checks": checks,
     }
 
 
@@ -181,6 +199,16 @@ def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
         healthy = False
         errors.append("Feature/test directory access issue")
         suggestions.append("Check directory permissions")
+
+    skill_check = checks_map.get("skill_file_integrity")
+    if isinstance(skill_check, dict):
+        integrity = skill_check.get("integrity")
+        if integrity == INTEGRITY_MODIFIED:
+            healthy = False
+            errors.append("Skill file integrity verification failed")
+            suggestions.append("Run: specleft skill update")
+        elif integrity == INTEGRITY_OUTDATED:
+            suggestions.append("Skill file is outdated. Run: specleft skill update")
 
     output = {
         "healthy": healthy,
@@ -234,6 +262,19 @@ def _print_doctor_table(checks: dict[str, Any], *, verbose: bool) -> None:
     click.echo(f"{features_marker} Can read feature directory ({features_dir}/)")
     click.echo(f"{tests_marker} Can write to test directory (tests/)")
 
+    skill_check = checks_map.get("skill_file_integrity")
+    if isinstance(skill_check, dict):
+        skill_marker = (
+            "✓"
+            if skill_check.get("status") == "pass"
+            else ("⚠" if skill_check.get("status") == "warn" else "✗")
+        )
+        click.echo(
+            f"{skill_marker} Skill file integrity ({skill_check.get('integrity')})"
+        )
+        if skill_check.get("message"):
+            click.echo(f"  {skill_check.get('message')}")
+
     if verbose and plugin_check.get("error"):
         click.echo(f"pytest plugin error: {plugin_check.get('error')}")
 
@@ -262,9 +303,14 @@ def _print_doctor_table(checks: dict[str, Any], *, verbose: bool) -> None:
     help="Output format: 'table' or 'json'.",
 )
 @click.option("--verbose", is_flag=True, help="Show detailed diagnostic information.")
-def doctor(format_type: str, verbose: bool) -> None:
+@click.option(
+    "--verify-skill",
+    is_flag=True,
+    help="Verify .specleft/SKILL.md checksum and template freshness.",
+)
+def doctor(format_type: str, verbose: bool, verify_skill: bool) -> None:
     """Verify SpecLeft installation and environment."""
-    checks = _build_doctor_checks()
+    checks = _build_doctor_checks(verify_skill=verify_skill)
     output = _build_doctor_output(checks)
 
     if format_type == "json":

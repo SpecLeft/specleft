@@ -169,6 +169,8 @@ Guaranteed invariants:
 - All validation errors are explicit and actionable
 - Missing behaviour is skipped, never failed
 - CLI exit codes are meaningful and stable
+- Skill instructions are integrity-verifiable via `specleft skill verify`
+- Skill commands are constrained to simple `specleft ...` invocations (no shell metacharacters)
 
 SpecLeft commands are safe to:
 - run repeatedly

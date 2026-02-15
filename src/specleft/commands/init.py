@@ -14,6 +14,12 @@ from typing import cast
 import click
 
 from specleft.utils.messaging import print_support_footer
+from specleft.utils.skill_integrity import (
+    SKILL_FILE_PATH,
+    SKILL_HASH_PATH,
+    skill_template_hash,
+    sync_skill_files,
+)
 
 _PRD_TEMPLATE_CONTENT = """\
 version: "1.0"
@@ -127,16 +133,17 @@ def _prompt_init_action(features_dir: Path) -> str:
 
 
 def _print_init_dry_run(directories: list[Path], files: list[tuple[Path, str]]) -> None:
+    would_create = [path for path, _ in files] + [SKILL_FILE_PATH, SKILL_HASH_PATH]
     click.echo("Dry run: no files will be created.")
     click.echo("")
     click.echo("Would create:")
-    for file_path, _ in files:
+    for file_path in would_create:
         click.echo(f"  - {file_path}")
     for directory in directories:
         click.echo(f"  - {directory}/")
     click.echo("")
     click.echo("Summary:")
-    click.echo(f"  {len(files)} files would be created")
+    click.echo(f"  {len(would_create)} files would be created")
     click.echo(f"  {len(directories)} directories would be created")
 
 
@@ -220,17 +227,20 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
 
     directories, files = _init_plan(example=example)
     if dry_run:
+        would_create = [str(path) for path, _ in files]
+        would_create.extend([str(SKILL_FILE_PATH), str(SKILL_HASH_PATH)])
         if format_type == "json":
             payload_dry_run = {
                 "status": "ok",
                 "dry_run": True,
                 "example": example,
-                "would_create": [str(path) for path, _ in files],
+                "would_create": would_create,
                 "would_create_directories": [str(path) for path in directories],
                 "summary": {
-                    "files": len(files),
+                    "files": len(would_create),
                     "directories": len(directories),
                 },
+                "skill_file_hash": skill_template_hash(),
             }
             click.echo(json.dumps(payload_dry_run, indent=2))
             return
@@ -260,11 +270,16 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     )
     click.echo("")
     created = _apply_init_plan(directories, files)
-    for path in created:
-        if path.is_dir():
-            click.echo(f"✓ Created {path}/")
+    skill_sync = sync_skill_files(overwrite_existing=False)
+    for created_path in created:
+        if created_path.is_dir():
+            click.echo(f"✓ Created {created_path}/")
         else:
-            click.echo(f"✓ Created {path}")
+            click.echo(f"✓ Created {created_path}")
+    for created_skill_path in skill_sync.created:
+        click.echo(f"✓ Created {created_skill_path}")
+    for warning in skill_sync.warnings:
+        click.secho(warning, fg="yellow")
 
     click.echo("")
     _print_license_notice()
