@@ -9,6 +9,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 from specleft.cli.main import cli
+from specleft.decorators import specleft
 
 
 def _hash_for(content: str) -> str:
@@ -18,6 +19,10 @@ def _hash_for(content: str) -> str:
 class TestSkillCommand:
     """Tests for 'specleft skill' commands."""
 
+    @specleft(
+        feature_id="feature-skill-integrity",
+        scenario_id="skill-command-group-is-discoverable",
+    )
     def test_skill_group_help(self) -> None:
         runner = CliRunner()
         result = runner.invoke(cli, ["skill", "--help"])
@@ -25,6 +30,10 @@ class TestSkillCommand:
         assert "verify" in result.output
         assert "update" in result.output
 
+    @specleft(
+        feature_id="feature-skill-integrity",
+        scenario_id="verify-reports-pass-after-init",
+    )
     def test_skill_verify_pass_after_init(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -38,6 +47,10 @@ class TestSkillCommand:
             assert payload["commands_simple"] is True
             assert payload["expected_hash"] == payload["actual_hash"]
 
+    @specleft(
+        feature_id="feature-skill-integrity",
+        scenario_id="verify-reports-modified-on-hash-mismatch",
+    )
     def test_skill_verify_modified_when_hash_mismatch(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -53,6 +66,10 @@ class TestSkillCommand:
             payload = json.loads(result.output)
             assert payload["integrity"] == "modified"
 
+    @specleft(
+        feature_id="feature-skill-integrity",
+        scenario_id="verify-reports-outdated-for-non-canonical-but-checksum-valid-content",
+    )
     def test_skill_verify_outdated_when_hash_matches_noncanonical(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -72,6 +89,10 @@ class TestSkillCommand:
             payload = json.loads(result.output)
             assert payload["integrity"] == "outdated"
 
+    @specleft(
+        feature_id="feature-skill-integrity",
+        scenario_id="skill-update-repairs-modified-integrity-state",
+    )
     def test_skill_update_repairs_modified_integrity(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
