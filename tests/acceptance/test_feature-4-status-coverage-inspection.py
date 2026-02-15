@@ -251,4 +251,6 @@ def test_status_of_implementation_by_feature(
         assert "summary" in payload, "Expected 'summary' in payload"
         overall = payload["summary"]
         assert overall["features"] == 1, "Should only count filtered feature"
-        assert overall["scenarios"] == 2, "Should only count scenarios from filtered feature"
+        assert (
+            overall["scenarios"] == 2
+        ), "Should only count scenarios from filtered feature"
