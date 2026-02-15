@@ -11,6 +11,7 @@ archives/
 .specleft/results
 PLAN.md
 .opencode/
+.progress.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
