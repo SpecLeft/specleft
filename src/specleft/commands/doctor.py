@@ -16,7 +16,11 @@ from typing import Any, cast
 import click
 
 from specleft.commands.constants import CLI_VERSION
-from specleft.commands.output import json_dumps, resolve_output_format
+from specleft.commands.output import (
+    compact_mode_enabled,
+    json_dumps,
+    resolve_output_format,
+)
 from specleft.utils.messaging import print_support_footer
 from specleft.utils.skill_integrity import (
     INTEGRITY_MODIFIED,
@@ -57,7 +61,11 @@ def _load_dependency_names() -> list[str]:
 def _build_doctor_checks(*, verify_skill: bool) -> dict[str, Any]:
     import importlib.metadata as metadata
 
-    cli_check = {"status": "pass", "version": CLI_VERSION}
+    cli_check = {
+        "status": "pass",
+        "version": CLI_VERSION,
+        "compact_mode": compact_mode_enabled(),
+    }
 
     python_info = sys.version_info
     minimum_python = (3, 9, 0)
