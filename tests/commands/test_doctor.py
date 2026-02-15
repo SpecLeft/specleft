@@ -8,6 +8,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 from specleft.cli.main import cli
+from specleft.commands.constants import CLI_VERSION
 from specleft.commands.doctor import _load_dependency_names
 
 
@@ -53,7 +54,7 @@ dependencies = [
         result = runner.invoke(cli, ["doctor", "--format", "json"])
         assert result.exit_code in {0, 1}
         payload = json.loads(result.output)
-        assert payload["version"] == "0.2.0"
+        assert payload["version"] == CLI_VERSION
         assert "healthy" in payload
         assert "checks" in payload
 

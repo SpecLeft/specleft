@@ -25,7 +25,11 @@ from specleft.commands.constants import CLI_VERSION
 
 
 @click.group()
-@click.version_option(version=CLI_VERSION, prog_name="specleft")
+@click.version_option(
+    version=CLI_VERSION,
+    prog_name="specleft",
+    message="%(prog)s version: v%(version)s",
+)
 def cli() -> None:
     """
     SpecLeft - Code driven intent analysis for Python.

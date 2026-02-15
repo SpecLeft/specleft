@@ -6,6 +6,7 @@ import json
 
 from click.testing import CliRunner
 from specleft.cli.main import cli
+from specleft.commands.constants import CLI_VERSION
 
 
 class TestContractCommand:
@@ -17,7 +18,7 @@ class TestContractCommand:
         assert result.exit_code == 0
         payload = json.loads(result.output)
         assert payload["contract_version"] == "1.0"
-        assert payload["specleft_version"] == "0.2.0"
+        assert payload["specleft_version"] == CLI_VERSION
         assert "guarantees" in payload
 
     def test_contract_test_json_output(self) -> None:
@@ -26,6 +27,6 @@ class TestContractCommand:
         assert result.exit_code == 0
         payload = json.loads(result.output)
         assert payload["contract_version"] == "1.0"
-        assert payload["specleft_version"] == "0.2.0"
+        assert payload["specleft_version"] == CLI_VERSION
         assert payload["passed"] is True
         assert payload["checks"]
