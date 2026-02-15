@@ -37,6 +37,10 @@ def build_contract_payload() -> dict[str, object]:
                     "cancelled": 2,
                 },
             },
+            "skill_security": {
+                "skill_file_integrity_check": True,
+                "skill_file_commands_are_simple": True,
+            },
         },
         "docs": {
             "agent_contract": CONTRACT_DOC_PATH,

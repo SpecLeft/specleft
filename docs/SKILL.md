@@ -4,8 +4,9 @@
 1. specleft next --format json
 2. Implement test logic
 3. specleft features validate --format json
-4. pytest
-5. Repeat
+4. specleft skill verify --format json
+5. pytest
+6. Repeat
 
 ## Safety
 - Always `--dry-run` before writing files
@@ -28,12 +29,12 @@ Validate before generating tests. `--strict` treats warnings as errors.
 `specleft features stats --format json [--dir PATH] [--tests-dir PATH]`
 
 ### Add a feature
-`specleft features add --format json --id FEATURE_ID --title "Title" [--priority critical|high|medium|low] [--description TEXT] [--dir PATH] [--dry-run]`
+`specleft features add --format json --id FEATURE_ID --title "Title" [--priority PRIORITY] [--description TEXT] [--dir PATH] [--dry-run]`
 Creates `<features-dir>/feature-id.md`. Never overwrites existing files.
 Use `--interactive` for guided prompts (TTY only).
 
 ### Add a scenario
-`specleft features add-scenario --format json --feature FEATURE_ID --title "Title" [--id SCENARIO_ID] [--step "Given ..."] [--step "When ..."] [--step "Then ..."] [--priority critical|high|medium|low] [--tags "tag1,tag2"] [--dir PATH] [--tests-dir PATH] [--dry-run] [--add-test stub|skeleton] [--preview-test]`
+`specleft features add-scenario --format json --feature FEATURE_ID --title "Title" [--id SCENARIO_ID] [--step "Given ..."] [--step "When ..."] [--step "Then ..."] [--priority PRIORITY] [--tags "tag1,tag2"] [--dir PATH] [--tests-dir PATH] [--dry-run] [--add-test MODE] [--preview-test]`
 Appends to feature file. `--add-test` generates a test file.
 `--preview-test` shows test content without writing. Use `--interactive`
 for guided prompts (TTY only).
@@ -44,7 +45,7 @@ for guided prompts (TTY only).
 `specleft status --format json [--dir PATH] [--feature ID] [--story ID] [--unimplemented] [--implemented]`
 
 ### Next scenario to implement
-`specleft next --format json [--dir PATH] [--limit N] [--priority critical|high|medium|low] [--feature ID] [--story ID]`
+`specleft next --format json [--dir PATH] [--limit N] [--priority PRIORITY] [--feature ID] [--story ID]`
 
 ### Coverage metrics
 `specleft coverage --format json [--dir PATH] [--threshold N] [--output PATH]`
@@ -78,7 +79,21 @@ Builds an HTML report from `.specleft/results/`.
 
 ### Verify contract
 `specleft contract test --format json [--verbose]`
-Run to verify deterministic/safe command guarantees.
+Run to verify deterministic and safe command guarantees.
+
+## Skill Security
+
+### Verify skill integrity
+`specleft skill verify --format json`
+Returns `pass`, `modified`, or `outdated` integrity status.
+
+### Update skill files
+`specleft skill update --format json`
+Regenerates `.specleft/SKILL.md` and `.specleft/SKILL.md.sha256`.
+
+### Verify within doctor checks
+`specleft doctor --verify-skill --format json`
+Adds skill integrity status to standard environment diagnostics.
 
 ## Enforcement
 

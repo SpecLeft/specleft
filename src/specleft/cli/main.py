@@ -18,6 +18,7 @@ from specleft.commands import (
     license_group,
     next_command,
     plan,
+    skill_group,
     status,
     test,
 )
@@ -50,6 +51,7 @@ cli.add_command(init)
 cli.add_command(contract)
 cli.add_command(enforce)
 cli.add_command(license_group)
+cli.add_command(skill_group)
 cli.add_command(guide)
 
 

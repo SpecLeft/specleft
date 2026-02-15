@@ -27,3 +27,4 @@ class TestCLIBase:
         assert "test" in result.output
         assert "features" in result.output
         assert "contract" in result.output
+        assert "skill" in result.output

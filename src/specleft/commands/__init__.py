@@ -15,6 +15,7 @@ from specleft.commands.init import init
 from specleft.commands.license import license_group
 from specleft.commands.next import next_command
 from specleft.commands.plan import plan
+from specleft.commands.skill import skill_group
 from specleft.commands.status import status
 from specleft.commands.test import test
 
@@ -29,6 +30,7 @@ __all__ = [
     "license_group",
     "next_command",
     "plan",
+    "skill_group",
     "status",
     "test",
 ]

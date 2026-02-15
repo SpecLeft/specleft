@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -17,9 +18,16 @@ class TestInitCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["init"], input="1\n")
             assert result.exit_code == 0
-            assert Path(".specleft/SKILL.md").exists()
+            skill_path = Path(".specleft/SKILL.md")
+            checksum_path = Path(".specleft/SKILL.md.sha256")
+            assert skill_path.exists()
+            assert checksum_path.exists()
             assert Path(".specleft/specs/example-feature.md").exists()
             assert Path(".specleft/templates/prd-template.yml").exists()
+            expected_hash = hashlib.sha256(
+                skill_path.read_text().encode("utf-8")
+            ).hexdigest()
+            assert checksum_path.read_text().strip() == expected_hash
 
     def test_init_json_dry_run(self) -> None:
         runner = CliRunner()
@@ -29,9 +37,12 @@ class TestInitCommand:
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
             assert payload["summary"]["directories"] == 5
+            assert payload["summary"]["files"] == 6
             assert ".specleft/SKILL.md" in payload["would_create"]
+            assert ".specleft/SKILL.md.sha256" in payload["would_create"]
             assert ".specleft/specs/example-feature.md" in payload["would_create"]
             assert ".specleft/templates/prd-template.yml" in payload["would_create"]
+            assert len(payload["skill_file_hash"]) == 64
 
     def test_init_json_requires_dry_run(self) -> None:
         runner = CliRunner()
@@ -87,28 +98,17 @@ class TestInitCommand:
             assert result.exit_code == 2
             assert "Cancelled" in result.output
 
-    def test_init_existing_skill_file_warns_and_exits(self) -> None:
+    def test_init_existing_skill_file_warns_and_continues(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path(".specleft").mkdir(parents=True)
             Path(".specleft/SKILL.md").write_text("# existing\n")
             result = runner.invoke(cli, ["init"])
-            assert result.exit_code == 2
+            assert result.exit_code == 0
             assert (
                 "Warning: Skipped creation. Specleft SKILL.md exists already."
                 in result.output
             )
-
-    def test_init_existing_skill_file_json_cancelled(self) -> None:
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            Path(".specleft").mkdir(parents=True)
-            Path(".specleft/SKILL.md").write_text("# existing\n")
-            result = runner.invoke(cli, ["init", "--format", "json"])
-            assert result.exit_code == 2
-            payload = json.loads(result.output)
-            assert payload["status"] == "cancelled"
-            assert (
-                payload["message"]
-                == "Skipped creation. Specleft SKILL.md exists already."
-            )
+            assert Path(".specleft/specs/example-feature.md").exists()
+            assert Path(".specleft/SKILL.md").read_text() == "# existing\n"
+            assert Path(".specleft/SKILL.md.sha256").exists()
