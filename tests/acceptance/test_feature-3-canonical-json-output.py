@@ -53,7 +53,7 @@ def test_emit_canonical_json_shape(
 
     with specleft.step("When output is produced"):
         # Use status command with --format json to get canonical output
-        result = runner.invoke(cli, ["status", "--format", "json"])
+        result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
         assert result.exit_code == 0, f"Command failed: {result.output}"
         payload = json.loads(result.output)
 
@@ -125,7 +125,7 @@ def test_scenario_ids_are_deterministic(
 
     with specleft.step("When JSON is emitted"):
         # Run status command twice to verify determinism
-        result1 = runner.invoke(cli, ["status", "--format", "json"])
+        result1 = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
         assert result1.exit_code == 0, f"First run failed: {result1.output}"
         payload1 = json.loads(result1.output)
 
@@ -167,7 +167,7 @@ def test_scenario_ids_are_deterministic(
 
     with specleft.step("And repeated runs produce identical IDs"):
         # Run the same command again
-        result2 = runner.invoke(cli, ["status", "--format", "json"])
+        result2 = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
         assert result2.exit_code == 0, f"Second run failed: {result2.output}"
         payload2 = json.loads(result2.output)
 

@@ -80,7 +80,9 @@ def _run_contract_tests_impl(
                 )
             )
 
-            cancel_result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
+            cancel_result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="n\n"
+            )
             cancel_pass = cancel_result.exit_code == 2 and not Path("tests").exists()
             _record_check(
                 ContractCheckResult(
@@ -93,7 +95,9 @@ def _run_contract_tests_impl(
                 )
             )
 
-            create_result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            create_result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             generated_file = Path("tests/auth/test_login.py")
             created = create_result.exit_code == 0 and generated_file.exists()
             _record_check(
@@ -115,7 +119,9 @@ def _run_contract_tests_impl(
 
             if created:
                 snapshot = record_file_snapshot(root)
-                rerun_result = runner.invoke(cli, ["test", "skeleton"])
+                rerun_result = runner.invoke(
+                    cli, ["test", "skeleton", "--format", "table"]
+                )
                 unchanged = rerun_result.exit_code == 0 and compare_file_snapshot(
                     root, snapshot
                 )

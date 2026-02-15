@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import date
 from pathlib import Path
@@ -13,6 +12,7 @@ from typing import Any, cast
 
 import click
 import yaml
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.specleft_signing.schema import PolicyType, SignedPolicy
 from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
 
@@ -190,15 +190,41 @@ def display_violations(violations: dict[str, Any]) -> None:
     )
 
 
+def _augment_violations_with_fix_commands(
+    violations: dict[str, Any],
+) -> dict[str, Any]:
+    payload = dict(violations)
+    priority_violations: list[dict[str, Any]] = []
+    for violation in violations.get("priority_violations", []):
+        entry = dict(violation)
+        feature_id = str(entry.get("feature_id", ""))
+        priority = str(entry.get("priority", "")).lower()
+        if feature_id and priority:
+            entry["fix_command"] = (
+                f"specleft next --feature {feature_id} --priority {priority} --limit 1"
+            )
+        priority_violations.append(entry)
+    payload["priority_violations"] = priority_violations
+
+    coverage_violations: list[dict[str, Any]] = []
+    for violation in violations.get("coverage_violations", []):
+        entry = dict(violation)
+        threshold = entry.get("threshold")
+        if threshold is not None:
+            entry["fix_command"] = f"specleft coverage --threshold {threshold}"
+        coverage_violations.append(entry)
+    payload["coverage_violations"] = coverage_violations
+    return payload
+
+
 @click.command("enforce")
 @click.argument("policy_file", type=click.Path(exists=False), default=None)
 @click.option(
     "--format",
     "fmt",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--ignore-feature-id",
@@ -218,12 +244,14 @@ def display_violations(violations: dict[str, Any]) -> None:
     default="tests",
     help="Path to tests directory.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def enforce(
     policy_file: str | None,
-    fmt: str,
+    fmt: str | None,
     ignored: tuple[str, ...],
     features_dir: str | None,
     test_dir: str,
+    pretty: bool,
 ) -> None:
     """Enforce policy against the source code.
 
@@ -236,6 +264,8 @@ def enforce(
       2 - License issue (signature, expired, repo mismatch)
     """
     from specleft.validator import load_specs_directory
+
+    selected_format = resolve_output_format(fmt)
 
     # Load policy
     policy_path = resolve_policy_path(policy_file)
@@ -306,7 +336,7 @@ def enforce(
         sys.exit(2)
 
     # Show policy status (table format only)
-    if fmt == "table":
+    if selected_format == "table":
         display_policy_status(policy)
         click.echo("Checking scenarios...")
         if policy.policy_type == PolicyType.ENFORCE:
@@ -321,8 +351,13 @@ def enforce(
         tests_dir=test_dir,
     )
 
-    if fmt == "json":
-        click.echo(json.dumps(violations, indent=2))
+    if selected_format == "json":
+        click.echo(
+            json_dumps(
+                _augment_violations_with_fix_commands(violations),
+                pretty=pretty,
+            )
+        )
     else:
         display_violations(violations)
 

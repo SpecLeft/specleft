@@ -366,6 +366,8 @@ def test_preview_test_content_for_a_scenario(
                 "--step",
                 "Given a preview step",
                 "--preview-test",
+                "--format",
+                "table",
                 "--dir",
                 "features",
             ],

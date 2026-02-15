@@ -9,6 +9,19 @@ from specleft.commands.constants import CLI_VERSION, CONTRACT_DOC_PATH, CONTRACT
 from specleft.commands.contracts.types import ContractCheckResult
 
 
+def _fix_command_for_check(check_name: str) -> str | None:
+    mapping = {
+        "dry_run_no_writes": "specleft test skeleton --dry-run --format json",
+        "no_implicit_writes": "specleft test skeleton --format table",
+        "existing_tests_not_modified_by_default": "specleft test skeleton --force --format table",
+        "validation_non_destructive": "specleft features validate --format json",
+        "json_supported_globally": "specleft guide --format json",
+        "json_schema_valid": "specleft contract --format json",
+        "exit_codes_correct": "specleft test skeleton --format table",
+    }
+    return mapping.get(check_name)
+
+
 def build_contract_payload() -> dict[str, object]:
     return {
         "contract_version": CONTRACT_VERSION,
@@ -64,6 +77,12 @@ def build_contract_test_payload(
                 "name": check.name,
                 "status": check.status,
                 **({"message": check.message} if check.message else {}),
+                **(
+                    {"fix_command": _fix_command_for_check(check.name)}
+                    if check.status == "fail"
+                    and _fix_command_for_check(check.name) is not None
+                    else {}
+                ),
             }
             for check in checks
         ],

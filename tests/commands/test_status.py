@@ -24,7 +24,7 @@ class TestStatusCommand:
                 scenario_id="login-success",
                 execution_time="slow",
             )
-            result = runner.invoke(cli, ["status", "--format", "json"])
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
             assert result.exit_code == 0
             payload = json.loads(result.output)
             scenarios = payload["features"][0]["scenarios"]
@@ -38,7 +38,7 @@ class TestStatusCommand:
                 feature_id="auth",
                 scenario_id="login-success",
             )
-            result = runner.invoke(cli, ["status"])
+            result = runner.invoke(cli, ["status", "--format", "table"])
             assert result.exit_code == 0
             assert ".specleft/specs/auth.md" in result.output
             assert "login-success" in result.output
@@ -52,7 +52,9 @@ class TestStatusCommand:
                 story_id="login",
                 scenario_id="login-success",
             )
-            result = runner.invoke(cli, ["status", "--unimplemented"])
+            result = runner.invoke(
+                cli, ["status", "--unimplemented", "--format", "table"]
+            )
             assert result.exit_code == 0
             assert "Unimplemented Scenarios" in result.output
             assert "⚠ auth/login/login-success" in result.output
@@ -80,7 +82,7 @@ class TestStatusCommand:
                 story_id="login",
                 scenario_id="login-success",
             )
-            result = runner.invoke(cli, ["status", "--format", "json"])
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
             payload = json.loads(result.output)
             scenario = payload["features"][0]["scenarios"][0]
             assert scenario["status"] == "skipped"
@@ -105,7 +107,7 @@ def test_login_success():
     pass
 """)
 
-            result = runner.invoke(cli, ["status", "--format", "json"])
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
             scenario = json.loads(result.output)["features"][0]["scenarios"][0]
             assert scenario["status"] == "skipped"
             assert scenario["reason"] == "Not implemented"
@@ -129,7 +131,7 @@ def test_login_success():
     pass
 """)
 
-            result = runner.invoke(cli, ["status", "--format", "json"])
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
             scenario = json.loads(result.output)["features"][0]["scenarios"][0]
             assert scenario["status"] == "implemented"
 
@@ -143,7 +145,7 @@ def test_login_success():
                 story_id="login",
                 scenario_id="login-success",
             )
-            result = runner.invoke(cli, ["status", "--format", "json"])
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
             assert result.exit_code == 0
             payload = json.loads(result.output)
 

@@ -81,7 +81,7 @@ class TestReportCommand:
         """Test report command when no results exist."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["test", "report"])
+            result = runner.invoke(cli, ["test", "report", "--format", "table"])
             assert result.exit_code == 1
             assert "No results found" in result.output
 
@@ -94,7 +94,7 @@ class TestReportCommand:
             results_file = results_dir / "results_20250113_100000.json"
             results_file.write_text(json.dumps(sample_results))
 
-            result = runner.invoke(cli, ["test", "report"])
+            result = runner.invoke(cli, ["test", "report", "--format", "table"])
             assert result.exit_code == 0
             assert "Report generated" in result.output
 
@@ -114,7 +114,9 @@ class TestReportCommand:
             results_file = results_dir / "results_20250113_100000.json"
             results_file.write_text(json.dumps(sample_results))
 
-            result = runner.invoke(cli, ["test", "report", "-o", "custom_report.html"])
+            result = runner.invoke(
+                cli, ["test", "report", "-o", "custom_report.html", "--format", "table"]
+            )
             assert result.exit_code == 0
             assert Path("custom_report.html").exists()
 
@@ -124,7 +126,9 @@ class TestReportCommand:
         with runner.isolated_filesystem():
             Path("my_results.json").write_text(json.dumps(sample_results))
 
-            result = runner.invoke(cli, ["test", "report", "-r", "my_results.json"])
+            result = runner.invoke(
+                cli, ["test", "report", "-r", "my_results.json", "--format", "table"]
+            )
             assert result.exit_code == 0
             assert Path("report.html").exists()
 
@@ -161,7 +165,7 @@ class TestReportCommand:
                 json.dumps({**sample_results, "run_id": "new-run"})
             )
 
-            result = runner.invoke(cli, ["test", "report"])
+            result = runner.invoke(cli, ["test", "report", "--format", "table"])
             assert result.exit_code == 0
 
             content = Path("report.html").read_text()

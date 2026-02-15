@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -17,6 +16,7 @@ from typing import Any, cast
 import click
 
 from specleft.commands.constants import CLI_VERSION
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.utils.messaging import print_support_footer
 from specleft.utils.skill_integrity import (
     INTEGRITY_MODIFIED,
@@ -170,14 +170,20 @@ def _build_doctor_checks(*, verify_skill: bool) -> dict[str, Any]:
 def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
     checks_map = cast(dict[str, Any], checks.get("checks", {}))
     errors: list[str] = []
+    error_details: list[dict[str, str]] = []
     suggestions: list[str] = []
     healthy = True
 
     python_check = checks_map.get("python_version", {})
     if python_check.get("status") == "fail":
         healthy = False
-        errors.append(
-            f"Python version {python_check.get('version')} is below minimum {python_check.get('minimum')}"
+        message = f"Python version {python_check.get('version')} is below minimum {python_check.get('minimum')}"
+        errors.append(message)
+        error_details.append(
+            {
+                "message": message,
+                "fix_command": "pyenv install 3.11 && pyenv local 3.11",
+            }
         )
         suggestions.append("Upgrade Python: pyenv install 3.11")
 
@@ -187,17 +193,25 @@ def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
         for package in dependencies_check.get("packages", []):
             if package.get("status") == "fail":
                 name = package.get("name")
-                errors.append(f"Missing required package: {name}")
+                message = f"Missing required package: {name}"
+                errors.append(message)
+                error_details.append(
+                    {"message": message, "fix_command": f"pip install {name}"}
+                )
                 suggestions.append(f"Install {name}: pip install {name}")
 
     if checks_map.get("pytest_plugin", {}).get("status") == "fail":
         healthy = False
-        errors.append("Pytest plugin registration check failed")
+        message = "Pytest plugin registration check failed"
+        errors.append(message)
+        error_details.append({"message": message, "fix_command": "pip install -e ."})
         suggestions.append("Ensure SpecLeft is installed: pip install -e .")
 
     if checks_map.get("directories", {}).get("status") != "pass":
         healthy = False
-        errors.append("Feature/test directory access issue")
+        message = "Feature/test directory access issue"
+        errors.append(message)
+        error_details.append({"message": message})
         suggestions.append("Check directory permissions")
 
     skill_check = checks_map.get("skill_file_integrity")
@@ -205,7 +219,11 @@ def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
         integrity = skill_check.get("integrity")
         if integrity == INTEGRITY_MODIFIED:
             healthy = False
-            errors.append("Skill file integrity verification failed")
+            message = "Skill file integrity verification failed"
+            errors.append(message)
+            error_details.append(
+                {"message": message, "fix_command": "specleft skill update"}
+            )
             suggestions.append("Run: specleft skill update")
         elif integrity == INTEGRITY_OUTDATED:
             suggestions.append("Skill file is outdated. Run: specleft skill update")
@@ -219,6 +237,7 @@ def _build_doctor_output(checks: dict[str, Any]) -> dict[str, Any]:
 
     if errors:
         output["errors"] = errors
+        output["error_details"] = error_details
     if suggestions:
         output["suggestions"] = suggestions
 
@@ -298,9 +317,8 @@ def _print_doctor_table(checks: dict[str, Any], *, verbose: bool) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option("--verbose", is_flag=True, help="Show detailed diagnostic information.")
 @click.option(
@@ -308,13 +326,17 @@ def _print_doctor_table(checks: dict[str, Any], *, verbose: bool) -> None:
     is_flag=True,
     help="Verify .specleft/SKILL.md checksum and template freshness.",
 )
-def doctor(format_type: str, verbose: bool, verify_skill: bool) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def doctor(
+    format_type: str | None, verbose: bool, verify_skill: bool, pretty: bool
+) -> None:
     """Verify SpecLeft installation and environment."""
+    selected_format = resolve_output_format(format_type)
     checks = _build_doctor_checks(verify_skill=verify_skill)
     output = _build_doctor_output(checks)
 
-    if format_type == "json":
-        click.echo(json.dumps(output, indent=2))
+    if selected_format == "json":
+        click.echo(json_dumps(output, pretty=pretty))
     else:
         _print_doctor_table(output, verbose=verbose)
         if not output.get("healthy"):

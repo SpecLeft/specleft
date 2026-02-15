@@ -1,12 +1,21 @@
 # SpecLeft CLI Reference
 
+## Setup
+`export SPECLEFT_COMPACT=1`
+All commands below run in compact mode.
+
 ## Workflow
-1. specleft next --format json
+1. specleft next --limit 1
 2. Implement test logic
-3. specleft features validate --format json
-4. specleft skill verify --format json
+3. specleft features validate
+4. specleft skill verify
 5. pytest
 6. Repeat
+
+## Quick checks
+- Validation: check exit code first, parse JSON only on failure
+- Coverage: `specleft coverage --threshold 100` and check exit code
+- Status: `specleft status` for progress snapshots
 
 ## Safety
 - Always `--dry-run` before writing files

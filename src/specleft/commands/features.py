@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 import sys
 from datetime import datetime
@@ -14,6 +13,7 @@ from typing import Any, cast
 
 import click
 
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.test import generate_test_stub
 from specleft.schema import (
     FeatureSpec,
@@ -295,9 +295,26 @@ def _print_feature_add_result(
     result: dict[str, object],
     format_type: str,
     dry_run: bool,
+    pretty: bool,
 ) -> None:
     if format_type == "json":
-        click.echo(json.dumps(result, indent=2))
+        if result.get("success") is False:
+            click.echo(json_dumps(result, pretty=pretty))
+            return
+
+        if dry_run:
+            payload = {
+                "dry_run": True,
+                "feature_id": result.get("feature_id"),
+                "file": result.get("file_path"),
+            }
+        else:
+            payload = {
+                "created": True,
+                "feature_id": result.get("feature_id"),
+                "file": result.get("file_path"),
+            }
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     if result.get("success") is False:
@@ -323,9 +340,32 @@ def _print_scenario_add_result(
     format_type: str,
     dry_run: bool,
     warnings: list[str],
+    pretty: bool,
 ) -> None:
     if format_type == "json":
-        click.echo(json.dumps(result, indent=2))
+        if result.get("success") is False:
+            click.echo(json_dumps(result, pretty=pretty))
+            return
+
+        if dry_run:
+            payload = {
+                "dry_run": True,
+                "feature_id": result.get("feature_id"),
+                "scenario_id": result.get("scenario_id"),
+                "file": result.get("file_path"),
+            }
+        else:
+            payload = {
+                "created": True,
+                "feature_id": result.get("feature_id"),
+                "scenario_id": result.get("scenario_id"),
+                "file": result.get("file_path"),
+            }
+        if result.get("test_preview"):
+            payload["test_preview"] = result.get("test_preview")
+        if warnings:
+            payload["warnings"] = warnings
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     if result.get("success") is False:
@@ -369,19 +409,22 @@ def features() -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--strict",
     is_flag=True,
     help="Treat warnings as errors.",
 )
-def features_validate(features_dir: str | None, format_type: str, strict: bool) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def features_validate(
+    features_dir: str | None, format_type: str | None, strict: bool, pretty: bool
+) -> None:
     """Validate Markdown specs in a features directory."""
     from specleft.validator import collect_spec_stats, load_specs_directory
 
+    selected_format = resolve_output_format(format_type)
     warnings: list[dict[str, object]] = []
     resolved_features_dir = resolve_specs_dir(features_dir)
     try:
@@ -389,20 +432,11 @@ def features_validate(features_dir: str | None, format_type: str, strict: bool) 
         stats = collect_spec_stats(config)
 
         # Gentle nudge for nested structures (table output only)
-        if format_type != "json":
+        if selected_format != "json":
             warn_if_nested_structure(resolved_features_dir)
 
-        if format_type == "json":
-            payload = {
-                "valid": True,
-                "timestamp": datetime.now().isoformat(),
-                "features": stats.feature_count,
-                "stories": stats.story_count,
-                "scenarios": stats.scenario_count,
-                "errors": [],
-                "warnings": warnings,
-            }
-            click.echo(json.dumps(payload, indent=2))
+        if selected_format == "json":
+            click.echo(json_dumps({"valid": True}, pretty=pretty))
         else:
             click.secho(
                 f"✅ Features directory '{resolved_features_dir}/' is valid", bold=True
@@ -417,22 +451,18 @@ def features_validate(features_dir: str | None, format_type: str, strict: bool) 
             sys.exit(2)
         sys.exit(0)
     except FileNotFoundError:
-        if format_type == "json":
+        if selected_format == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now().isoformat(),
-                "features": 0,
-                "stories": 0,
-                "scenarios": 0,
                 "errors": [
                     {
                         "file": str(resolved_features_dir),
                         "message": f"Directory not found: {resolved_features_dir}",
+                        "fix_command": f"mkdir -p {resolved_features_dir}",
                     }
                 ],
-                "warnings": warnings,
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
         else:
             click.secho(
                 f"✗ Directory not found: {resolved_features_dir}",
@@ -442,41 +472,31 @@ def features_validate(features_dir: str | None, format_type: str, strict: bool) 
             print_support_footer()
         sys.exit(1)
     except ValueError as e:
-        if format_type == "json":
+        if selected_format == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now().isoformat(),
-                "features": 0,
-                "stories": 0,
-                "scenarios": 0,
                 "errors": [
                     {
                         "message": str(e),
                     }
                 ],
-                "warnings": warnings,
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
         else:
             click.secho(f"✗ Validation failed: {e}", fg="red", err=True)
             print_support_footer()
         sys.exit(1)
     except Exception as e:
-        if format_type == "json":
+        if selected_format == "json":
             payload = {
                 "valid": False,
-                "timestamp": datetime.now().isoformat(),
-                "features": 0,
-                "stories": 0,
-                "scenarios": 0,
                 "errors": [
                     {
                         "message": f"Unexpected validation failure: {e}",
                     }
                 ],
-                "warnings": warnings,
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
         else:
             click.secho(f"✗ Unexpected validation failure: {e}", fg="red", err=True)
             print_support_footer()
@@ -494,24 +514,27 @@ def features_validate(features_dir: str | None, format_type: str, strict: bool) 
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def features_list(features_dir: str | None, format_type: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def features_list(
+    features_dir: str | None, format_type: str | None, pretty: bool
+) -> None:
     """List features, stories, and scenarios."""
     from specleft.validator import load_specs_directory
 
+    selected_format = resolve_output_format(format_type)
     resolved_features_dir = resolve_specs_dir(features_dir)
     try:
         config = load_specs_directory(resolved_features_dir)
     except FileNotFoundError:
-        if format_type == "json":
+        if selected_format == "json":
             error_payload = {
                 "status": "error",
                 "message": f"Directory not found: {resolved_features_dir}",
             }
-            click.echo(json.dumps(error_payload, indent=2))
+            click.echo(json_dumps(error_payload, pretty=pretty))
         else:
             click.secho(
                 f"✗ Directory not found: {resolved_features_dir}",
@@ -521,31 +544,31 @@ def features_list(features_dir: str | None, format_type: str) -> None:
             print_support_footer()
         sys.exit(1)
     except ValueError as e:
-        if format_type == "json":
+        if selected_format == "json":
             error_payload = {
                 "status": "error",
                 "message": f"Unable to load specs: {e}",
             }
-            click.echo(json.dumps(error_payload, indent=2))
+            click.echo(json_dumps(error_payload, pretty=pretty))
         else:
             click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
             print_support_footer()
         sys.exit(1)
     except Exception as e:
-        if format_type == "json":
+        if selected_format == "json":
             error_payload = {
                 "status": "error",
                 "message": f"Unexpected error loading specs: {e}",
             }
-            click.echo(json.dumps(error_payload, indent=2))
+            click.echo(json_dumps(error_payload, pretty=pretty))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
             print_support_footer()
         sys.exit(1)
 
-    if format_type == "json":
+    if selected_format == "json":
         payload = _build_features_list_json(config)
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     # Gentle nudge for nested structures
@@ -577,14 +600,20 @@ def features_list(features_dir: str | None, format_type: str) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def features_stats(
+    features_dir: str | None,
+    tests_dir: str,
+    format_type: str | None,
+    pretty: bool,
+) -> None:
     """Show aggregate statistics for specs and test coverage."""
     from specleft.validator import collect_spec_stats, load_specs_directory
 
+    selected_format = resolve_output_format(format_type)
     config = None
     stats = None
     spec_scenario_ids: set[str] = set()
@@ -598,12 +627,12 @@ def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -
                 for scenario in story.scenarios:
                     spec_scenario_ids.add(scenario.scenario_id)
     except FileNotFoundError:
-        if format_type == "json":
+        if selected_format == "json":
             error_payload = {
                 "status": "error",
                 "message": f"Directory not found: {resolved_features_dir}",
             }
-            click.echo(json.dumps(error_payload, indent=2))
+            click.echo(json_dumps(error_payload, pretty=pretty))
         else:
             click.secho(
                 f"✗ Directory not found: {resolved_features_dir}",
@@ -614,41 +643,41 @@ def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -
         sys.exit(1)
     except ValueError as e:
         if "No feature specs found" in str(e):
-            if format_type == "json":
+            if selected_format == "json":
                 stats = None
             else:
                 click.secho(f"No specs found in {resolved_features_dir}.", fg="yellow")
             stats = None
         else:
-            if format_type == "json":
+            if selected_format == "json":
                 error_payload = {
                     "status": "error",
                     "message": f"Unable to load specs: {e}",
                 }
-                click.echo(json.dumps(error_payload, indent=2))
+                click.echo(json_dumps(error_payload, pretty=pretty))
             else:
                 click.secho(f"✗ Unable to load specs: {e}", fg="red", err=True)
                 print_support_footer()
             sys.exit(1)
     except Exception as e:
-        if format_type == "json":
+        if selected_format == "json":
             error_payload = {
                 "status": "error",
                 "message": f"Unexpected error loading specs: {e}",
             }
-            click.echo(json.dumps(error_payload, indent=2))
+            click.echo(json_dumps(error_payload, pretty=pretty))
         else:
             click.secho(f"✗ Unexpected error loading specs: {e}", fg="red", err=True)
             print_support_footer()
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     test_discovery = discover_pytest_tests(tests_dir)
 
-    if format_type == "json":
+    if selected_format == "json":
         payload = _build_features_stats_json(
             features_dir=resolved_features_dir,
             tests_dir=tests_dir,
@@ -656,7 +685,7 @@ def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -
             spec_scenario_ids=spec_scenario_ids,
             test_discovery=test_discovery,
         )
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     click.echo("")
@@ -748,11 +777,11 @@ def features_stats(features_dir: str | None, tests_dir: str, format_type: str) -
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option("--interactive", is_flag=True, help="Use guided prompts.")
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def features_add(
     feature_id: str | None,
     title: str | None,
@@ -760,10 +789,12 @@ def features_add(
     description: str | None,
     features_dir: str | None,
     dry_run: bool,
-    format_type: str,
+    format_type: str | None,
     interactive: bool,
+    pretty: bool,
 ) -> None:
     """Create a new feature markdown file."""
+    selected_format = resolve_output_format(format_type)
     _ensure_interactive(interactive)
 
     if interactive:
@@ -815,7 +846,10 @@ def features_add(
             "error": str(exc),
         }
         _print_feature_add_result(
-            result=payload, format_type=format_type, dry_run=dry_run
+            result=payload,
+            format_type=selected_format,
+            dry_run=dry_run,
+            pretty=pretty,
         )
         sys.exit(1)
 
@@ -847,7 +881,12 @@ def features_add(
             {"title": title, "priority": priority, "description": description},
         )
 
-    _print_feature_add_result(result=payload, format_type=format_type, dry_run=dry_run)
+    _print_feature_add_result(
+        result=payload,
+        format_type=selected_format,
+        dry_run=dry_run,
+        pretty=pretty,
+    )
     if not result.success:
         sys.exit(1)
 
@@ -892,9 +931,8 @@ def features_add(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option("--interactive", is_flag=True, help="Use guided prompts.")
 @click.option(
@@ -908,6 +946,7 @@ def features_add(
     is_flag=True,
     help="Print the generated test content.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def features_add_scenario(
     feature_id: str | None,
     title: str | None,
@@ -918,12 +957,14 @@ def features_add_scenario(
     features_dir: str | None,
     tests_dir: Path | None,
     dry_run: bool,
-    format_type: str,
+    format_type: str | None,
     interactive: bool,
     add_test: str | None,
     preview_test: bool,
+    pretty: bool,
 ) -> None:
     """Append a scenario to an existing feature file."""
+    selected_format = resolve_output_format(format_type)
     _ensure_interactive(interactive)
 
     if interactive:
@@ -976,9 +1017,10 @@ def features_add_scenario(
         }
         _print_scenario_add_result(
             result=payload,
-            format_type=format_type,
+            format_type=selected_format,
             dry_run=dry_run,
             warnings=[],
+            pretty=pretty,
         )
         sys.exit(1)
 
@@ -998,9 +1040,10 @@ def features_add_scenario(
         }
         _print_scenario_add_result(
             result=payload,
-            format_type=format_type,
+            format_type=selected_format,
             dry_run=dry_run,
             warnings=warnings,
+            pretty=pretty,
         )
         sys.exit(1)
 
@@ -1017,9 +1060,10 @@ def features_add_scenario(
         }
         _print_scenario_add_result(
             result=payload,
-            format_type=format_type,
+            format_type=selected_format,
             dry_run=dry_run,
             warnings=warnings,
+            pretty=pretty,
         )
         sys.exit(1)
 
@@ -1057,9 +1101,10 @@ def features_add_scenario(
         )
         _print_scenario_add_result(
             result=payload,
-            format_type=format_type,
+            format_type=selected_format,
             dry_run=dry_run,
             warnings=warnings,
+            pretty=pretty,
         )
         sys.exit(1)
 
@@ -1117,7 +1162,7 @@ def features_add_scenario(
         )
         if not created and error:
             click.secho(f"Warning: {error}", fg="yellow")
-    elif format_type == "table" and not dry_run and not preview_test:
+    elif selected_format == "table" and not dry_run and not preview_test:
         if click.confirm("Generate test skeleton?", default=True):
             default_tests_dir = tests_dir or Path("tests")
             try:
@@ -1146,7 +1191,7 @@ def features_add_scenario(
                 click.secho(f"Warning: {error}", fg="yellow")
 
     if preview_test and generated_test:
-        if format_type == "json":
+        if selected_format == "json":
             payload["test_preview"] = generated_test
         else:
             click.echo("\nTest preview:\n")
@@ -1154,7 +1199,8 @@ def features_add_scenario(
 
     _print_scenario_add_result(
         result=payload,
-        format_type=format_type,
+        format_type=selected_format,
         dry_run=dry_run,
         warnings=warnings,
+        pretty=pretty,
     )

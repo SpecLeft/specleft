@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -19,7 +20,7 @@ class TestStubCommand:
         """Test stub command when features directory is missing."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["test", "stub"])
+            result = runner.invoke(cli, ["test", "stub", "--format", "table"])
             assert result.exit_code == 1
             assert "not found" in result.output
 
@@ -35,7 +36,7 @@ class TestStubCommand:
 
             result = runner.invoke(
                 cli,
-                ["test", "stub", "--single-file"],
+                ["test", "stub", "--single-file", "--format", "table"],
                 input="y\n",
             )
             assert result.exit_code == 0
@@ -66,7 +67,9 @@ class TestStubCommand:
                 scenario_id="card-charge",
             )
 
-            result = runner.invoke(cli, ["test", "stub"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "stub", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -90,7 +93,9 @@ class TestStubCommand:
                 scenario_id="legacy-charge",
             )
 
-            result = runner.invoke(cli, ["test", "stub"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "stub", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -115,6 +120,8 @@ class TestStubCommand:
                     "stub",
                     "--output-dir",
                     "custom_tests",
+                    "--format",
+                    "table",
                 ],
                 input="y\n",
             )
@@ -137,7 +144,9 @@ class TestStubCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "stub", "-f", str(features_dir)], input="y\n"
+                cli,
+                ["test", "stub", "-f", str(features_dir), "--format", "table"],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -154,7 +163,9 @@ class TestStubCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "stub", "--dry-run"])
+            result = runner.invoke(
+                cli, ["test", "stub", "--dry-run", "--format", "table"]
+            )
             assert result.exit_code == 0
             assert "Dry run: no files will be created." in result.output
             assert "Would create tests:" in result.output
@@ -181,8 +192,10 @@ class TestStubCommand:
                 ],
             )
             assert result.exit_code == 0
-            assert '"would_create"' in result.output
-            assert '"preview"' in result.output
+            payload = json.loads(result.output)
+            assert payload["dry_run"] is True
+            assert payload["files_planned"] == 1
+            assert "tests/test_auth.py" in payload["files"]
 
     def test_stub_force_overwrites(self) -> None:
         """Test stub command force overwrites existing files."""
@@ -194,7 +207,9 @@ class TestStubCommand:
                 scenario_id="login-success",
             )
 
-            first_run = runner.invoke(cli, ["test", "stub"], input="y\n")
+            first_run = runner.invoke(
+                cli, ["test", "stub", "--format", "table"], input="y\n"
+            )
             assert first_run.exit_code == 0
             generated_file = Path("tests/test_auth.py")
             assert generated_file.exists()
@@ -202,7 +217,7 @@ class TestStubCommand:
 
             second_run = runner.invoke(
                 cli,
-                ["test", "stub", "--force"],
+                ["test", "stub", "--force", "--format", "table"],
                 input="y\n",
             )
             assert second_run.exit_code == 0
@@ -220,7 +235,7 @@ class TestStubCommand:
 
             result = runner.invoke(
                 cli,
-                ["test", "stub", "--single-file"],
+                ["test", "stub", "--single-file", "--format", "table"],
                 input="y\n",
             )
             assert result.exit_code == 0
@@ -240,7 +255,7 @@ class TestStubCommand:
 
             result = runner.invoke(
                 cli,
-                ["test", "stub", "--single-file"],
+                ["test", "stub", "--single-file", "--format", "table"],
                 input="y\n",
             )
             assert result.exit_code == 0
@@ -262,7 +277,7 @@ class TestStubCommand:
 
             result = runner.invoke(
                 cli,
-                ["test", "stub", "--single-file"],
+                ["test", "stub", "--single-file", "--format", "table"],
                 input="y\n",
             )
             assert result.exit_code == 0

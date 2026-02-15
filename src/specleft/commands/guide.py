@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import json
-
 import click
 
 from specleft.commands.guide_content import (
@@ -16,6 +14,7 @@ from specleft.commands.guide_content import (
     TASK_MAPPINGS,
 )
 from specleft.commands.guide_content import get_guide_json
+from specleft.commands.output import json_dumps, resolve_output_format
 
 
 def _format_table() -> str:
@@ -79,14 +78,15 @@ def _format_table() -> str:
     "--format",
     "output_format",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def guide(output_format: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def guide(output_format: str | None, pretty: bool) -> None:
     """Display SpecLeft workflow guide."""
-    if output_format == "json":
-        click.echo(json.dumps(get_guide_json(), indent=2))
+    selected_format = resolve_output_format(output_format)
+    if selected_format == "json":
+        click.echo(json_dumps(get_guide_json(), pretty=pretty))
         return
 
     click.echo(_format_table())

@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +13,11 @@ from typing import Any
 import click
 
 from specleft.commands.formatters import get_priority_value
+from specleft.commands.output import (
+    compact_mode_enabled,
+    json_dumps,
+    resolve_output_format,
+)
 from specleft.commands.status import build_status_entries
 from specleft.commands.types import ScenarioStatusEntry, StatusSummary
 from specleft.utils.messaging import print_support_footer
@@ -123,18 +127,16 @@ def _build_next_json(
 )
 @click.option(
     "--limit",
-    default=5,
-    show_default=True,
+    default=None,
     type=int,
-    help="Number of tests to show.",
+    help="Number of tests to show (default: 5, or 1 when SPECLEFT_COMPACT=1).",
 )
 @click.option(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--priority",
@@ -144,16 +146,23 @@ def _build_next_json(
 )
 @click.option("--feature", "feature_id", help="Filter by feature ID.")
 @click.option("--story", "story_id", help="Filter by story ID.")
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def next_command(
     features_dir: str | None,
-    limit: int,
-    format_type: str,
+    limit: int | None,
+    format_type: str | None,
     priority_filter: str | None,
     feature_id: str | None,
     story_id: str | None,
+    pretty: bool,
 ) -> None:
     """Show the next tests to implement."""
     from specleft.validator import load_specs_directory
+
+    selected_format = resolve_output_format(format_type)
+    effective_limit = limit
+    if effective_limit is None:
+        effective_limit = 1 if compact_mode_enabled() else 5
 
     resolved_features_dir = resolve_specs_dir(features_dir)
     try:
@@ -168,7 +177,7 @@ def next_command(
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     entries = build_status_entries(
@@ -196,9 +205,9 @@ def next_command(
         )
     )
 
-    limited = unimplemented[: max(limit, 0)]
-    if format_type == "json":
+    limited = unimplemented[: max(effective_limit, 0)]
+    if selected_format == "json":
         payload = _build_next_json(limited, len(unimplemented))
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json_dumps(payload, pretty=pretty))
     else:
         _print_next_table(limited, summary)
