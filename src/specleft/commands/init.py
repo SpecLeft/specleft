@@ -13,6 +13,7 @@ from typing import cast
 
 import click
 
+from specleft.templates.skill_template import get_skill_content
 from specleft.utils.messaging import print_support_footer
 
 _PRD_TEMPLATE_CONTENT = """\
@@ -110,6 +111,7 @@ def _init_plan(example: bool) -> tuple[list[Path], list[tuple[Path, str]]]:
     if example:
         for rel_path, content in _init_example_content().items():
             files.append((Path(rel_path), content))
+    files.append((Path(".specleft/SKILL.md"), get_skill_content()))
     files.append((Path(".specleft/.gitkeep"), ""))
     files.append((Path(".specleft/policies/.gitkeep"), ""))
     files.append((Path(".specleft/templates/prd-template.yml"), _PRD_TEMPLATE_CONTENT))
@@ -200,6 +202,19 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
 
     if blank:
         example = False
+
+    skill_file = Path(".specleft/SKILL.md")
+    if skill_file.exists():
+        warning = "Skipped creation. Specleft SKILL.md exists already."
+        if format_type == "json":
+            payload_cancelled = {
+                "status": "cancelled",
+                "message": warning,
+            }
+            click.echo(json.dumps(payload_cancelled, indent=2))
+        else:
+            click.secho(f"Warning: {warning}", fg="yellow")
+        sys.exit(2)
 
     features_dir = Path(".specleft/specs")
     if features_dir.exists():

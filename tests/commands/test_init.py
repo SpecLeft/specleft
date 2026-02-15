@@ -17,6 +17,7 @@ class TestInitCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["init"], input="1\n")
             assert result.exit_code == 0
+            assert Path(".specleft/SKILL.md").exists()
             assert Path(".specleft/specs/example-feature.md").exists()
             assert Path(".specleft/templates/prd-template.yml").exists()
 
@@ -28,6 +29,7 @@ class TestInitCommand:
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
             assert payload["summary"]["directories"] == 5
+            assert ".specleft/SKILL.md" in payload["would_create"]
             assert ".specleft/specs/example-feature.md" in payload["would_create"]
             assert ".specleft/templates/prd-template.yml" in payload["would_create"]
 
@@ -84,3 +86,29 @@ class TestInitCommand:
             result = runner.invoke(cli, ["init"], input="3\n")
             assert result.exit_code == 2
             assert "Cancelled" in result.output
+
+    def test_init_existing_skill_file_warns_and_exits(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path(".specleft").mkdir(parents=True)
+            Path(".specleft/SKILL.md").write_text("# existing\n")
+            result = runner.invoke(cli, ["init"])
+            assert result.exit_code == 2
+            assert (
+                "Warning: Skipped creation. Specleft SKILL.md exists already."
+                in result.output
+            )
+
+    def test_init_existing_skill_file_json_cancelled(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path(".specleft").mkdir(parents=True)
+            Path(".specleft/SKILL.md").write_text("# existing\n")
+            result = runner.invoke(cli, ["init", "--format", "json"])
+            assert result.exit_code == 2
+            payload = json.loads(result.output)
+            assert payload["status"] == "cancelled"
+            assert (
+                payload["message"]
+                == "Skipped creation. Specleft SKILL.md exists already."
+            )
