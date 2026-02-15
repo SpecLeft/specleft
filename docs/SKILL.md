@@ -81,7 +81,11 @@ Builds an HTML report from `.specleft/results/`.
 `specleft contract test --format json [--verbose]`
 Run to verify deterministic and safe command guarantees.
 
-## Skill Security
+## Skill Command Group
+
+### Show skill commands
+`specleft skill --help`
+Displays skill lifecycle subcommands (`verify`, `update`).
 
 ### Verify skill integrity
 `specleft skill verify --format json`

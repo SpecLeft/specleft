@@ -17,7 +17,7 @@ class TestContractCommand:
         result = runner.invoke(cli, ["contract", "--format", "json"])
         assert result.exit_code == 0
         payload = json.loads(result.output)
-        assert payload["contract_version"] == "1.0"
+        assert payload["contract_version"] == "1.1"
         assert payload["specleft_version"] == CLI_VERSION
         assert "guarantees" in payload
         skill_security = payload["guarantees"]["skill_security"]
@@ -29,7 +29,7 @@ class TestContractCommand:
         result = runner.invoke(cli, ["contract", "test", "--format", "json"])
         assert result.exit_code == 0
         payload = json.loads(result.output)
-        assert payload["contract_version"] == "1.0"
+        assert payload["contract_version"] == "1.1"
         assert payload["specleft_version"] == CLI_VERSION
         assert payload["passed"] is True
         assert payload["checks"]

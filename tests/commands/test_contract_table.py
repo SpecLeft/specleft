@@ -36,7 +36,7 @@ def test_print_contract_table_outputs_sections(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     payload = {
-        "contract_version": "1.0",
+        "contract_version": "1.1",
         "specleft_version": "0.2.0",
         "guarantees": {
             "safety": {
@@ -57,6 +57,10 @@ def test_print_contract_table_outputs_sections(
                 "json_supported_globally": True,
                 "json_additive_within_minor": True,
             },
+            "skill_security": {
+                "skill_file_integrity_check": True,
+                "skill_file_commands_are_simple": True,
+            },
         },
     }
     print_contract_table(payload)
@@ -66,6 +70,7 @@ def test_print_contract_table_outputs_sections(
     assert "Execution:" in output
     assert "Determinism:" in output
     assert "JSON & CLI:" in output
+    assert "Skill Security:" in output
 
 
 def test_print_contract_test_summary(capsys: pytest.CaptureFixture[str]) -> None:

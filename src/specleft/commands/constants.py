@@ -8,5 +8,5 @@ from __future__ import annotations
 from specleft.version import SPECLEFT_VERSION
 
 CLI_VERSION = SPECLEFT_VERSION
-CONTRACT_VERSION = "1.0"
+CONTRACT_VERSION = "1.1"
 CONTRACT_DOC_PATH = "docs/agent-contract.md"
