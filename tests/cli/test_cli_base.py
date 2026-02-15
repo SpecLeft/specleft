@@ -16,7 +16,7 @@ class TestCLIBase:
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert __version__ in result.output
+        assert result.output == f"specleft version: v{__version__}\n"
 
     def test_cli_help(self) -> None:
         """Test --help flag."""
