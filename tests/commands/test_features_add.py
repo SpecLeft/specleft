@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -91,8 +92,9 @@ class TestFeaturesAddCommand:
                 ],
             )
             assert result.exit_code == 0
-            assert '"success": true' in result.output
-            assert '"feature_id": "json-feature"' in result.output
+            payload = json.loads(result.output)
+            assert payload["created"] is True
+            assert payload["feature_id"] == "json-feature"
 
 
 class TestFeaturesAddScenarioCommand:
@@ -200,6 +202,8 @@ class TestFeaturesAddScenarioCommand:
                     "--step",
                     "Given a preview",
                     "--preview-test",
+                    "--format",
+                    "table",
                     "--dir",
                     ".specleft/specs",
                 ],
@@ -264,8 +268,9 @@ class TestFeaturesAddScenarioCommand:
                 ],
             )
             assert result.exit_code == 1
-            assert '"success": false' in result.output
-            assert '"suggestion"' in result.output
+            payload = json.loads(result.output)
+            assert payload["success"] is False
+            assert "suggestion" in payload
 
     def test_add_scenario_invalid_id(self) -> None:
         runner = CliRunner()
@@ -441,6 +446,8 @@ class TestFeaturesAddScenarioCommand:
                     "Add scenario",
                     "--step",
                     "Given a scenario",
+                    "--format",
+                    "table",
                     "--dir",
                     ".specleft/specs",
                 ],
@@ -478,6 +485,8 @@ class TestFeaturesAddScenarioCommand:
                     "Add scenario",
                     "--step",
                     "Given a scenario",
+                    "--format",
+                    "table",
                     "--dir",
                     ".specleft/specs",
                 ],

@@ -109,7 +109,7 @@ def test_ci_failure_explains_intent_mismatch(
         ):
             result = runner.invoke(
                 cli,
-                ["enforce", ".specleft/policies/policy.yml"],
+                ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
             )
 
         output = result.output
@@ -214,6 +214,8 @@ def test_documentation_and_support_links_on_ci_failure(
                 [
                     "enforce",
                     f".specleft/policies/{policy_filename}",
+                    "--format",
+                    "table",
                 ],
             )
 

@@ -36,26 +36,26 @@ class TestInitCommand:
             assert result.exit_code == 0
             payload = json.loads(result.output)
             assert payload["dry_run"] is True
-            assert payload["summary"]["directories"] == 5
-            assert payload["summary"]["files"] == 6
-            assert ".specleft/SKILL.md" in payload["would_create"]
-            assert ".specleft/SKILL.md.sha256" in payload["would_create"]
-            assert ".specleft/specs/example-feature.md" in payload["would_create"]
-            assert ".specleft/templates/prd-template.yml" in payload["would_create"]
+            assert payload["directories_planned"] == 5
+            assert payload["files_planned"] == 6
+            assert ".specleft/SKILL.md" in payload["files"]
+            assert ".specleft/SKILL.md.sha256" in payload["files"]
+            assert ".specleft/specs/example-feature.md" in payload["files"]
+            assert ".specleft/templates/prd-template.yml" in payload["files"]
             assert len(payload["skill_file_hash"]) == 64
 
-    def test_init_json_requires_dry_run(self) -> None:
+    def test_init_json_supports_non_dry_run(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["init", "--format", "json"])
-            assert result.exit_code == 1
+            assert result.exit_code == 0
             payload = json.loads(result.output)
-            assert payload["status"] == "error"
+            assert payload["success"] is True
 
     def test_init_blank_creates_directories(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["init", "--blank"])
+            result = runner.invoke(cli, ["init", "--blank", "--format", "table"])
             assert result.exit_code == 0
             assert Path(".specleft/specs").exists()
             assert Path("tests").exists()
@@ -76,7 +76,7 @@ class TestInitCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path(".specleft/specs").mkdir(parents=True)
-            result = runner.invoke(cli, ["init"], input="1\n")
+            result = runner.invoke(cli, ["init", "--format", "table"], input="1\n")
             assert result.exit_code == 0
             assert "Skipping initialization" in result.output
             assert Path(".specleft/specs").exists()
@@ -86,7 +86,7 @@ class TestInitCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path(".specleft/specs").mkdir(parents=True)
-            result = runner.invoke(cli, ["init"], input="2\n")
+            result = runner.invoke(cli, ["init", "--format", "table"], input="2\n")
             assert result.exit_code == 0
             assert Path(".specleft/specs/example-feature.md").exists()
 
@@ -94,7 +94,7 @@ class TestInitCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path(".specleft/specs").mkdir(parents=True)
-            result = runner.invoke(cli, ["init"], input="3\n")
+            result = runner.invoke(cli, ["init", "--format", "table"], input="3\n")
             assert result.exit_code == 2
             assert "Cancelled" in result.output
 
@@ -103,7 +103,7 @@ class TestInitCommand:
         with runner.isolated_filesystem():
             Path(".specleft").mkdir(parents=True)
             Path(".specleft/SKILL.md").write_text("# existing\n")
-            result = runner.invoke(cli, ["init"])
+            result = runner.invoke(cli, ["init", "--format", "table"])
             assert result.exit_code == 0
             assert (
                 "Warning: Skipped creation. Specleft SKILL.md exists already."

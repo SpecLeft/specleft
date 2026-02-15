@@ -51,16 +51,29 @@ dependencies = [
 
     def test_doctor_json_includes_version(self) -> None:
         runner = CliRunner()
-        result = runner.invoke(cli, ["doctor", "--format", "json"])
+        result = runner.invoke(
+            cli, ["doctor", "--format", "json"], env={"SPECLEFT_COMPACT": "0"}
+        )
         assert result.exit_code in {0, 1}
         payload = json.loads(result.output)
         assert payload["version"] == CLI_VERSION
         assert "healthy" in payload
         assert "checks" in payload
+        assert payload["checks"]["cli_available"]["version"] == CLI_VERSION
+        assert payload["checks"]["cli_available"]["compact_mode"] is False
+
+    def test_doctor_json_compact_mode_true(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["doctor", "--format", "json"], env={"SPECLEFT_COMPACT": "1"}
+        )
+        assert result.exit_code in {0, 1}
+        payload = json.loads(result.output)
+        assert payload["checks"]["cli_available"]["compact_mode"] is True
 
     def test_doctor_table_output(self) -> None:
         runner = CliRunner()
-        result = runner.invoke(cli, ["doctor"])
+        result = runner.invoke(cli, ["doctor", "--format", "table"])
         assert result.exit_code in {0, 1}
         assert "Checking SpecLeft installation" in result.output
         assert "specleft CLI available" in result.output
@@ -68,7 +81,7 @@ dependencies = [
 
     def test_doctor_verbose_output(self) -> None:
         runner = CliRunner()
-        result = runner.invoke(cli, ["doctor", "--verbose"])
+        result = runner.invoke(cli, ["doctor", "--verbose", "--format", "table"])
         assert result.exit_code in {0, 1}
         assert "pytest plugin" in result.output
         assert "feature directory" in result.output

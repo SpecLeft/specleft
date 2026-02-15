@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import ast
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +14,7 @@ from typing import Any
 import click
 
 from specleft.commands.formatters import get_priority_value
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.types import ScenarioStatus, ScenarioStatusEntry, StatusSummary
 from specleft.schema import SpecsConfig
 from specleft.utils.messaging import print_support_footer
@@ -174,15 +174,37 @@ def build_status_json(
     entries: list[ScenarioStatusEntry],
     *,
     include_execution_time: bool,
+    verbose: bool,
 ) -> dict[str, Any]:
     from specleft.commands.formatters import build_feature_json
 
     summary = _summarize_status_entries(entries)
+    summary_payload = {
+        "features": summary.total_features,
+        "stories": summary.total_stories,
+        "scenarios": summary.total_scenarios,
+        "implemented": summary.implemented,
+        "skipped": summary.skipped,
+        "coverage_percent": summary.coverage_percent,
+    }
+    if not verbose:
+        return summary_payload
+
     features: list[dict[str, Any]] = []
+    by_priority: dict[str, dict[str, int]] = {}
 
     feature_groups: dict[str, list[ScenarioStatusEntry]] = {}
     for entry in entries:
         feature_groups.setdefault(entry.feature.feature_id, []).append(entry)
+        priority = get_priority_value(entry.scenario)
+        priority_payload = by_priority.setdefault(
+            priority, {"total": 0, "implemented": 0, "skipped": 0}
+        )
+        priority_payload["total"] += 1
+        if entry.status == "implemented":
+            priority_payload["implemented"] += 1
+        else:
+            priority_payload["skipped"] += 1
 
     for feature_entries in feature_groups.values():
         feature_summary = _summarize_status_entries(feature_entries)
@@ -230,16 +252,11 @@ def build_status_json(
         features.append(feature_payload)
 
     return {
+        "initialised": True,
         "timestamp": datetime.now().isoformat(),
+        "summary": summary_payload,
+        "by_priority": by_priority,
         "features": features,
-        "summary": {
-            "total_features": summary.total_features,
-            "total_stories": summary.total_stories,
-            "total_scenarios": summary.total_scenarios,
-            "implemented": summary.implemented,
-            "skipped": summary.skipped,
-            "coverage_percent": summary.coverage_percent,
-        },
     }
 
 
@@ -362,9 +379,8 @@ def _is_single_file_feature(feature: object) -> bool:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option("--feature", "feature_id", help="Filter by feature ID.")
 @click.option("--story", "story_id", help="Filter by story ID.")
@@ -372,16 +388,26 @@ def _is_single_file_feature(feature: object) -> bool:
     "--unimplemented", is_flag=True, help="Show only unimplemented scenarios."
 )
 @click.option("--implemented", is_flag=True, help="Show only implemented scenarios.")
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Return full status payload (default json output is summary-only).",
+)
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def status(
     features_dir: str | None,
-    format_type: str,
+    format_type: str | None,
     feature_id: str | None,
     story_id: str | None,
     unimplemented: bool,
     implemented: bool,
+    verbose: bool,
+    pretty: bool,
 ) -> None:
     """Show which scenarios are implemented vs. skipped."""
     from specleft.validator import load_specs_directory
+
+    selected_format = resolve_output_format(format_type)
 
     if unimplemented and implemented:
         click.secho(
@@ -403,7 +429,7 @@ def status(
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     if feature_id and not any(
@@ -437,9 +463,11 @@ def status(
     elif implemented:
         entries = [entry for entry in entries if entry.status == "implemented"]
 
-    if format_type == "json":
-        payload = build_status_json(entries, include_execution_time=True)
-        click.echo(json.dumps(payload, indent=2))
+    if selected_format == "json":
+        payload = build_status_json(
+            entries, include_execution_time=True, verbose=verbose
+        )
+        click.echo(json_dumps(payload, pretty=pretty))
     else:
         show_only = None
         if unimplemented:

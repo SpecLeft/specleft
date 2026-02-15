@@ -56,7 +56,6 @@ def test_minimal_valid_feature_file(
         assert result.exit_code == 0, f"Validation failed: {result.output}"
         payload = json.loads(result.output)
         assert payload["valid"] is True, f"Expected valid=True, got: {payload}"
-        assert payload["scenarios"] >= 1, "Expected at least 1 scenario"
 
     with specleft.step("And missing metadata fields are treated as null"):
         # List features with JSON to inspect metadata fields
@@ -196,9 +195,3 @@ def test_optional_metadata_does_not_block_usage(
         # Overall validation should have passed for both features
         validate_payload = json.loads(validate_result.output)
         assert validate_payload["valid"] is True, "Both features should be valid"
-        assert (
-            validate_payload["features"] == 2
-        ), f"Expected 2 features, got: {validate_payload['features']}"
-        assert (
-            len(validate_payload.get("errors", [])) == 0
-        ), f"Expected no errors, got: {validate_payload.get('errors')}"

@@ -8,12 +8,12 @@ from __future__ import annotations
 import json
 import sys
 import webbrowser
-from datetime import datetime
 from pathlib import Path
 
 import click
 from jinja2 import Environment, FileSystemLoader, Template
 
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.formatters import get_priority_value
 from specleft.commands.types import (
     ScenarioPlan,
@@ -326,48 +326,21 @@ def _flatten_skeleton_entries(
     return entries
 
 
-def _build_skeleton_json(
+def _build_skeleton_compact_payload(
     *,
-    would_create: list[SkeletonScenarioEntry],
-    would_skip: list[SkeletonScenarioEntry],
+    plan_result: SkeletonPlanResult,
     dry_run: bool,
-    template: Template,
 ) -> dict[str, object]:
-    def _entry_payload(entry: SkeletonScenarioEntry) -> dict[str, object]:
-        preview_lines = _render_skeleton_preview_content(
-            template=template,
-            scenarios=[entry.scenario],
-        ).splitlines()
-        preview = "\n".join(preview_lines[:6])
-        scenario = entry.scenario.scenario
+    files = sorted({str(plan.output_path) for plan in plan_result.plans})
+    if dry_run:
         return {
-            "feature_id": entry.scenario.feature_id,
-            "story_id": entry.scenario.story_id,
-            "scenario_id": scenario.scenario_id,
-            "test_file": str(entry.output_path),
-            "test_function": scenario.test_function_name,
-            "steps": len(scenario.steps),
-            "priority": get_priority_value(scenario),
-            "preview": preview,
-            "overwrites": entry.overwrites,
+            "dry_run": True,
+            "files_planned": len(files),
+            "files": files,
         }
-
     return {
-        "timestamp": datetime.now().isoformat(),
-        "dry_run": dry_run,
-        "would_create": [_entry_payload(entry) for entry in would_create],
-        "would_skip": [
-            {
-                "scenario_id": entry.scenario.scenario.scenario_id,
-                "test_file": str(entry.output_path),
-                "reason": entry.skip_reason,
-            }
-            for entry in would_skip
-        ],
-        "summary": {
-            "would_create": len({entry.output_path for entry in would_create}),
-            "would_skip": len({entry.output_path for entry in would_skip}),
-        },
+        "created": True,
+        "files_written": len(files),
     }
 
 
@@ -462,26 +435,28 @@ def test() -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--force",
     is_flag=True,
     help="Overwrite existing test files.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def skeleton(
     features_dir: str | None,
     output_dir: str,
     single_file: bool,
     skip_preview: bool,
     dry_run: bool,
-    format_type: str,
+    format_type: str | None,
     force: bool,
+    pretty: bool,
 ) -> None:
     """Generate skeleton test files from Markdown feature specs."""
-    if format_type == "json" and not dry_run and not force:
+    selected_format = resolve_output_format(format_type)
+    if selected_format == "json" and not dry_run and not force:
         click.secho(
             "JSON output requires --dry-run or --force to avoid prompts.",
             fg="red",
@@ -521,7 +496,7 @@ def skeleton(
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     template = _load_test_template("skeleton_test.py.jinja2")
@@ -539,15 +514,7 @@ def skeleton(
     would_create = [entry for entry in flattened if entry.skip_reason is None]
     would_skip = [entry for entry in flattened if entry.skip_reason is not None]
 
-    if format_type == "json":
-        payload = _build_skeleton_json(
-            would_create=would_create,
-            would_skip=would_skip,
-            dry_run=dry_run,
-            template=template,
-        )
-        click.echo(json.dumps(payload, indent=2))
-    else:
+    if selected_format == "table":
         _print_skeleton_plan_table(
             would_create=would_create,
             would_skip=would_skip,
@@ -559,9 +526,27 @@ def skeleton(
                 _render_skeleton_preview(plan)
 
     if dry_run:
+        if selected_format == "json":
+            click.echo(
+                json_dumps(
+                    _build_skeleton_compact_payload(
+                        plan_result=plan_result,
+                        dry_run=True,
+                    ),
+                    pretty=pretty,
+                )
+            )
         return
 
     if not plan_result.plans:
+        if selected_format == "json":
+            click.echo(
+                json_dumps(
+                    {"created": True, "files_written": 0},
+                    pretty=pretty,
+                )
+            )
+            return
         click.secho("No new skeleton tests to generate.", fg="magenta")
         return
 
@@ -573,7 +558,19 @@ def skeleton(
         plan.output_path.parent.mkdir(parents=True, exist_ok=True)
         plan.output_path.write_text(plan.content)
 
-    if format_type == "table":
+    if selected_format == "json":
+        click.echo(
+            json_dumps(
+                _build_skeleton_compact_payload(
+                    plan_result=plan_result,
+                    dry_run=False,
+                ),
+                pretty=pretty,
+            )
+        )
+        return
+
+    if selected_format == "table":
         click.secho(f"\n✓ Created {len(plan_result.plans)} test files", fg="green")
         for plan in plan_result.plans:
             click.echo(f"{plan.output_path}")
@@ -615,26 +612,28 @@ def skeleton(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--force",
     is_flag=True,
     help="Overwrite existing test files.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def stub(
     features_dir: str | None,
     output_dir: str,
     single_file: bool,
     skip_preview: bool,
     dry_run: bool,
-    format_type: str,
+    format_type: str | None,
     force: bool,
+    pretty: bool,
 ) -> None:
     """Generate stub test files from Markdown feature specs."""
-    if format_type == "json" and not dry_run and not force:
+    selected_format = resolve_output_format(format_type)
+    if selected_format == "json" and not dry_run and not force:
         click.secho(
             "JSON output requires --dry-run or --force to avoid prompts.",
             fg="red",
@@ -673,7 +672,7 @@ def stub(
         print_support_footer()
         sys.exit(1)
 
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     template = _load_test_template("stub_test.py.jinja2")
@@ -691,15 +690,7 @@ def stub(
     would_create = [entry for entry in flattened if entry.skip_reason is None]
     would_skip = [entry for entry in flattened if entry.skip_reason is not None]
 
-    if format_type == "json":
-        payload = _build_skeleton_json(
-            would_create=would_create,
-            would_skip=would_skip,
-            dry_run=dry_run,
-            template=template,
-        )
-        click.echo(json.dumps(payload, indent=2))
-    else:
+    if selected_format == "table":
         _print_skeleton_plan_table(
             would_create=would_create,
             would_skip=would_skip,
@@ -711,9 +702,27 @@ def stub(
                 _render_skeleton_preview(plan)
 
     if dry_run:
+        if selected_format == "json":
+            click.echo(
+                json_dumps(
+                    _build_skeleton_compact_payload(
+                        plan_result=plan_result,
+                        dry_run=True,
+                    ),
+                    pretty=pretty,
+                )
+            )
         return
 
     if not plan_result.plans:
+        if selected_format == "json":
+            click.echo(
+                json_dumps(
+                    {"created": True, "files_written": 0},
+                    pretty=pretty,
+                )
+            )
+            return
         click.secho("No new stub tests to generate.", fg="magenta")
         return
 
@@ -725,7 +734,19 @@ def stub(
         plan.output_path.parent.mkdir(parents=True, exist_ok=True)
         plan.output_path.write_text(plan.content)
 
-    if format_type == "table":
+    if selected_format == "json":
+        click.echo(
+            json_dumps(
+                _build_skeleton_compact_payload(
+                    plan_result=plan_result,
+                    dry_run=False,
+                ),
+                pretty=pretty,
+            )
+        )
+        return
+
+    if selected_format == "table":
         click.secho(f"\n✓ Created {len(plan_result.plans)} test files", fg="green")
         for plan in plan_result.plans:
             click.echo(f"{plan.output_path}")
@@ -756,25 +777,30 @@ def stub(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def report(
-    results_file: str | None, output: str, open_browser: bool, format_type: str
+    results_file: str | None,
+    output: str,
+    open_browser: bool,
+    format_type: str | None,
+    pretty: bool,
 ) -> None:
     """Generate HTML report from test results."""
+    selected_format = resolve_output_format(format_type)
     results_dir = Path(".specleft/results")
 
     if results_file:
         results_path = Path(results_file)
         if not results_path.exists():
-            if format_type == "json":
+            if selected_format == "json":
                 payload = {
                     "status": "error",
                     "message": f"Results file not found: {results_file}",
                 }
-                click.echo(json.dumps(payload, indent=2))
+                click.echo(json_dumps(payload, pretty=pretty))
             else:
                 click.secho(
                     f"Error: Results file not found: {results_file}", fg="red", err=True
@@ -783,12 +809,12 @@ def report(
             sys.exit(1)
     else:
         if not results_dir.exists():
-            if format_type == "json":
+            if selected_format == "json":
                 payload = {
                     "status": "error",
                     "message": "No results found. Run tests first with pytest.",
                 }
-                click.echo(json.dumps(payload, indent=2))
+                click.echo(json_dumps(payload, pretty=pretty))
             else:
                 click.secho(
                     "No results found. Run tests first with pytest.",
@@ -800,44 +826,44 @@ def report(
 
         json_files = sorted(results_dir.glob("results_*.json"))
         if not json_files:
-            if format_type == "json":
+            if selected_format == "json":
                 payload = {
                     "status": "error",
                     "message": "No results files found.",
                 }
-                click.echo(json.dumps(payload, indent=2))
+                click.echo(json_dumps(payload, pretty=pretty))
             else:
                 click.secho("No results files found.", fg="yellow", err=True)
                 print_support_footer()
             sys.exit(1)
 
         results_path = json_files[-1]
-        if format_type == "table":
+        if selected_format == "table":
             click.echo(f"Using latest results: {results_path}")
 
     try:
         with results_path.open() as f:
             results = json.load(f)
     except json.JSONDecodeError as e:
-        if format_type == "json":
+        if selected_format == "json":
             payload = {
                 "status": "error",
                 "message": f"Invalid JSON in results file: {e}",
             }
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
         else:
             click.secho(f"Invalid JSON in results file: {e}", fg="red", err=True)
             print_support_footer()
         sys.exit(1)
 
-    if format_type == "json":
+    if selected_format == "json":
         payload = {
             "status": "ok",
             "results_file": str(results_path),
             "summary": results.get("summary"),
             "features": results.get("features"),
         }
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     templates_dir = Path(__file__).parent.parent / "templates"

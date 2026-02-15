@@ -334,7 +334,7 @@ def test_analyze_prd_structure_without_writing_files() -> None:
             assert Path("prd.md").exists()
 
         with specleft.step("When specleft plan --analyze is executed"):
-            result = runner.invoke(cli, ["plan", "--analyze"])
+            result = runner.invoke(cli, ["plan", "--analyze", "--format", "table"])
 
         with specleft.step(
             "Then the output classifies headings as feature, excluded, or ambiguous"

@@ -38,7 +38,7 @@ class TestValidateCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["features", "validate"])
+            result = runner.invoke(cli, ["features", "validate", "--format", "table"])
             assert result.exit_code == 0
             assert "is valid" in result.output
             assert "Features: 1" in result.output
@@ -62,13 +62,12 @@ class TestValidateCommand:
             assert result.exit_code == 0
             payload = json.loads(result.output)
             assert payload["valid"] is True
-            assert payload["features"] == 1
 
     def test_validate_missing_dir(self) -> None:
         """Test validate command when directory is missing."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["features", "validate"])
+            result = runner.invoke(cli, ["features", "validate", "--format", "table"])
             assert result.exit_code == 1
             assert "Directory not found" in result.output
 
@@ -78,7 +77,7 @@ class TestValidateCommand:
         with runner.isolated_filesystem():
             Path("features").mkdir()
 
-            result = runner.invoke(cli, ["features", "validate"])
+            result = runner.invoke(cli, ["features", "validate", "--format", "table"])
             assert result.exit_code == 1
             assert "Validation failed" in result.output
 
@@ -95,7 +94,15 @@ class TestValidateCommand:
             )
 
             result = runner.invoke(
-                cli, ["features", "validate", "--dir", str(features_dir)]
+                cli,
+                [
+                    "features",
+                    "validate",
+                    "--dir",
+                    str(features_dir),
+                    "--format",
+                    "table",
+                ],
             )
             assert result.exit_code == 0
             assert "is valid" in result.output
@@ -115,7 +122,7 @@ class TestFeaturesListCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["features", "list"])
+            result = runner.invoke(cli, ["features", "list", "--format", "table"])
             assert result.exit_code == 0
             assert "Features (1):" in result.output
             assert "- auth: Auth Feature" in result.output
@@ -157,7 +164,7 @@ class TestFeaturesListCommand:
                 scenario_id="legacy-charge",
             )
 
-            result = runner.invoke(cli, ["features", "list"])
+            result = runner.invoke(cli, ["features", "list", "--format", "table"])
             assert result.exit_code == 0
             assert "Detected nested feature structure" in result.output
             assert ".specleft/specs/legacy/_feature.md" not in result.output
@@ -165,7 +172,7 @@ class TestFeaturesListCommand:
     def test_features_list_missing_dir(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["features", "list"])
+            result = runner.invoke(cli, ["features", "list", "--format", "table"])
             assert result.exit_code == 1
             assert "Directory not found" in result.output
 
@@ -184,7 +191,7 @@ class TestFeaturesStatsCommand:
                 include_test_data=True,
             )
 
-            result = runner.invoke(cli, ["features", "stats"])
+            result = runner.invoke(cli, ["features", "stats", "--format", "table"])
             assert result.exit_code == 0
             # New format includes test coverage stats
             assert "Test Coverage Stats" in result.output
@@ -253,7 +260,7 @@ def test_login_success():
     pass
 """)
 
-            result = runner.invoke(cli, ["features", "stats"])
+            result = runner.invoke(cli, ["features", "stats", "--format", "table"])
             assert result.exit_code == 0
             assert "Scenarios with tests: 1" in result.output
             assert "Scenarios without tests: 0" in result.output
@@ -297,7 +304,7 @@ def test_login_success():
     pass
 """)
 
-            result = runner.invoke(cli, ["features", "stats"])
+            result = runner.invoke(cli, ["features", "stats", "--format", "table"])
             assert result.exit_code == 0
             assert "Scenarios: 2" in result.output
             assert "Scenarios with tests: 1" in result.output

@@ -55,7 +55,9 @@ def test_report_unimplemented_scenarios(
     with specleft.step(
         "When specleft status --unimplemented --format json is executed"
     ):
-        result = runner.invoke(cli, ["status", "--unimplemented", "--format", "json"])
+        result = runner.invoke(
+            cli, ["status", "--unimplemented", "--format", "json", "--verbose"]
+        )
         assert result.exit_code == 0, f"Command failed: {result.output}"
         payload = json.loads(result.output)
 
@@ -121,7 +123,9 @@ def test_report_implemented_scenarios(
         pass
 
     with specleft.step("When specleft status --implemented --format json is executed"):
-        result = runner.invoke(cli, ["status", "--implemented", "--format", "json"])
+        result = runner.invoke(
+            cli, ["status", "--implemented", "--format", "json", "--verbose"]
+        )
         assert result.exit_code == 0, f"Command failed: {result.output}"
         payload = json.loads(result.output)
 
@@ -187,7 +191,8 @@ def test_status_of_implementation_by_feature(
         "When command is run spec status --feature feature-billing --format json"
     ):
         result = runner.invoke(
-            cli, ["status", "--feature", "feature-billing", "--format", "json"]
+            cli,
+            ["status", "--feature", "feature-billing", "--format", "json", "--verbose"],
         )
         assert result.exit_code == 0, f"Command failed: {result.output}"
         payload = json.loads(result.output)
@@ -245,7 +250,7 @@ def test_status_of_implementation_by_feature(
         # Verify overall summary only counts the filtered feature
         assert "summary" in payload, "Expected 'summary' in payload"
         overall = payload["summary"]
-        assert overall["total_features"] == 1, "Should only count filtered feature"
+        assert overall["features"] == 1, "Should only count filtered feature"
         assert (
-            overall["total_scenarios"] == 2
+            overall["scenarios"] == 2
         ), "Should only count scenarios from filtered feature"

@@ -15,7 +15,7 @@ class TestGuideCommand:
 
     def test_guide_table_output(self) -> None:
         runner = CliRunner()
-        result = runner.invoke(cli, ["guide"])
+        result = runner.invoke(cli, ["guide", "--format", "table"])
 
         assert result.exit_code == 0
         assert "SpecLeft Workflow Guide" in result.output

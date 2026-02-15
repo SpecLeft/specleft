@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 import textwrap
 from datetime import datetime
@@ -15,6 +14,7 @@ from typing import Any, cast
 import click
 from slugify import slugify
 
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.license.status import resolve_license
 from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.templates.prd_template import (
@@ -583,9 +583,8 @@ def _print_analyze_summary(summary: dict[str, int]) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option("--dry-run", is_flag=True, help="Preview without writing files.")
 @click.option("--analyze", is_flag=True, help="Analyze PRD without writing files.")
@@ -595,14 +594,17 @@ def _print_analyze_summary(summary: dict[str, int]) -> None:
     type=click.Path(dir_okay=False, path_type=Path),
     help="Path to a PRD template YAML file.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def plan(
     prd_path: str,
-    format_type: str,
+    format_type: str | None,
     dry_run: bool,
     analyze: bool,
     template_path: Path | None,
+    pretty: bool,
 ) -> None:
     """Generate feature specs from a PRD."""
+    selected_format = resolve_output_format(format_type)
     prd_file = Path(prd_path)
     template = default_template()
     template_info: dict[str, str] | None = None
@@ -622,12 +624,12 @@ def plan(
             "version": template.version,
         }
 
-    if template_path is not None and format_type != "json":
+    if template_path is not None and selected_format != "json":
         click.echo(f"Using template: {template_path}")
         click.echo("")
     prd_content, warnings = _read_prd(prd_file)
     if prd_content is None:
-        if format_type == "json":
+        if selected_format == "json":
             payload = _build_plan_payload(
                 prd_path=prd_file,
                 dry_run=dry_run,
@@ -637,7 +639,7 @@ def plan(
                 warnings=warnings,
                 template_info=template_info,
             )
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
             return
 
         for warning in warnings:
@@ -652,7 +654,7 @@ def plan(
         analysis = _analyze_prd(prd_content, template)
         summary = cast(dict[str, int], analysis["summary"])
         suggestions = cast(list[str], analysis["suggestions"])
-        if format_type == "json":
+        if selected_format == "json":
             payload = {
                 "timestamp": datetime.now().isoformat(),
                 "status": "warning" if warnings else "ok",
@@ -662,7 +664,7 @@ def plan(
             }
             if template_info:
                 payload["template"] = template_info
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
             return
 
         for warning in warnings:
@@ -701,7 +703,7 @@ def plan(
     )
     feature_count = len(titles)
 
-    if format_type == "json":
+    if selected_format == "json":
         payload = _build_plan_payload(
             prd_path=prd_file,
             dry_run=dry_run,
@@ -712,7 +714,7 @@ def plan(
             orphan_scenarios=orphan_scenarios,
             template_info=template_info,
         )
-        click.echo(json.dumps(payload, indent=2))
+        click.echo(json_dumps(payload, pretty=pretty))
         return
 
     for warning in warnings:

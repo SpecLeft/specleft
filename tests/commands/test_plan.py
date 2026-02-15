@@ -23,7 +23,7 @@ class TestPlanCommand:
     def test_plan_missing_prd_warns(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
             assert result.exit_code == 0
             assert "PRD not found" in result.output
             assert "Expected locations" in result.output
@@ -34,7 +34,7 @@ class TestPlanCommand:
             Path("prd.md").write_text(
                 "# PRD\n\n## Feature: User Authentication\n## Feature: Payments\n"
             )
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
 
             assert result.exit_code == 0
             assert Path(".specleft/specs/feature-user-authentication.md").exists()
@@ -51,7 +51,7 @@ class TestPlanCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path("prd.md").write_text("# User Authentication\n")
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
             assert result.exit_code == 0
             assert Path(".specleft/specs/user-authentication.md").exists()
             assert "using top-level title" in result.output
@@ -60,7 +60,7 @@ class TestPlanCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path("prd.md").write_text("No headings here")
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
             assert result.exit_code == 0
             assert Path(".specleft/specs/prd.md").exists()
             assert "creating .specleft/specs/prd.md" in result.output
@@ -69,7 +69,7 @@ class TestPlanCommand:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path("prd.md").write_text("# User Authentication\n")
-            result = runner.invoke(cli, ["plan", "--dry-run"])
+            result = runner.invoke(cli, ["plan", "--dry-run", "--format", "table"])
             assert result.exit_code == 0
             assert not Path(".specleft/specs").exists()
             assert "Dry run" in result.output
@@ -105,7 +105,7 @@ class TestPlanCommand:
             feature_file.write_text("# Feature: User Authentication\n")
 
             Path("prd.md").write_text("# User Authentication\n")
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
             assert result.exit_code == 0
             assert "Skipped existing" in result.output
             assert feature_file.read_text() == "# Feature: User Authentication\n"
@@ -274,7 +274,7 @@ class TestPlanTemplateExtraction:
                 "- When they request a refund\n"
                 "- Then we mark it pending\n"
             )
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
 
             assert result.exit_code == 0
             feature_file = Path(".specleft/specs/feature-billing.md")
@@ -291,7 +291,7 @@ class TestPlanAnalyzeMode:
             Path("prd.md").write_text(
                 "# PRD\n\n## Overview\n\n## Feature: Billing\n\n## Notes\n\n## Payments\n"
             )
-            result = runner.invoke(cli, ["plan", "--analyze"])
+            result = runner.invoke(cli, ["plan", "--analyze", "--format", "table"])
 
             assert result.exit_code == 0
             assert not Path("features").exists()
@@ -370,7 +370,9 @@ priorities:
     p0: critical
 """.lstrip())
 
-            result = runner.invoke(cli, ["plan", "--template", "template.yml"])
+            result = runner.invoke(
+                cli, ["plan", "--template", "template.yml", "--format", "table"]
+            )
 
             assert result.exit_code == 0
             feature_file = Path(".specleft/specs/epic-billing.md")
@@ -419,7 +421,7 @@ class TestPlanTemplateAutoDetect:
         with runner.isolated_filesystem():
             Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
             self._write_default_template()
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
 
             assert result.exit_code == 0
             assert (
@@ -442,7 +444,7 @@ class TestPlanTemplateAutoDetect:
         runner = CliRunner()
         with runner.isolated_filesystem():
             Path("prd.md").write_text("# PRD\n\n## Feature: Billing\n")
-            result = runner.invoke(cli, ["plan"])
+            result = runner.invoke(cli, ["plan", "--format", "table"])
 
             assert result.exit_code == 0
             assert "Using template:" not in result.output
@@ -459,7 +461,9 @@ class TestPlanTemplateAutoDetect:
                 "  patterns:\n"
                 '    - "Epic: {title}"\n'
             )
-            result = runner.invoke(cli, ["plan", "--template", "custom.yml"])
+            result = runner.invoke(
+                cli, ["plan", "--template", "custom.yml", "--format", "table"]
+            )
 
             assert result.exit_code == 0
             assert "Using template: custom.yml" in result.output

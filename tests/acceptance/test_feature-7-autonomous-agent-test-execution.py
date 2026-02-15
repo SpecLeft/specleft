@@ -157,19 +157,11 @@ def test_generate_test_skeleton_for_a_scenario(
         payload = json.loads(result.output)
 
     with specleft.step("Then a test stub is generated in to ./tmp directory"):
-        # Check JSON output indicates files would be created
+        # Compact success payload confirms write count.
+        assert payload.get("created") is True, f"Expected created=true. Got: {payload}"
         assert (
-            "would_create" in payload
-        ), f"Expected 'would_create' in output. Got: {payload}"
-        assert (
-            len(payload["would_create"]) >= 1
-        ), f"Expected at least 1 skeleton to be created. Got: {payload}"
-
-        # Verify output path is in tmp directory
-        first_skeleton = payload["would_create"][0]
-        assert (
-            "tmp" in first_skeleton["test_file"]
-        ), f"Expected test file in tmp directory. Got: {first_skeleton['test_file']}"
+            payload.get("files_written", 0) >= 1
+        ), f"Expected at least 1 skeleton file written. Got: {payload}"
 
         # Verify actual file was created (dry_run should be False by default)
         # Check for the generated test file
@@ -260,7 +252,7 @@ def test_agent_implements_behaviour_to_satisfy_the_test(
     ):
         result = runner.invoke(
             cli,
-            ["status", "--implemented", "--format", "json"],
+            ["status", "--implemented", "--format", "json", "--verbose"],
         )
 
         assert result.exit_code == 0, (

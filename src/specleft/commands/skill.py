@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from typing import cast
 
 import click
 
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.utils.skill_integrity import (
     INTEGRITY_MODIFIED,
     INTEGRITY_OUTDATED,
@@ -44,15 +44,16 @@ def _print_integrity_table(payload: dict[str, object]) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def skill_verify(format_type: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def skill_verify(format_type: str | None, pretty: bool) -> None:
     """Verify SKILL.md integrity and freshness."""
+    selected_format = resolve_output_format(format_type)
     result = verify_skill_integrity().to_payload()
-    if format_type == "json":
-        click.echo(json.dumps(result, indent=2))
+    if selected_format == "json":
+        click.echo(json_dumps(result, pretty=pretty))
     else:
         _print_integrity_table(result)
 
@@ -86,15 +87,16 @@ def _print_sync_table(payload: dict[str, object]) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def skill_update(format_type: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def skill_update(format_type: str | None, pretty: bool) -> None:
     """Regenerate SKILL.md and checksum from the current SpecLeft version."""
+    selected_format = resolve_output_format(format_type)
     payload = sync_skill_files(overwrite_existing=True).to_payload()
-    if format_type == "json":
-        click.echo(json.dumps(payload, indent=2))
+    if selected_format == "json":
+        click.echo(json_dumps(payload, pretty=pretty))
     else:
         _print_sync_table(payload)
     sys.exit(0)

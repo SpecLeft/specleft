@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +17,7 @@ from specleft.commands.formatters import (
     format_execution_time_key,
     render_badge_svg,
 )
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.status import build_status_entries
 from specleft.commands.types import (
     CoverageMetrics,
@@ -150,6 +150,32 @@ def _build_coverage_json(entries: list[ScenarioStatusEntry]) -> dict[str, object
     }
 
 
+def _build_threshold_json(
+    metrics: CoverageMetrics, *, threshold: int
+) -> dict[str, object]:
+    overall = metrics.overall.percent
+    passed = overall is not None and overall >= threshold
+    payload: dict[str, object] = {
+        "passed": passed,
+        "overall": overall,
+        "threshold": threshold,
+    }
+    if passed:
+        return payload
+
+    below_threshold: list[dict[str, object]] = []
+    for feature_id, tally in metrics.by_feature.items():
+        feature_percent = format_coverage_percent(tally.implemented, tally.total)
+        if feature_percent is None or feature_percent < threshold:
+            below_threshold.append(
+                {"feature_id": feature_id, "coverage": feature_percent}
+            )
+    payload["below_threshold"] = sorted(
+        below_threshold, key=lambda item: str(item["feature_id"])
+    )
+    return payload
+
+
 def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
     metrics = _build_coverage_metrics(entries)
 
@@ -197,9 +223,8 @@ def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
     "--format",
     "format_type",
     type=click.Choice(["table", "json", "badge"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table', 'json', or 'badge'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
 @click.option(
     "--threshold",
@@ -214,15 +239,20 @@ def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
     default=None,
     help="Output file for badge format.",
 )
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def coverage(
     features_dir: str | None,
-    format_type: str,
+    format_type: str | None,
     threshold: int | None,
     output_path: str | None,
+    pretty: bool,
 ) -> None:
     """Show high-level coverage metrics."""
     from specleft.validator import load_specs_directory
 
+    selected_format = resolve_output_format(
+        format_type, choices=("table", "json", "badge")
+    )
     resolved_features_dir = resolve_specs_dir(features_dir)
     try:
         config = load_specs_directory(resolved_features_dir)
@@ -236,16 +266,19 @@ def coverage(
         sys.exit(1)
 
     # Gentle nudge for nested structures (table output only)
-    if format_type == "table":
+    if selected_format == "table":
         warn_if_nested_structure(resolved_features_dir)
 
     entries = build_status_entries(config, Path("tests"))
     metrics = _build_coverage_metrics(entries)
 
-    if format_type == "json":
-        payload = _build_coverage_json(entries)
-        click.echo(json.dumps(payload, indent=2))
-    elif format_type == "badge":
+    if selected_format == "json":
+        if threshold is not None:
+            payload = _build_threshold_json(metrics, threshold=threshold)
+        else:
+            payload = _build_coverage_json(entries)
+        click.echo(json_dumps(payload, pretty=pretty))
+    elif selected_format == "badge":
         if not output_path:
             click.secho("Badge format requires --output.", fg="red", err=True)
             print_support_footer()

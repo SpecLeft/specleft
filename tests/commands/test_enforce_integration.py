@@ -96,7 +96,8 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
 
             assert result.exit_code == 0
@@ -128,7 +129,8 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
 
             assert result.exit_code == 1
@@ -173,7 +175,8 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
 
             assert result.exit_code == 0
@@ -214,7 +217,8 @@ def test_login_success():
                 return_value=RepoIdentity(owner="test-owner", name="test-repo"),
             ):
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
 
             assert result.exit_code == 0
@@ -265,14 +269,21 @@ def test_login_success():
             ):
                 # Enforce policy should fail (expired evaluation)
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
                 assert result.exit_code == 2
                 assert "Evaluation" in result.output and "ended" in result.output
 
                 # Core policy should work
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy-core.yml"]
+                    cli,
+                    [
+                        "enforce",
+                        ".specleft/policies/policy-core.yml",
+                        "--format",
+                        "table",
+                    ],
                 )
                 assert result.exit_code == 0
                 assert "Core Policy (downgraded from Enforce)" in result.output
@@ -322,7 +333,8 @@ def test_login_success():
             ):
                 # Without ignore - should fail (legacy not implemented)
                 result = runner.invoke(
-                    cli, ["enforce", ".specleft/policies/policy.yml"]
+                    cli,
+                    ["enforce", ".specleft/policies/policy.yml", "--format", "table"],
                 )
                 assert result.exit_code == 1
 
@@ -334,6 +346,8 @@ def test_login_success():
                         ".specleft/policies/policy.yml",
                         "--ignore-feature-id",
                         "legacy",
+                        "--format",
+                        "table",
                     ],
                 )
                 assert result.exit_code == 0

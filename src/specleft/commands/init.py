@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 import textwrap
 from pathlib import Path
@@ -13,6 +12,7 @@ from typing import cast
 
 import click
 
+from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.utils.messaging import print_support_footer
 from specleft.utils.skill_integrity import (
     SKILL_FILE_PATH,
@@ -186,17 +186,20 @@ def _apply_init_plan(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
-    default="table",
-    show_default=True,
-    help="Output format: 'table' or 'json'.",
+    default=None,
+    help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
+@click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
+def init(
+    example: bool, blank: bool, dry_run: bool, format_type: str | None, pretty: bool
+) -> None:
     """Initialize SpecLeft project directories and example specs."""
+    selected_format = resolve_output_format(format_type)
     if example and blank:
         message = "Choose either --example or --blank, not both."
-        if format_type == "json":
+        if selected_format == "json":
             payload = {"status": "error", "message": message}
-            click.echo(json.dumps(payload, indent=2))
+            click.echo(json_dumps(payload, pretty=pretty))
         else:
             click.secho(message, fg="red", err=True)
             print_support_footer()
@@ -210,12 +213,12 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
 
     features_dir = Path(".specleft/specs")
     if features_dir.exists():
-        if format_type == "json":
+        if selected_format == "json":
             payload_cancelled = {
                 "status": "cancelled",
                 "message": "Initialization cancelled; existing features directory requires confirmation.",
             }
-            click.echo(json.dumps(payload_cancelled, indent=2))
+            click.echo(json_dumps(payload_cancelled, pretty=pretty))
             sys.exit(2)
         choice = _prompt_init_action(features_dir)
         if choice == "3":
@@ -229,20 +232,15 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
     if dry_run:
         would_create = [str(path) for path, _ in files]
         would_create.extend([str(SKILL_FILE_PATH), str(SKILL_HASH_PATH)])
-        if format_type == "json":
+        if selected_format == "json":
             payload_dry_run = {
-                "status": "ok",
                 "dry_run": True,
-                "example": example,
-                "would_create": would_create,
-                "would_create_directories": [str(path) for path in directories],
-                "summary": {
-                    "files": len(would_create),
-                    "directories": len(directories),
-                },
+                "files_planned": len(would_create),
+                "directories_planned": len(directories),
+                "files": would_create,
                 "skill_file_hash": skill_template_hash(),
             }
-            click.echo(json.dumps(payload_dry_run, indent=2))
+            click.echo(json_dumps(payload_dry_run, pretty=pretty))
             return
         click.echo(
             "Creating SpecLeft example project..."
@@ -255,22 +253,26 @@ def init(example: bool, blank: bool, dry_run: bool, format_type: str) -> None:
         _print_license_notice()
         return
 
-    if format_type == "json" and not dry_run:
-        payload_error = {
-            "status": "error",
-            "message": "JSON output requires --dry-run to avoid interactive prompts.",
-        }
-        click.echo(json.dumps(payload_error, indent=2))
-        sys.exit(1)
-
-    click.echo(
-        "Creating SpecLeft example project..."
-        if example
-        else "Creating SpecLeft directory structure..."
-    )
-    click.echo("")
+    if selected_format == "table":
+        click.echo(
+            "Creating SpecLeft example project..."
+            if example
+            else "Creating SpecLeft directory structure..."
+        )
+        click.echo("")
     created = _apply_init_plan(directories, files)
     skill_sync = sync_skill_files(overwrite_existing=False)
+
+    if selected_format == "json":
+        json_payload: dict[str, object] = {
+            "success": True,
+            "health": {"ok": True},
+            "skill_file": str(SKILL_FILE_PATH),
+            "skill_file_hash": skill_sync.skill_file_hash,
+        }
+        click.echo(json_dumps(json_payload, pretty=pretty))
+        return
+
     for created_path in created:
         if created_path.is_dir():
             click.echo(f"✓ Created {created_path}/")

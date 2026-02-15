@@ -31,7 +31,7 @@ class TestSkeletonCommand:
         """Test skeleton command when features directory is missing."""
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["test", "skeleton"])
+            result = runner.invoke(cli, ["test", "skeleton", "--format", "table"])
             assert result.exit_code == 1
             assert "not found" in result.output
 
@@ -50,6 +50,8 @@ class TestSkeletonCommand:
                 [
                     "test",
                     "skeleton",
+                    "--format",
+                    "table",
                     "--single-file",
                 ],
                 input="y\n",
@@ -84,7 +86,9 @@ class TestSkeletonCommand:
                 scenario_id="card-charge",
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -108,7 +112,9 @@ class TestSkeletonCommand:
                 scenario_id="legacy-charge",
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -131,6 +137,8 @@ class TestSkeletonCommand:
                 [
                     "test",
                     "skeleton",
+                    "--format",
+                    "table",
                     "--output-dir",
                     "custom_tests",
                 ],
@@ -155,7 +163,9 @@ class TestSkeletonCommand:
             )
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "-f", str(features_dir)], input="y\n"
+                cli,
+                ["test", "skeleton", "--format", "table", "-f", str(features_dir)],
+                input="y\n",
             )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
@@ -179,6 +189,8 @@ class TestSkeletonCommand:
                 [
                     "test",
                     "skeleton",
+                    "--format",
+                    "table",
                     "--single-file",
                 ],
                 input="y\n",
@@ -201,7 +213,15 @@ class TestSkeletonCommand:
             Path(".specleft/specs").mkdir(parents=True)
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "--features-dir", ".specleft/specs"]
+                cli,
+                [
+                    "test",
+                    "skeleton",
+                    "--format",
+                    "table",
+                    "--features-dir",
+                    ".specleft/specs",
+                ],
             )
             assert result.exit_code == 0
             assert "No specs found" in result.output
@@ -217,7 +237,15 @@ class TestSkeletonCommand:
             (feature_dir / "_feature.md").write_text("---\nfeature_id: INVALID\n---")
 
             result = runner.invoke(
-                cli, ["test", "skeleton", "--features-dir", ".specleft/specs"]
+                cli,
+                [
+                    "test",
+                    "skeleton",
+                    "--format",
+                    "table",
+                    "--features-dir",
+                    ".specleft/specs",
+                ],
             )
             assert result.exit_code == 1
             assert "Error loading" in result.output
@@ -237,7 +265,9 @@ class TestSkeletonCommand:
                 scenario_id="example",
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="n\n"
+            )
             assert result.exit_code == 2
             assert "Duplicate scenario name found" in result.output
             assert "Scenario IDs:" in result.output
@@ -273,7 +303,9 @@ class TestSkeletonCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="n\n"
+            )
             assert result.exit_code == 2
             assert "Confirm creation?" in result.output
             assert "Cancelled" in result.output
@@ -289,7 +321,9 @@ class TestSkeletonCommand:
                 scenario_id="login-success",
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="n\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="n\n"
+            )
             assert result.exit_code == 2
             assert "File: tests/test_auth.py" in result.output
             assert "Scenario IDs: login-success" in result.output
@@ -309,13 +343,17 @@ class TestSkeletonCommand:
                 scenario_id="login-success",
             )
 
-            first_run = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            first_run = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert first_run.exit_code == 0
             generated_file = Path("tests/test_auth.py")
             assert generated_file.exists()
             initial_content = generated_file.read_text()
 
-            second_run = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            second_run = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert second_run.exit_code == 0
             assert "No new skeleton tests to generate." in second_run.output
             assert generated_file.read_text() == initial_content
@@ -331,7 +369,9 @@ class TestSkeletonCommand:
             )
 
             # Generate skeleton test
-            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Confirm creation?" in result.output
             assert "✓ Created 1 test files" in result.output
@@ -378,7 +418,9 @@ class TestSkeletonCommand:
                 "- Then it should be stored\n"
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Created 1 test files" in result.output
 
@@ -409,7 +451,9 @@ class TestSkeletonCommand:
                 "- Then a push notification is sent\n"
             )
 
-            result = runner.invoke(cli, ["test", "skeleton"], input="y\n")
+            result = runner.invoke(
+                cli, ["test", "skeleton", "--format", "table"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Created 1 test files" in result.output
 
