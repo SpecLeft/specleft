@@ -42,8 +42,8 @@ def _build_empty_status_payload(*, initialised: bool, verbose: bool) -> dict[str
 def build_mcp_status_payload(
     *,
     verbose: bool = False,
-    features_dir: str | None = None,
-    tests_dir: Path | None = None,
+    features_dir: str | None = ".specleft/specs",
+    tests_dir: Path | None = Path("tests"),
 ) -> dict[str, Any]:
     """Build the status resource payload for MCP clients."""
     resolved_features_dir = resolve_specs_dir(features_dir)

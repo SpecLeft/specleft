@@ -59,7 +59,7 @@ def build_mcp_server() -> Any:
         FunctionResource(
             uri="specleft://guide",
             name="SpecLeft Workflow Guide",
-            description="Workflow and spec format guidance for agents using SpecLeft.",
+            description="Workflow and Skill guidance for agents using SpecLeft.",
             mime_type="application/json",
             fn=build_mcp_guide_payload,
         )
