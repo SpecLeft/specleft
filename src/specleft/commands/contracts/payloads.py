@@ -54,6 +54,12 @@ def build_contract_payload() -> dict[str, object]:
                 "skill_file_integrity_check": True,
                 "skill_file_commands_are_simple": True,
             },
+            "security": {
+                "cli_rejects_shell_metacharacters": True,
+                "init_refuses_symlinks": True,
+                "no_network_access": True,
+                "no_telemetry": True,
+            },
         },
         "docs": {
             "agent_contract": CONTRACT_DOC_PATH,

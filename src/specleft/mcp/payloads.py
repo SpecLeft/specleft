@@ -72,26 +72,7 @@ def build_mcp_status_payload(
 
 def build_mcp_contract_payload() -> dict[str, Any]:
     """Build the contract resource payload for MCP clients."""
-    payload = build_contract_payload()
-    raw_guarantees = payload.get("guarantees")
-    guarantees = dict(raw_guarantees) if isinstance(raw_guarantees, dict) else {}
-    raw_cli_api = guarantees.get("cli_api")
-    cli_api = dict(raw_cli_api) if isinstance(raw_cli_api, dict) else {}
-    raw_exit_codes = cli_api.get("exit_codes")
-    if isinstance(raw_exit_codes, dict):
-        exit_codes = dict(raw_exit_codes)
-    else:
-        exit_codes = {
-            "success": 0,
-            "error": 1,
-            "cancelled": 2,
-        }
-    guarantees["exit_codes"] = exit_codes
-
-    mcp_payload = dict(payload)
-    mcp_payload["guarantees"] = guarantees
-    mcp_payload.pop("docs", None)
-    return mcp_payload
+    return build_contract_payload()
 
 
 def build_mcp_guide_payload() -> dict[str, object]:
@@ -161,4 +142,7 @@ def build_mcp_guide_payload() -> dict[str, object]:
             ],
         },
         "skill_file": "Run specleft_init to generate .specleft/SKILL.md with full CLI reference",
+        "security_notes": [
+            "Avoid sensitive data in feature and scenario names.",
+        ],
     }

@@ -21,6 +21,7 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
     determinism = cast(dict[str, Any], guarantees.get("determinism", {}))
     cli_api = cast(dict[str, Any], guarantees.get("cli_api", {}))
     skill_security = cast(dict[str, Any], guarantees.get("skill_security", {}))
+    security = cast(dict[str, Any], guarantees.get("security", {}))
     click.echo("SpecLeft Agent Contract")
     click.echo("─" * 40)
     click.echo(f"Contract version: {payload.get('contract_version')}")
@@ -95,6 +96,28 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
         "  - Skill commands are simple invocations (no shell metacharacters)"
         if skill_security.get("skill_file_commands_are_simple")
         else "  - Skill command simplicity guarantee missing"
+    )
+    click.echo("")
+    click.echo("Security:")
+    click.echo(
+        "  - CLI rejects shell metacharacters"
+        if security.get("cli_rejects_shell_metacharacters")
+        else "  - CLI shell metacharacter rejection missing"
+    )
+    click.echo(
+        "  - Init refuses symlink paths"
+        if security.get("init_refuses_symlinks")
+        else "  - Init symlink safety guarantee missing"
+    )
+    click.echo(
+        "  - No network access"
+        if security.get("no_network_access")
+        else "  - Network isolation guarantee missing"
+    )
+    click.echo(
+        "  - No telemetry"
+        if security.get("no_telemetry")
+        else "  - Telemetry isolation guarantee missing"
     )
     click.echo("")
     click.echo(f"For full details, see: {CONTRACT_DOC_PATH}")

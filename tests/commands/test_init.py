@@ -51,6 +51,8 @@ class TestInitCommand:
             assert result.exit_code == 0
             payload = json.loads(result.output)
             assert payload["success"] is True
+            assert payload["skill_file_regenerated"] is True
+            assert payload["warnings"] == []
 
     def test_init_blank_creates_directories(self) -> None:
         runner = CliRunner()
@@ -106,9 +108,23 @@ class TestInitCommand:
             result = runner.invoke(cli, ["init", "--format", "table"])
             assert result.exit_code == 0
             assert (
-                "Warning: Skipped creation. Specleft SKILL.md exists already."
-                in result.output
+                "Existing SKILL.md has been modified from template "
+                "(checksum mismatch). Use --force to regenerate." in result.output
             )
             assert Path(".specleft/specs/example-feature.md").exists()
             assert Path(".specleft/SKILL.md").read_text() == "# existing\n"
+            assert not Path(".specleft/SKILL.md.sha256").exists()
+
+    def test_init_force_regenerates_modified_skill_file(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path(".specleft").mkdir(parents=True)
+            Path(".specleft/SKILL.md").write_text("# existing\n")
+
+            result = runner.invoke(cli, ["init", "--force", "--format", "json"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["success"] is True
+            assert payload["skill_file_regenerated"] is True
+            assert payload["warnings"] == []
             assert Path(".specleft/SKILL.md.sha256").exists()

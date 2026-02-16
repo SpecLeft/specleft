@@ -61,6 +61,12 @@ def test_print_contract_table_outputs_sections(
                 "skill_file_integrity_check": True,
                 "skill_file_commands_are_simple": True,
             },
+            "security": {
+                "cli_rejects_shell_metacharacters": True,
+                "init_refuses_symlinks": True,
+                "no_network_access": True,
+                "no_telemetry": True,
+            },
         },
     }
     print_contract_table(payload)
@@ -71,6 +77,7 @@ def test_print_contract_table_outputs_sections(
     assert "Determinism:" in output
     assert "JSON & CLI:" in output
     assert "Skill Security:" in output
+    assert "Security:" in output
 
 
 def test_print_contract_test_summary(capsys: pytest.CaptureFixture[str]) -> None:

@@ -104,7 +104,7 @@ def test_reject_invalid_feature_ids(
                 "Bad Id",
             ],
         )
-        assert result.exit_code == 1, result.output
+        assert result.exit_code == 2, result.output
 
     with specleft.step("And no history entry is recorded"):
         entries = load_feature_history("Bad Id")
@@ -113,7 +113,7 @@ def test_reject_invalid_feature_ids(
     with specleft.step(
         "Then the command exits with a validation error and no file is written"
     ):
-        assert "Feature ID must match" in result.output
+        assert "Must be kebab-case alphanumeric" in result.output
         assert not feature_file.exists()
 
 

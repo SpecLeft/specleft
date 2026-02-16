@@ -50,8 +50,27 @@ class TestFeaturesAddCommand:
                     ".specleft/specs",
                 ],
             )
-            assert result.exit_code == 1
-            assert "Feature ID must match" in result.output
+            assert result.exit_code == 2
+            assert "Must be kebab-case alphanumeric" in result.output
+
+    def test_add_rejects_shell_metacharacters_in_title(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                cli,
+                [
+                    "features",
+                    "add",
+                    "--id",
+                    "bad-title",
+                    "--title",
+                    "Bad;Title",
+                    "--dir",
+                    ".specleft/specs",
+                ],
+            )
+            assert result.exit_code == 2
+            assert "Contains disallowed characters" in result.output
 
     def test_add_dry_run(self) -> None:
         runner = CliRunner()
@@ -304,8 +323,8 @@ class TestFeaturesAddScenarioCommand:
                     ".specleft/specs",
                 ],
             )
-            assert result.exit_code == 1
-            assert "Scenario ID must match" in result.output
+            assert result.exit_code == 2
+            assert "Must be kebab-case alphanumeric" in result.output
 
     def test_add_scenario_add_test_stub_creates_file(self) -> None:
         runner = CliRunner()

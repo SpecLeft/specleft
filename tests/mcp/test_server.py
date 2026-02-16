@@ -61,6 +61,14 @@ async def test_contract_and_guide_resources_are_json(mcp_client: Any) -> None:
 
     assert contract_payload["contract_version"]
     assert "guarantees" in contract_payload
+    skill_security = contract_payload["guarantees"]["skill_security"]
+    assert skill_security["skill_file_integrity_check"] is True
+    assert skill_security["skill_file_commands_are_simple"] is True
+    security = contract_payload["guarantees"]["security"]
+    assert security["cli_rejects_shell_metacharacters"] is True
+    assert security["init_refuses_symlinks"] is True
+    assert security["no_network_access"] is True
+    assert security["no_telemetry"] is True
     assert guide_payload["workflow"]
     assert "skill_file" in guide_payload
 
