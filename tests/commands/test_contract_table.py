@@ -39,28 +39,24 @@ def test_print_contract_table_outputs_sections(
         "contract_version": "1.1",
         "specleft_version": "0.2.0",
         "guarantees": {
-            "safety": {
-                "no_implicit_writes": True,
-                "dry_run_never_writes": True,
-                "existing_tests_not_modified_by_default": True,
+            "dry_run_never_writes": True,
+            "no_writes_without_confirmation": True,
+            "existing_files_never_overwritten": True,
+            "skeletons_skipped_by_default": True,
+            "skipped_never_fail": True,
+            "deterministic_for_same_inputs": True,
+            "safe_for_retries": True,
+            "exit_codes": {
+                "success": 0,
+                "error": 1,
+                "cancelled": 2,
             },
-            "execution": {
-                "skeletons_skipped_by_default": True,
-                "skipped_never_fail": True,
-                "validation_non_destructive": True,
-            },
-            "determinism": {
-                "deterministic_for_same_inputs": True,
-                "safe_for_retries": True,
-            },
-            "cli_api": {
-                "json_supported_globally": True,
-                "json_additive_within_minor": True,
-            },
-            "skill_security": {
-                "skill_file_integrity_check": True,
-                "skill_file_commands_are_simple": True,
-            },
+            "skill_file_integrity_check": True,
+            "skill_file_commands_are_simple": True,
+            "cli_rejects_shell_metacharacters": True,
+            "init_refuses_symlinks": True,
+            "no_network_access": True,
+            "no_telemetry": True,
         },
     }
     print_contract_table(payload)

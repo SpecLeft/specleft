@@ -31,6 +31,7 @@ def get_skill_content() -> str:
             - Status: `specleft status` for progress snapshots
 
             ## Safety
+            - Always `--dry-run` before writing files
             - All `--id` values must be kebab-case alphanumeric (`a-z`, `0-9`, hyphens)
             - All text inputs reject shell metacharacters (`$`, `` ` ``, `|`, `;`, `&`, etc.)
             - Never pass unsanitised user input directly as CLI arguments

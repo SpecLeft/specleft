@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from specleft.commands.constants import CLI_VERSION, CONTRACT_DOC_PATH, CONTRACT_VERSION
+from specleft.commands.constants import CLI_VERSION, CONTRACT_VERSION
 from specleft.commands.contracts.types import ContractCheckResult
 
 
@@ -27,36 +27,24 @@ def build_contract_payload() -> dict[str, object]:
         "contract_version": CONTRACT_VERSION,
         "specleft_version": CLI_VERSION,
         "guarantees": {
-            "safety": {
-                "no_implicit_writes": True,
-                "dry_run_never_writes": True,
-                "existing_tests_not_modified_by_default": True,
+            "dry_run_never_writes": True,
+            "no_writes_without_confirmation": True,
+            "existing_files_never_overwritten": True,
+            "skeletons_skipped_by_default": True,
+            "skipped_never_fail": True,
+            "deterministic_for_same_inputs": True,
+            "safe_for_retries": True,
+            "exit_codes": {
+                "success": 0,
+                "error": 1,
+                "cancelled": 2,
             },
-            "execution": {
-                "skeletons_skipped_by_default": True,
-                "skipped_never_fail": True,
-                "validation_non_destructive": True,
-            },
-            "determinism": {
-                "deterministic_for_same_inputs": True,
-                "safe_for_retries": True,
-            },
-            "cli_api": {
-                "json_supported_globally": True,
-                "json_additive_within_minor": True,
-                "exit_codes": {
-                    "success": 0,
-                    "error": 1,
-                    "cancelled": 2,
-                },
-            },
-            "skill_security": {
-                "skill_file_integrity_check": True,
-                "skill_file_commands_are_simple": True,
-            },
-        },
-        "docs": {
-            "agent_contract": CONTRACT_DOC_PATH,
+            "skill_file_integrity_check": True,
+            "skill_file_commands_are_simple": True,
+            "cli_rejects_shell_metacharacters": True,
+            "init_refuses_symlinks": True,
+            "no_network_access": True,
+            "no_telemetry": True,
         },
     }
 

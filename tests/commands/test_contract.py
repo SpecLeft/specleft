@@ -20,9 +20,11 @@ class TestContractCommand:
         assert payload["contract_version"] == "1.1"
         assert payload["specleft_version"] == CLI_VERSION
         assert "guarantees" in payload
-        skill_security = payload["guarantees"]["skill_security"]
-        assert skill_security["skill_file_integrity_check"] is True
-        assert skill_security["skill_file_commands_are_simple"] is True
+        guarantees = payload["guarantees"]
+        assert guarantees["skill_file_integrity_check"] is True
+        assert guarantees["skill_file_commands_are_simple"] is True
+        assert guarantees["cli_rejects_shell_metacharacters"] is True
+        assert guarantees["init_refuses_symlinks"] is True
 
     def test_contract_test_json_output(self) -> None:
         runner = CliRunner()
