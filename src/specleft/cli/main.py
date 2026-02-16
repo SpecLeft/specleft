@@ -16,6 +16,7 @@ from specleft.commands import (
     guide,
     init,
     license_group,
+    mcp,
     next_command,
     plan,
     skill_group,
@@ -53,6 +54,7 @@ cli.add_command(enforce)
 cli.add_command(license_group)
 cli.add_command(skill_group)
 cli.add_command(guide)
+cli.add_command(mcp)
 
 
 __all__ = ["cli"]

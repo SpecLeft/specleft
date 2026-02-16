@@ -30,6 +30,21 @@ class TestStatusCommand:
             scenarios = payload["features"][0]["scenarios"]
             assert scenarios[0]["execution_time"] == "slow"
 
+    def test_status_summary_json_includes_initialised(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_feature_specs(
+                Path("."),
+                feature_id="auth",
+                story_id="login",
+                scenario_id="login-success",
+            )
+            result = runner.invoke(cli, ["status", "--format", "json"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            assert payload["initialised"] is True
+            assert payload["features"] == 1
+
     def test_status_groups_by_feature_file(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():

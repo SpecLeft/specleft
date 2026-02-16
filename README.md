@@ -159,6 +159,16 @@ No config files required.
 No test changes required.
 
 ---
+## MCP Server Setup
+
+SpecLeft includes an MCP server that connects directly to AI coding agents
+like Claude Code, Cursor, Codex, and OpenCode. Once connected, your agent can
+read specs, track coverage, and generate test scaffolding without leaving the
+conversation.
+
+See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for details.
+
+---
 ## SpecLeft Agent Contract
 
 SpecLeft is designed to be safely operated by autonomous agents.

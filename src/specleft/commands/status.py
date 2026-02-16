@@ -188,7 +188,7 @@ def build_status_json(
         "coverage_percent": summary.coverage_percent,
     }
     if not verbose:
-        return summary_payload
+        return {"initialised": True, **summary_payload}
 
     features: list[dict[str, Any]] = []
     by_priority: dict[str, dict[str, int]] = {}
