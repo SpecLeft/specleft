@@ -183,6 +183,11 @@ def _apply_init_plan(
 @click.option("--blank", is_flag=True, help="Create empty directory structure only.")
 @click.option("--dry-run", is_flag=True, help="Show what would be created.")
 @click.option(
+    "--force",
+    is_flag=True,
+    help="Regenerate SKILL.md even if it was modified.",
+)
+@click.option(
     "--format",
     "format_type",
     type=click.Choice(["table", "json"], case_sensitive=False),
@@ -191,7 +196,12 @@ def _apply_init_plan(
 )
 @click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def init(
-    example: bool, blank: bool, dry_run: bool, format_type: str | None, pretty: bool
+    example: bool,
+    blank: bool,
+    dry_run: bool,
+    force: bool,
+    format_type: str | None,
+    pretty: bool,
 ) -> None:
     """Initialize SpecLeft project directories and example specs."""
     selected_format = resolve_output_format(format_type)
@@ -261,7 +271,7 @@ def init(
         )
         click.echo("")
     created = _apply_init_plan(directories, files)
-    skill_sync = sync_skill_files(overwrite_existing=False)
+    skill_sync = sync_skill_files(overwrite_existing=force)
 
     if selected_format == "json":
         json_payload: dict[str, object] = {
@@ -269,6 +279,8 @@ def init(
             "health": {"ok": True},
             "skill_file": str(SKILL_FILE_PATH),
             "skill_file_hash": skill_sync.skill_file_hash,
+            "skill_file_regenerated": skill_sync.skill_file_regenerated,
+            "warnings": skill_sync.warnings,
         }
         click.echo(json_dumps(json_payload, pretty=pretty))
         return

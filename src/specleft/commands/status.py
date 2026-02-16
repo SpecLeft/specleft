@@ -14,6 +14,7 @@ from typing import Any
 import click
 
 from specleft.commands.formatters import get_priority_value
+from specleft.commands.input_validation import validate_id_parameter
 from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.types import ScenarioStatus, ScenarioStatusEntry, StatusSummary
 from specleft.schema import SpecsConfig
@@ -382,8 +383,18 @@ def _is_single_file_feature(feature: object) -> bool:
     default=None,
     help="Output format. Defaults to table in a terminal and json otherwise.",
 )
-@click.option("--feature", "feature_id", help="Filter by feature ID.")
-@click.option("--story", "story_id", help="Filter by story ID.")
+@click.option(
+    "--feature",
+    "feature_id",
+    callback=validate_id_parameter,
+    help="Filter by feature ID.",
+)
+@click.option(
+    "--story",
+    "story_id",
+    callback=validate_id_parameter,
+    help="Filter by story ID.",
+)
 @click.option(
     "--unimplemented", is_flag=True, help="Show only unimplemented scenarios."
 )

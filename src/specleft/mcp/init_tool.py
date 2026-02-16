@@ -121,6 +121,7 @@ def run_specleft_init(
                 "plugin_registered": False,
             },
             "created": [],
+            "skill_file_regenerated": False,
             "skill_file": str(SKILL_FILE_PATH),
             "next_steps": "Fix the input arguments and retry.",
         }
@@ -135,6 +136,7 @@ def run_specleft_init(
             "error": "Environment health checks failed.",
             "health": health,
             "created": [],
+            "skill_file_regenerated": False,
             "skill_file": str(SKILL_FILE_PATH),
             "next_steps": "Run `specleft doctor` and resolve reported issues.",
             "errors": doctor_output.get("errors", []),
@@ -151,6 +153,7 @@ def run_specleft_init(
             "error": str(exc),
             "health": health,
             "created": [],
+            "skill_file_regenerated": False,
             "skill_file": str(SKILL_FILE_PATH),
             "next_steps": "Review filesystem safety and retry initialisation.",
         }
@@ -164,6 +167,7 @@ def run_specleft_init(
             "dry_run": True,
             "health": health,
             "created": sorted(set(planned)),
+            "skill_file_regenerated": False,
             "skill_file": str(SKILL_FILE_PATH),
             "next_steps": "Run specleft_init without dry_run to write files.",
         }
@@ -176,6 +180,7 @@ def run_specleft_init(
         "success": True,
         "health": health,
         "created": created_paths,
+        "skill_file_regenerated": skill_sync.skill_file_regenerated,
         "skill_file": str(SKILL_FILE_PATH),
         "next_steps": "Read .specleft/SKILL.md for full CLI reference",
         "warnings": skill_sync.warnings,

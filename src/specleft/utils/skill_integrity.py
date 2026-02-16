@@ -102,6 +102,7 @@ class SkillSyncResult:
     skipped: list[str]
     warnings: list[str]
     skill_file_hash: str
+    skill_file_regenerated: bool
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -111,6 +112,7 @@ class SkillSyncResult:
             "skipped": self.skipped,
             "warnings": self.warnings,
             "skill_file_hash": self.skill_file_hash,
+            "skill_file_regenerated": self.skill_file_regenerated,
         }
 
 
@@ -153,39 +155,60 @@ def sync_skill_files(*, overwrite_existing: bool) -> SkillSyncResult:
     canonical_hash = _sha256_hex(canonical_content)
     skill_path = SKILL_FILE_PATH
     hash_path = SKILL_HASH_PATH
+    modified_warning = (
+        "Existing SKILL.md has been modified from template (checksum mismatch). "
+        "Use --force to regenerate."
+    )
+
+    skill_hash = canonical_hash
+    allow_hash_sync = True
+    skill_file_regenerated = False
 
     skill_exists = skill_path.exists()
     if not skill_exists:
         _write_file(skill_path, canonical_content)
         created.append(str(skill_path))
-        skill_hash = canonical_hash
+        skill_file_regenerated = True
     elif overwrite_existing:
         current_content = skill_path.read_text()
         if current_content != canonical_content:
             _write_file(skill_path, canonical_content)
             updated.append(str(skill_path))
+            skill_file_regenerated = True
         else:
             skipped.append(str(skill_path))
-        skill_hash = canonical_hash
     else:
-        skipped.append(str(skill_path))
-        warnings.append("Warning: Skipped creation. Specleft SKILL.md exists already.")
-        skill_hash = _sha256_hex(skill_path.read_text())
+        current_content = skill_path.read_text()
+        current_hash = _sha256_hex(current_content)
+        expected_hash = _read_hash(hash_path)
+        skill_hash = current_hash
+        if expected_hash is None or expected_hash != current_hash:
+            skipped.append(str(skill_path))
+            warnings.append(modified_warning)
+            allow_hash_sync = False
+        elif current_hash != canonical_hash:
+            _write_file(skill_path, canonical_content)
+            updated.append(str(skill_path))
+            skill_hash = canonical_hash
+            skill_file_regenerated = True
+        else:
+            skipped.append(str(skill_path))
 
     hash_exists = hash_path.exists()
     hash_content = f"{skill_hash}\n"
-    if not hash_exists:
+    if not allow_hash_sync:
+        if hash_exists:
+            skipped.append(str(hash_path))
+    elif not hash_exists:
         _write_file(hash_path, hash_content)
         created.append(str(hash_path))
-    elif overwrite_existing:
+    else:
         current_hash = hash_path.read_text()
         if current_hash != hash_content:
             _write_file(hash_path, hash_content)
             updated.append(str(hash_path))
         else:
             skipped.append(str(hash_path))
-    else:
-        skipped.append(str(hash_path))
 
     return SkillSyncResult(
         created=created,
@@ -193,6 +216,7 @@ def sync_skill_files(*, overwrite_existing: bool) -> SkillSyncResult:
         skipped=skipped,
         warnings=warnings,
         skill_file_hash=skill_hash,
+        skill_file_regenerated=skill_file_regenerated,
     )
 
 

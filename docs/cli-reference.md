@@ -119,6 +119,7 @@ Options:
   --example             Create example specs
   --blank               Create empty directory structure only
   --dry-run             Show what would be created
+  --force               Regenerate SKILL.md if it was modified
   --format [table|json] Output format (default: table)
 ```
 

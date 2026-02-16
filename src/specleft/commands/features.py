@@ -13,6 +13,10 @@ from typing import Any, cast
 
 import click
 
+from specleft.commands.input_validation import (
+    validate_id_parameter,
+    validate_text_parameter,
+)
 from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.test import generate_test_stub
 from specleft.schema import (
@@ -754,9 +758,15 @@ def features_stats(
 @click.option(
     "--id",
     "feature_id",
+    callback=validate_id_parameter,
     help="Feature ID (optional; defaults to a slug from the title).",
 )
-@click.option("--title", "title", help="Feature title (required).")
+@click.option(
+    "--title",
+    "title",
+    callback=validate_text_parameter,
+    help="Feature title (required).",
+)
 @click.option(
     "--priority",
     "priority",
@@ -765,7 +775,12 @@ def features_stats(
     show_default=True,
     help="Feature priority.",
 )
-@click.option("--description", "description", help="Feature description.")
+@click.option(
+    "--description",
+    "description",
+    callback=validate_text_parameter,
+    help="Feature description.",
+)
 @click.option(
     "--dir",
     "features_dir",
@@ -799,14 +814,13 @@ def features_add(
 
     if interactive:
         title_input = click.prompt("Feature title", type=str).strip()
-        title = title_input
         default_feature_id = generate_feature_id(title_input)
         feature_id_input = click.prompt(
             "Feature ID",
             default=default_feature_id,
             show_default=True,
         )
-        feature_id = feature_id_input.strip()
+        feature_id_value = feature_id_input.strip()
         priority = click.prompt(
             "Priority",
             type=click.Choice([p.value for p in Priority], case_sensitive=False),
@@ -814,7 +828,27 @@ def features_add(
             show_default=True,
         )
         description = click.prompt("Description", default="", show_default=False)
-        description = description.strip() if description else None
+        try:
+            title = validate_text_parameter(None, None, title_input)
+            feature_id = validate_id_parameter(None, None, feature_id_value)
+            description = validate_text_parameter(
+                None,
+                None,
+                description.strip() if description else None,
+            )
+        except click.BadParameter as exc:
+            payload = {
+                "success": False,
+                "action": "add",
+                "error": str(exc),
+            }
+            _print_feature_add_result(
+                result=payload,
+                format_type=selected_format,
+                dry_run=dry_run,
+                pretty=pretty,
+            )
+            sys.exit(1)
 
     if not title:
         click.secho(
@@ -836,6 +870,27 @@ def features_add(
         )
         print_support_footer()
         sys.exit(1)
+
+    try:
+        feature_id = validate_id_parameter(None, None, feature_id)
+        title = validate_text_parameter(None, None, title)
+        description = validate_text_parameter(None, None, description)
+    except click.BadParameter as exc:
+        payload = {
+            "success": False,
+            "action": "add",
+            "error": str(exc),
+        }
+        _print_feature_add_result(
+            result=payload,
+            format_type=selected_format,
+            dry_run=dry_run,
+            pretty=pretty,
+        )
+        sys.exit(1)
+
+    assert feature_id is not None
+    assert title is not None
 
     try:
         validate_feature_id(feature_id)
@@ -895,10 +950,21 @@ def features_add(
 @click.option(
     "--feature",
     "feature_id",
+    callback=validate_id_parameter,
     help="Feature ID to append scenario to.",
 )
-@click.option("--title", "title", help="Scenario title.")
-@click.option("--id", "scenario_id", help="Scenario ID (optional).")
+@click.option(
+    "--title",
+    "title",
+    callback=validate_text_parameter,
+    help="Scenario title.",
+)
+@click.option(
+    "--id",
+    "scenario_id",
+    callback=validate_id_parameter,
+    help="Scenario ID (optional).",
+)
 @click.option(
     "--step",
     "steps",
@@ -968,16 +1034,15 @@ def features_add_scenario(
     _ensure_interactive(interactive)
 
     if interactive:
-        feature_id = click.prompt("Feature ID", type=str).strip()
+        feature_input = click.prompt("Feature ID", type=str).strip()
         title_input = click.prompt("Scenario title", type=str).strip()
-        title = title_input
         default_scenario_id = generate_scenario_id(title_input)
         scenario_id_input = click.prompt(
             "Scenario ID",
             default=default_scenario_id,
             show_default=True,
         )
-        scenario_id = scenario_id_input.strip() or None
+        scenario_id_value = scenario_id_input.strip() or None
         priority = click.prompt(
             "Priority",
             type=click.Choice([p.value for p in Priority], case_sensitive=False),
@@ -994,6 +1059,26 @@ def features_add_scenario(
                 break
             steps_list.append(step)
         steps = tuple(steps_list)
+        try:
+            feature_id = validate_id_parameter(None, None, feature_input)
+            title = validate_text_parameter(None, None, title_input)
+            scenario_id = validate_id_parameter(None, None, scenario_id_value)
+        except click.BadParameter as exc:
+            payload = {
+                "success": False,
+                "action": "add_scenario",
+                "feature_id": feature_input,
+                "scenario_id": scenario_id_value,
+                "error": str(exc),
+            }
+            _print_scenario_add_result(
+                result=payload,
+                format_type=selected_format,
+                dry_run=dry_run,
+                warnings=[],
+                pretty=pretty,
+            )
+            sys.exit(1)
 
     if not feature_id or not title:
         click.secho(
@@ -1004,6 +1089,28 @@ def features_add_scenario(
         print_support_footer()
         sys.exit(1)
 
+    assert title is not None
+
+    try:
+        feature_id = validate_id_parameter(None, None, feature_id)
+        title = validate_text_parameter(None, None, title)
+    except click.BadParameter as exc:
+        payload = {
+            "success": False,
+            "action": "add_scenario",
+            "feature_id": feature_id,
+            "error": str(exc),
+        }
+        _print_scenario_add_result(
+            result=payload,
+            format_type=selected_format,
+            dry_run=dry_run,
+            warnings=[],
+            pretty=pretty,
+        )
+        sys.exit(1)
+
+    assert feature_id is not None
     assert title is not None
 
     try:
@@ -1027,6 +1134,27 @@ def features_add_scenario(
     steps_list = _parse_steps(steps)
     warnings = validate_step_keywords(steps_list) if steps_list else []
     scenario_id = scenario_id or generate_scenario_id(title)
+
+    try:
+        scenario_id = validate_id_parameter(None, None, scenario_id)
+    except click.BadParameter as exc:
+        payload = {
+            "success": False,
+            "action": "add_scenario",
+            "feature_id": feature_id,
+            "scenario_id": scenario_id,
+            "error": str(exc),
+        }
+        _print_scenario_add_result(
+            result=payload,
+            format_type=selected_format,
+            dry_run=dry_run,
+            warnings=warnings,
+            pretty=pretty,
+        )
+        sys.exit(1)
+
+    assert scenario_id is not None
 
     try:
         validate_scenario_id(scenario_id)

@@ -13,6 +13,7 @@ from typing import Any
 import click
 
 from specleft.commands.formatters import get_priority_value
+from specleft.commands.input_validation import validate_id_parameter
 from specleft.commands.output import (
     compact_mode_enabled,
     json_dumps,
@@ -144,8 +145,18 @@ def _build_next_json(
     type=click.Choice(["critical", "high", "medium", "low"], case_sensitive=False),
     help="Filter by priority.",
 )
-@click.option("--feature", "feature_id", help="Filter by feature ID.")
-@click.option("--story", "story_id", help="Filter by story ID.")
+@click.option(
+    "--feature",
+    "feature_id",
+    callback=validate_id_parameter,
+    help="Filter by feature ID.",
+)
+@click.option(
+    "--story",
+    "story_id",
+    callback=validate_id_parameter,
+    help="Filter by story ID.",
+)
 @click.option("--pretty", is_flag=True, help="Pretty-print JSON output.")
 def next_command(
     features_dir: str | None,

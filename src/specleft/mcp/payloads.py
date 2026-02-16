@@ -75,8 +75,19 @@ def build_mcp_contract_payload() -> dict[str, Any]:
     payload = build_contract_payload()
     raw_guarantees = payload.get("guarantees")
     guarantees = dict(raw_guarantees) if isinstance(raw_guarantees, dict) else {}
+    raw_safety = guarantees.get("safety")
+    safety = dict(raw_safety) if isinstance(raw_safety, dict) else {}
+    raw_execution = guarantees.get("execution")
+    execution = dict(raw_execution) if isinstance(raw_execution, dict) else {}
+    raw_determinism = guarantees.get("determinism")
+    determinism = dict(raw_determinism) if isinstance(raw_determinism, dict) else {}
     raw_cli_api = guarantees.get("cli_api")
     cli_api = dict(raw_cli_api) if isinstance(raw_cli_api, dict) else {}
+    raw_skill_security = guarantees.get("skill_security")
+    skill_security = (
+        dict(raw_skill_security) if isinstance(raw_skill_security, dict) else {}
+    )
+
     raw_exit_codes = cli_api.get("exit_codes")
     if isinstance(raw_exit_codes, dict):
         exit_codes = dict(raw_exit_codes)
@@ -86,12 +97,39 @@ def build_mcp_contract_payload() -> dict[str, Any]:
             "error": 1,
             "cancelled": 2,
         }
-    guarantees["exit_codes"] = exit_codes
 
-    mcp_payload = dict(payload)
-    mcp_payload["guarantees"] = guarantees
-    mcp_payload.pop("docs", None)
-    return mcp_payload
+    return {
+        "contract_version": payload.get("contract_version"),
+        "specleft_version": payload.get("specleft_version"),
+        "guarantees": {
+            "dry_run_never_writes": bool(safety.get("dry_run_never_writes", True)),
+            "no_writes_without_confirmation": bool(
+                safety.get("no_implicit_writes", True)
+            ),
+            "existing_files_never_overwritten": bool(
+                safety.get("existing_tests_not_modified_by_default", True)
+            ),
+            "skeletons_skipped_by_default": bool(
+                execution.get("skeletons_skipped_by_default", True)
+            ),
+            "skipped_never_fail": bool(execution.get("skipped_never_fail", True)),
+            "deterministic_for_same_inputs": bool(
+                determinism.get("deterministic_for_same_inputs", True)
+            ),
+            "safe_for_retries": bool(determinism.get("safe_for_retries", True)),
+            "exit_codes": exit_codes,
+            "skill_file_integrity_check": bool(
+                skill_security.get("skill_file_integrity_check", True)
+            ),
+            "skill_file_commands_are_simple": bool(
+                skill_security.get("skill_file_commands_are_simple", True)
+            ),
+            "cli_rejects_shell_metacharacters": True,
+            "init_refuses_symlinks": True,
+            "no_network_access": True,
+            "no_telemetry": True,
+        },
+    }
 
 
 def build_mcp_guide_payload() -> dict[str, object]:
@@ -161,4 +199,7 @@ def build_mcp_guide_payload() -> dict[str, object]:
             ],
         },
         "skill_file": "Run specleft_init to generate .specleft/SKILL.md with full CLI reference",
+        "security_notes": [
+            "Avoid sensitive data in feature and scenario names.",
+        ],
     }

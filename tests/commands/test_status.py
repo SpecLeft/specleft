@@ -88,6 +88,13 @@ class TestStatusCommand:
             assert result.exit_code == 1
             assert "Unknown feature ID" in result.output
 
+    def test_status_rejects_invalid_id_format(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["status", "--feature", "Bad ID"])
+            assert result.exit_code == 2
+            assert "Must be kebab-case alphanumeric" in result.output
+
     def test_status_treats_missing_test_file_as_skipped(self) -> None:
         runner = CliRunner()
         with runner.isolated_filesystem():

@@ -148,6 +148,17 @@ def test_login_success():
             assert result.exit_code == 1
             assert "--ignore-feature-id requires Enforce" in result.output
 
+    def test_enforce_rejects_invalid_ignore_feature_id(self) -> None:
+        """--ignore-feature-id validates IDs at Click parsing layer."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                cli,
+                ["enforce", "--ignore-feature-id", "Bad ID"],
+            )
+            assert result.exit_code == 2
+            assert "Must be kebab-case alphanumeric" in result.output
+
     def test_enforce_invalid_signature_exit_2(self) -> None:
         """Tampered file exits with code 2."""
         runner = CliRunner()

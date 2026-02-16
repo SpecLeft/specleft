@@ -120,3 +120,10 @@ def test_login_success():
             result = runner.invoke(cli, ["next"])
             assert result.exit_code == 0
             assert "All scenarios are implemented" in result.output
+
+    def test_next_rejects_invalid_id_format(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["next", "--feature", "Bad ID"])
+            assert result.exit_code == 2
+            assert "Must be kebab-case alphanumeric" in result.output

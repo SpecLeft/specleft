@@ -12,6 +12,7 @@ from typing import Any, cast
 
 import click
 import yaml
+from specleft.commands.input_validation import validate_id_parameter_multiple
 from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.specleft_signing.schema import PolicyType, SignedPolicy
 from specleft.specleft_signing.verify import VerifyFailure, VerifyResult, verify_policy
@@ -230,6 +231,7 @@ def _augment_violations_with_fix_commands(
     "--ignore-feature-id",
     "ignored",
     multiple=True,
+    callback=validate_id_parameter_multiple,
     help="Exclude feature from evaluation (Enforce only, repeatable).",
 )
 @click.option(
