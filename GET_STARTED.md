@@ -27,6 +27,96 @@ SpecLeft is passive by default — it won't modify anything until you ask.
 
 ---
 
+## MCP Server Setup
+
+SpecLeft includes an MCP server that connects directly to AI coding agents like
+Claude Code, Cursor, and Windsurf. Once connected, your agent can read specs,
+track coverage, and generate test scaffolding without leaving the conversation.
+
+### Prerequisites
+
+- Python 3.10+
+- SpecLeft installed (`pip install specleft[mcp]`)
+
+### Option 1: uvx (recommended)
+
+If you have [uv](https://docs.astral.sh/uv/getting-started/installation/)
+installed, this is the fastest path. No separate install step is required.
+
+**Claude Code** (`.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "specleft": {
+      "command": "uvx",
+      "args": ["specleft", "mcp"]
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "specleft": {
+      "command": "uvx",
+      "args": ["specleft", "mcp"]
+    }
+  }
+}
+```
+
+### Option 2: pip install
+
+If you do not have `uv`, install SpecLeft first and point your MCP client at
+the CLI directly:
+
+```bash
+pip install specleft[mcp]
+```
+
+**Claude Code** (`.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "specleft": {
+      "command": "specleft",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "specleft": {
+      "command": "specleft",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Verify the connection
+
+After configuration, restart your editor. You should see SpecLeft listed as a
+connected MCP server with 3 resources and 1 tool. If the connection fails, run:
+
+```bash
+specleft doctor
+```
+
+This checks Python version, dependencies, and plugin registration.
+
+---
+
 ## 1. Write a PRD
 
 Create a `prd.md` file in your repository root:

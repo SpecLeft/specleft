@@ -64,10 +64,14 @@ Documentation = "https://github.com/SpecLeft/specleft/tree/main/docs"
 Repository = "https://github.com/SpecLeft/specleft"
 
 [project.optional-dependencies]
+mcp = [
+    "fastmcp<3",
+]
 dev = [
     "pytest-cov",
     "pytest-subtests",
     "pytest-asyncio",
+    "tiktoken",
     "black==26.1.0",
     "ruff==0.8.3",
     "mypy",

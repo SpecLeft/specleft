@@ -13,6 +13,7 @@ from specleft.commands.features import features
 from specleft.commands.guide import guide
 from specleft.commands.init import init
 from specleft.commands.license import license_group
+from specleft.commands.mcp import mcp
 from specleft.commands.next import next_command
 from specleft.commands.plan import plan
 from specleft.commands.skill import skill_group
@@ -28,6 +29,7 @@ __all__ = [
     "guide",
     "init",
     "license_group",
+    "mcp",
     "next_command",
     "plan",
     "skill_group",
