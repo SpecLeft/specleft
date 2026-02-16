@@ -60,13 +60,12 @@ async def test_contract_and_guide_resources_are_json(mcp_client: Any) -> None:
     guide_payload = _resource_json(guide_result)
 
     assert contract_payload["contract_version"]
-    assert "guarantees" in contract_payload
-    guarantees = contract_payload["guarantees"]
-    assert guarantees["cli_rejects_shell_metacharacters"] is True
-    assert guarantees["init_refuses_symlinks"] is True
-    assert guarantees["skill_file_integrity_check"] is True
-    assert guarantees["no_network_access"] is True
-    assert guarantees["no_telemetry"] is True
+    assert "guarantees" not in contract_payload
+    assert contract_payload["cli_rejects_shell_metacharacters"] is True
+    assert contract_payload["init_refuses_symlinks"] is True
+    assert contract_payload["skill_file_integrity_check"] is True
+    assert contract_payload["no_network_access"] is True
+    assert contract_payload["no_telemetry"] is True
     assert guide_payload["workflow"]
     assert "skill_file" in guide_payload
 
@@ -97,7 +96,7 @@ async def test_agent_discovery_flow_uses_resources_and_init_tool(
             status_payload = _resource_json(status_result)
 
     with specleft.step("Then status reports initialised=false before setup"):
-        assert "guarantees" in contract_payload
+        assert contract_payload["dry_run_never_writes"] is True
         assert "workflow" in guide_payload
         assert status_payload["initialised"] is False
 

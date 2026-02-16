@@ -77,12 +77,9 @@ def test_expose_agent_contract_as_structured_json(
             payload, dict
         ), f"Expected JSON object, got {type(payload).__name__}"
 
-        # Verify contract clauses (guarantees) are present
         assert (
-            "guarantees" in payload
-        ), f"Expected 'guarantees' in contract. Got keys: {list(payload.keys())}"
-
-        guarantees = payload["guarantees"]
+            "guarantees" not in payload
+        ), f"Contract payload should not include 'guarantees'. Got keys: {list(payload.keys())}"
 
         expected_boolean_keys = {
             "dry_run_never_writes",
@@ -101,19 +98,19 @@ def test_expose_agent_contract_as_structured_json(
         }
         for key in expected_boolean_keys:
             assert (
-                key in guarantees
-            ), f"Expected '{key}' in guarantees. Got: {list(guarantees.keys())}"
-            assert isinstance(guarantees[key], bool), (
-                f"Expected guarantees.{key} to be bool, got "
-                f"{type(guarantees[key]).__name__}"
+                key in payload
+            ), f"Expected '{key}' in payload. Got: {list(payload.keys())}"
+            assert isinstance(payload[key], bool), (
+                f"Expected payload.{key} to be bool, got "
+                f"{type(payload[key]).__name__}"
             )
 
         assert (
-            "exit_codes" in guarantees
-        ), f"Expected 'exit_codes' in guarantees. Got: {list(guarantees.keys())}"
-        assert isinstance(guarantees["exit_codes"], dict), (
-            f"Expected guarantees.exit_codes to be dict, got "
-            f"{type(guarantees['exit_codes']).__name__}"
+            "exit_codes" in payload
+        ), f"Expected 'exit_codes' in payload. Got: {list(payload.keys())}"
+        assert isinstance(payload["exit_codes"], dict), (
+            f"Expected payload.exit_codes to be dict, got "
+            f"{type(payload['exit_codes']).__name__}"
         )
 
     with specleft.step("And the JSON schema is stable and machine-friendly"):
@@ -127,7 +124,9 @@ def test_expose_agent_contract_as_structured_json(
 
         # Verify all guarantee values are booleans except exit_codes dict
         # (machine-friendly means predictable types)
-        for key, value in guarantees.items():
+        for key, value in payload.items():
+            if key in {"contract_version", "specleft_version"}:
+                continue
             if key == "exit_codes":
                 assert isinstance(
                     value, dict
@@ -135,7 +134,7 @@ def test_expose_agent_contract_as_structured_json(
             else:
                 assert isinstance(
                     value, bool
-                ), f"Expected guarantees.{key} to be bool, got {type(value).__name__}"
+                ), f"Expected payload.{key} to be bool, got {type(value).__name__}"
 
 
 @specleft(

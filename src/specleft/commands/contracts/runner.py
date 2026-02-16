@@ -254,7 +254,8 @@ def _run_contract_tests_impl(
                 schema_pass = isinstance(contract_payload, dict) and bool(
                     contract_payload.get("contract_version")
                     and contract_payload.get("specleft_version")
-                    and contract_payload.get("guarantees")
+                    and contract_payload.get("dry_run_never_writes") is not None
+                    and contract_payload.get("exit_codes")
                 )
             _record_check(
                 ContractCheckResult(

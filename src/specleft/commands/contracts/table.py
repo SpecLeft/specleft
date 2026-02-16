@@ -15,8 +15,7 @@ from specleft.commands.contracts.types import ContractCheckResult
 
 
 def print_contract_table(payload: Mapping[str, object]) -> None:
-    guarantees = cast(dict[str, Any], payload.get("guarantees", {}))
-    exit_codes = cast(dict[str, Any], guarantees.get("exit_codes", {}))
+    exit_codes = cast(dict[str, Any], payload.get("exit_codes", {}))
     click.echo("SpecLeft Agent Contract")
     click.echo("─" * 40)
     click.echo(f"Contract version: {payload.get('contract_version')}")
@@ -25,46 +24,46 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
     click.echo("Safety:")
     click.echo(
         "  - No writes without confirmation or --force"
-        if guarantees.get("no_writes_without_confirmation")
+        if payload.get("no_writes_without_confirmation")
         else "  - No implicit writes guarantee missing"
     )
     click.echo(
         "  - --dry-run never writes to disk"
-        if guarantees.get("dry_run_never_writes")
+        if payload.get("dry_run_never_writes")
         else "  - --dry-run guarantee missing"
     )
     click.echo(
         "  - Existing tests not modified by default"
-        if guarantees.get("existing_files_never_overwritten")
+        if payload.get("existing_files_never_overwritten")
         else "  - Existing test protection missing"
     )
     click.echo("")
     click.echo("Execution:")
     click.echo(
         "  - Skeleton tests skipped by default"
-        if guarantees.get("skeletons_skipped_by_default")
+        if payload.get("skeletons_skipped_by_default")
         else "  - Skeleton skip guarantee missing"
     )
     click.echo(
         "  - Skipped scenarios never fail tests"
-        if guarantees.get("skipped_never_fail")
+        if payload.get("skipped_never_fail")
         else "  - Skip behavior guarantee missing"
     )
     click.echo(
         "  - Init refuses symlink targets"
-        if guarantees.get("init_refuses_symlinks")
+        if payload.get("init_refuses_symlinks")
         else "  - Init path safety guarantee missing"
     )
     click.echo("")
     click.echo("Determinism:")
     click.echo(
         "  - Commands deterministic for same inputs"
-        if guarantees.get("deterministic_for_same_inputs")
+        if payload.get("deterministic_for_same_inputs")
         else "  - Determinism guarantee missing"
     )
     click.echo(
         "  - Safe to re-run in retry loops"
-        if guarantees.get("safe_for_retries")
+        if payload.get("safe_for_retries")
         else "  - Retry safety guarantee missing"
     )
     click.echo("")
@@ -77,24 +76,24 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
     )
     click.echo(
         "  - CLI rejects shell metacharacters in arguments"
-        if guarantees.get("cli_rejects_shell_metacharacters")
+        if payload.get("cli_rejects_shell_metacharacters")
         else "  - CLI input hardening guarantee missing"
     )
     click.echo("")
     click.echo("Skill Security:")
     click.echo(
         "  - Skill file integrity is verifiable"
-        if guarantees.get("skill_file_integrity_check")
+        if payload.get("skill_file_integrity_check")
         else "  - Skill integrity guarantee missing"
     )
     click.echo(
         "  - Skill commands are simple invocations (no shell metacharacters)"
-        if guarantees.get("skill_file_commands_are_simple")
+        if payload.get("skill_file_commands_are_simple")
         else "  - Skill command simplicity guarantee missing"
     )
     click.echo(
         "  - No network access and no telemetry"
-        if guarantees.get("no_network_access") and guarantees.get("no_telemetry")
+        if payload.get("no_network_access") and payload.get("no_telemetry")
         else "  - Network/telemetry isolation guarantee missing"
     )
     click.echo("")
