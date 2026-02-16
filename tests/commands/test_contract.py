@@ -23,6 +23,11 @@ class TestContractCommand:
         skill_security = payload["guarantees"]["skill_security"]
         assert skill_security["skill_file_integrity_check"] is True
         assert skill_security["skill_file_commands_are_simple"] is True
+        security = payload["guarantees"]["security"]
+        assert security["cli_rejects_shell_metacharacters"] is True
+        assert security["init_refuses_symlinks"] is True
+        assert security["no_network_access"] is True
+        assert security["no_telemetry"] is True
 
     def test_contract_test_json_output(self) -> None:
         runner = CliRunner()

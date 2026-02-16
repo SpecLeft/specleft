@@ -126,6 +126,24 @@ def test_expose_agent_contract_as_structured_json(
             "exit_codes" in cli_api
         ), f"Expected 'exit_codes' in cli_api. Got: {list(cli_api.keys())}"
 
+        # Verify security guarantees
+        assert (
+            "security" in guarantees
+        ), f"Expected 'security' in guarantees. Got: {list(guarantees.keys())}"
+        security = guarantees["security"]
+        assert (
+            "cli_rejects_shell_metacharacters" in security
+        ), f"Expected 'cli_rejects_shell_metacharacters'. Got: {list(security.keys())}"
+        assert (
+            "init_refuses_symlinks" in security
+        ), f"Expected 'init_refuses_symlinks'. Got: {list(security.keys())}"
+        assert (
+            "no_network_access" in security
+        ), f"Expected 'no_network_access'. Got: {list(security.keys())}"
+        assert (
+            "no_telemetry" in security
+        ), f"Expected 'no_telemetry'. Got: {list(security.keys())}"
+
     with specleft.step("And the JSON schema is stable and machine-friendly"):
         # Verify version information for schema stability
         assert (
