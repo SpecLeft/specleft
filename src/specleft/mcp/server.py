@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import importlib
 from typing import Any
 
 from specleft.commands.constants import CLI_VERSION
@@ -16,15 +17,17 @@ from specleft.mcp.payloads import (
 )
 
 
-def _require_fastmcp() -> tuple[type[Any], type[Any]]:
+def _require_fastmcp() -> tuple[Any, Any]:
     try:
-        from fastmcp import FastMCP
-        from fastmcp.resources import FunctionResource
+        fastmcp_module = importlib.import_module("fastmcp")
+        resources_module = importlib.import_module("fastmcp.resources")
     except ModuleNotFoundError as exc:  # pragma: no cover - exercised in CLI error path
         raise RuntimeError(
             "FastMCP is not installed. Install with `pip install specleft[mcp]`."
         ) from exc
 
+    FastMCP = fastmcp_module.FastMCP
+    FunctionResource = resources_module.FunctionResource
     return FastMCP, FunctionResource
 
 
@@ -72,18 +75,20 @@ def build_mcp_server() -> Any:
         )
     )
 
-    @mcp.tool(  # type: ignore[misc]
-        name="specleft_init",
-        description=(
-            "Initialise a SpecLeft project, run health checks, and generate .specleft/SKILL.md."
-        ),
-    )
     def specleft_init(
         example: bool = False,
         blank: bool = False,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         return run_specleft_init(example=example, blank=blank, dry_run=dry_run)
+
+    mcp.tool(
+        specleft_init,
+        name="specleft_init",
+        description=(
+            "Initialise a SpecLeft project, run health checks, and generate .specleft/SKILL.md."
+        ),
+    )
 
     return mcp
 
