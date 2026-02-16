@@ -8,84 +8,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from specleft.commands.coverage import _build_coverage_json
 from specleft.commands.contracts.payloads import build_contract_payload
-from specleft.commands.formatters import get_priority_value
-from specleft.commands.status import build_status_entries
+from specleft.commands.features import _build_features_list_json
+from specleft.commands.status import build_status_entries, build_status_json
 from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.validator import load_specs_directory
-
-_PRIORITY_ORDER = ("critical", "high", "medium", "low")
-
-
-def _percent(implemented: int, total: int) -> float:
-    if total <= 0:
-        return 0.0
-    return round((implemented / total) * 100, 1)
-
-
-def _build_summary_payload(entries: list[Any]) -> dict[str, int | float]:
-    total_scenarios = len(entries)
-    implemented = sum(1 for entry in entries if entry.status == "implemented")
-    skipped = total_scenarios - implemented
-    total_features = len({entry.feature.feature_id for entry in entries})
-    return {
-        "features": total_features,
-        "scenarios": total_scenarios,
-        "implemented": implemented,
-        "skipped": skipped,
-        "coverage_percent": _percent(implemented, total_scenarios),
-    }
-
-
-def _build_priority_payload(entries: list[Any]) -> dict[str, dict[str, int | float]]:
-    grouped: dict[str, dict[str, int]] = {}
-    for entry in entries:
-        priority = get_priority_value(entry.scenario)
-        summary = grouped.setdefault(priority, {"total": 0, "implemented": 0})
-        summary["total"] += 1
-        if entry.status == "implemented":
-            summary["implemented"] += 1
-
-    ordered: list[str] = [
-        *[item for item in _PRIORITY_ORDER if item in grouped],
-        *sorted(priority for priority in grouped if priority not in _PRIORITY_ORDER),
-    ]
-
-    return {
-        priority: {
-            "total": grouped[priority]["total"],
-            "implemented": grouped[priority]["implemented"],
-            "percent": _percent(
-                grouped[priority]["implemented"],
-                grouped[priority]["total"],
-            ),
-        }
-        for priority in ordered
-    }
-
-
-def _build_feature_payload(entries: list[Any]) -> list[dict[str, int | float | str]]:
-    grouped: dict[str, dict[str, int]] = {}
-    for entry in entries:
-        feature_id = entry.feature.feature_id
-        summary = grouped.setdefault(feature_id, {"total": 0, "implemented": 0})
-        summary["total"] += 1
-        if entry.status == "implemented":
-            summary["implemented"] += 1
-
-    payload: list[dict[str, int | float | str]] = []
-    for feature_id in sorted(grouped):
-        total = grouped[feature_id]["total"]
-        implemented = grouped[feature_id]["implemented"]
-        payload.append(
-            {
-                "feature_id": feature_id,
-                "scenarios": total,
-                "implemented": implemented,
-                "coverage_percent": _percent(implemented, total),
-            }
-        )
-    return payload
 
 
 def _build_empty_status_payload(*, initialised: bool, verbose: bool) -> dict[str, Any]:
@@ -134,16 +62,76 @@ def build_mcp_status_payload(
         return _build_empty_status_payload(initialised=False, verbose=verbose)
 
     entries = build_status_entries(config, tests_dir or Path("tests"))
-    summary = _build_summary_payload(entries)
+    status_summary = build_status_json(
+        entries,
+        include_execution_time=False,
+        verbose=verbose,
+    )
+    coverage_root = _build_coverage_json(entries)
+    raw_coverage = coverage_root.get("coverage")
+    coverage_payload: dict[str, Any] = (
+        raw_coverage if isinstance(raw_coverage, dict) else {}
+    )
+    features_payload = _build_features_list_json(config)
 
     if not verbose:
-        return {"initialised": True, **summary}
+        summary = dict(status_summary) if isinstance(status_summary, dict) else {}
+        features_summary = features_payload.get("summary", {})
+        coverage_overall = coverage_payload.get("overall", {})
+        summary["features"] = (
+            features_summary.get("features", summary.get("features", 0))
+            if isinstance(features_summary, dict)
+            else summary.get("features", 0)
+        )
+        if isinstance(coverage_overall, dict):
+            summary["coverage_percent"] = coverage_overall.get(
+                "percent",
+                summary.get("coverage_percent", 0.0),
+            )
+        return summary
 
+    summary_section = {}
+    if isinstance(status_summary, dict):
+        raw_summary = status_summary.get("summary", {})
+        if isinstance(raw_summary, dict):
+            summary_section = dict(raw_summary)
+    features_summary = features_payload.get("summary", {})
+    if isinstance(features_summary, dict):
+        summary_section["features"] = features_summary.get(
+            "features",
+            summary_section.get("features", 0),
+        )
+    coverage_overall = coverage_payload.get("overall", {})
+    if isinstance(coverage_overall, dict):
+        summary_section["coverage_percent"] = coverage_overall.get(
+            "percent",
+            summary_section.get("coverage_percent", 0.0),
+        )
+
+    by_priority: dict[str, Any] = {}
+    raw_by_priority = coverage_payload.get("by_priority", {})
+    if isinstance(raw_by_priority, dict):
+        by_priority = raw_by_priority
+
+    features: list[dict[str, Any]] = []
+    raw_by_feature = coverage_payload.get("by_feature", [])
+    if isinstance(raw_by_feature, list):
+        for item in raw_by_feature:
+            if not isinstance(item, dict):
+                continue
+            features.append(
+                {
+                    "feature_id": item.get("feature_id"),
+                    "scenarios": item.get("total", 0),
+                    "implemented": item.get("implemented", 0),
+                    "coverage_percent": item.get("percent", 0.0),
+                }
+            )
     return {
         "initialised": True,
-        "summary": summary,
-        "by_priority": _build_priority_payload(entries),
-        "features": _build_feature_payload(entries),
+        "summary": summary_section,
+        "by_priority": by_priority,
+        "features": features,
     }
 
 
