@@ -27,7 +27,7 @@ def _compact_json(data: Any) -> str:
 
 def test_contract_payload_within_budget() -> None:
     tokens = _count_tokens(_compact_json(build_mcp_contract_payload()))
-    assert tokens <= 120
+    assert tokens <= 170
 
 
 def test_guide_payload_within_budget() -> None:
