@@ -77,41 +77,54 @@ def test_expose_agent_contract_as_structured_json(
             payload, dict
         ), f"Expected JSON object, got {type(payload).__name__}"
 
+        # Verify contract clauses (guarantees) are present
         assert (
-            "guarantees" not in payload
-        ), f"Contract payload should not include 'guarantees'. Got keys: {list(payload.keys())}"
+            "guarantees" in payload
+        ), f"Expected 'guarantees' in contract. Got keys: {list(payload.keys())}"
 
-        expected_boolean_keys = {
-            "dry_run_never_writes",
-            "no_writes_without_confirmation",
-            "existing_files_never_overwritten",
-            "skeletons_skipped_by_default",
-            "skipped_never_fail",
-            "deterministic_for_same_inputs",
-            "safe_for_retries",
-            "skill_file_integrity_check",
-            "skill_file_commands_are_simple",
-            "cli_rejects_shell_metacharacters",
-            "init_refuses_symlinks",
-            "no_network_access",
-            "no_telemetry",
-        }
-        for key in expected_boolean_keys:
-            assert (
-                key in payload
-            ), f"Expected '{key}' in payload. Got: {list(payload.keys())}"
-            assert isinstance(payload[key], bool), (
-                f"Expected payload.{key} to be bool, got "
-                f"{type(payload[key]).__name__}"
-            )
+        guarantees = payload["guarantees"]
 
+        # Verify safety guarantees
         assert (
-            "exit_codes" in payload
-        ), f"Expected 'exit_codes' in payload. Got: {list(payload.keys())}"
-        assert isinstance(payload["exit_codes"], dict), (
-            f"Expected payload.exit_codes to be dict, got "
-            f"{type(payload['exit_codes']).__name__}"
-        )
+            "safety" in guarantees
+        ), f"Expected 'safety' in guarantees. Got: {list(guarantees.keys())}"
+        safety = guarantees["safety"]
+        assert (
+            "no_implicit_writes" in safety
+        ), f"Expected 'no_implicit_writes' in safety. Got: {list(safety.keys())}"
+        assert (
+            "dry_run_never_writes" in safety
+        ), f"Expected 'dry_run_never_writes' in safety. Got: {list(safety.keys())}"
+
+        # Verify execution guarantees
+        assert (
+            "execution" in guarantees
+        ), f"Expected 'execution' in guarantees. Got: {list(guarantees.keys())}"
+        execution = guarantees["execution"]
+        assert (
+            "skeletons_skipped_by_default" in execution
+        ), f"Expected 'skeletons_skipped_by_default'. Got: {list(execution.keys())}"
+
+        # Verify determinism guarantees
+        assert (
+            "determinism" in guarantees
+        ), f"Expected 'determinism' in guarantees. Got: {list(guarantees.keys())}"
+        determinism = guarantees["determinism"]
+        assert (
+            "deterministic_for_same_inputs" in determinism
+        ), f"Expected 'deterministic_for_same_inputs'. Got: {list(determinism.keys())}"
+
+        # Verify CLI API guarantees
+        assert (
+            "cli_api" in guarantees
+        ), f"Expected 'cli_api' in guarantees. Got: {list(guarantees.keys())}"
+        cli_api = guarantees["cli_api"]
+        assert (
+            "json_supported_globally" in cli_api
+        ), f"Expected 'json_supported_globally'. Got: {list(cli_api.keys())}"
+        assert (
+            "exit_codes" in cli_api
+        ), f"Expected 'exit_codes' in cli_api. Got: {list(cli_api.keys())}"
 
     with specleft.step("And the JSON schema is stable and machine-friendly"):
         # Verify version information for schema stability
@@ -122,19 +135,23 @@ def test_expose_agent_contract_as_structured_json(
             "specleft_version" in payload
         ), f"Expected 'specleft_version'. Got: {list(payload.keys())}"
 
-        # Verify all guarantee values are booleans except exit_codes dict
+        # Verify all guarantee values are booleans or well-defined structures
         # (machine-friendly means predictable types)
-        for key, value in payload.items():
-            if key in {"contract_version", "specleft_version"}:
-                continue
-            if key == "exit_codes":
-                assert isinstance(
-                    value, dict
-                ), f"Expected exit_codes to be dict, got {type(value).__name__}"
-            else:
-                assert isinstance(
-                    value, bool
-                ), f"Expected payload.{key} to be bool, got {type(value).__name__}"
+        for category, clauses in guarantees.items():
+            assert isinstance(
+                clauses, dict
+            ), f"Expected {category} to be dict, got {type(clauses).__name__}"
+            for key, value in clauses.items():
+                if key == "exit_codes":
+                    # exit_codes is a nested dict of int values
+                    assert isinstance(
+                        value, dict
+                    ), f"Expected exit_codes to be dict, got {type(value).__name__}"
+                else:
+                    # Other values should be booleans
+                    assert isinstance(
+                        value, bool
+                    ), f"Expected {category}.{key} to be bool, got {type(value).__name__}"
 
 
 @specleft(

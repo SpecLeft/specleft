@@ -15,7 +15,12 @@ from specleft.commands.contracts.types import ContractCheckResult
 
 
 def print_contract_table(payload: Mapping[str, object]) -> None:
-    exit_codes = cast(dict[str, Any], payload.get("exit_codes", {}))
+    guarantees = cast(dict[str, Any], payload.get("guarantees", {}))
+    safety = cast(dict[str, Any], guarantees.get("safety", {}))
+    execution = cast(dict[str, Any], guarantees.get("execution", {}))
+    determinism = cast(dict[str, Any], guarantees.get("determinism", {}))
+    cli_api = cast(dict[str, Any], guarantees.get("cli_api", {}))
+    skill_security = cast(dict[str, Any], guarantees.get("skill_security", {}))
     click.echo("SpecLeft Agent Contract")
     click.echo("─" * 40)
     click.echo(f"Contract version: {payload.get('contract_version')}")
@@ -24,77 +29,72 @@ def print_contract_table(payload: Mapping[str, object]) -> None:
     click.echo("Safety:")
     click.echo(
         "  - No writes without confirmation or --force"
-        if payload.get("no_writes_without_confirmation")
+        if safety.get("no_implicit_writes")
         else "  - No implicit writes guarantee missing"
     )
     click.echo(
         "  - --dry-run never writes to disk"
-        if payload.get("dry_run_never_writes")
+        if safety.get("dry_run_never_writes")
         else "  - --dry-run guarantee missing"
     )
     click.echo(
         "  - Existing tests not modified by default"
-        if payload.get("existing_files_never_overwritten")
+        if safety.get("existing_tests_not_modified_by_default")
         else "  - Existing test protection missing"
     )
     click.echo("")
     click.echo("Execution:")
     click.echo(
         "  - Skeleton tests skipped by default"
-        if payload.get("skeletons_skipped_by_default")
+        if execution.get("skeletons_skipped_by_default")
         else "  - Skeleton skip guarantee missing"
     )
     click.echo(
         "  - Skipped scenarios never fail tests"
-        if payload.get("skipped_never_fail")
+        if execution.get("skipped_never_fail")
         else "  - Skip behavior guarantee missing"
     )
     click.echo(
-        "  - Init refuses symlink targets"
-        if payload.get("init_refuses_symlinks")
-        else "  - Init path safety guarantee missing"
+        "  - Validation is non-destructive"
+        if execution.get("validation_non_destructive")
+        else "  - Validation guarantee missing"
     )
     click.echo("")
     click.echo("Determinism:")
     click.echo(
         "  - Commands deterministic for same inputs"
-        if payload.get("deterministic_for_same_inputs")
+        if determinism.get("deterministic_for_same_inputs")
         else "  - Determinism guarantee missing"
     )
     click.echo(
         "  - Safe to re-run in retry loops"
-        if payload.get("safe_for_retries")
+        if determinism.get("safe_for_retries")
         else "  - Retry safety guarantee missing"
     )
     click.echo("")
     click.echo("JSON & CLI:")
-    success = exit_codes.get("success")
-    error = exit_codes.get("error")
-    cancelled = exit_codes.get("cancelled")
     click.echo(
-        f"  - Stable exit codes: {success}=success, {error}=error, {cancelled}=cancel"
+        "  - All commands support --format json"
+        if cli_api.get("json_supported_globally")
+        else "  - JSON support guarantee missing"
     )
     click.echo(
-        "  - CLI rejects shell metacharacters in arguments"
-        if payload.get("cli_rejects_shell_metacharacters")
-        else "  - CLI input hardening guarantee missing"
+        "  - JSON schema additive within minor versions"
+        if cli_api.get("json_additive_within_minor")
+        else "  - JSON compatibility guarantee missing"
     )
+    click.echo("  - Stable exit codes: 0=success, 1=error, 2=cancel")
     click.echo("")
     click.echo("Skill Security:")
     click.echo(
         "  - Skill file integrity is verifiable"
-        if payload.get("skill_file_integrity_check")
+        if skill_security.get("skill_file_integrity_check")
         else "  - Skill integrity guarantee missing"
     )
     click.echo(
         "  - Skill commands are simple invocations (no shell metacharacters)"
-        if payload.get("skill_file_commands_are_simple")
+        if skill_security.get("skill_file_commands_are_simple")
         else "  - Skill command simplicity guarantee missing"
-    )
-    click.echo(
-        "  - No network access and no telemetry"
-        if payload.get("no_network_access") and payload.get("no_telemetry")
-        else "  - Network/telemetry isolation guarantee missing"
     )
     click.echo("")
     click.echo(f"For full details, see: {CONTRACT_DOC_PATH}")
