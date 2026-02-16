@@ -8,9 +8,11 @@ from typing import Any
 
 import pytest
 
+from specleft.commands.status import build_status_entries, build_status_json
 from specleft import specleft
 from specleft.mcp.payloads import build_mcp_status_payload
 from specleft.mcp.server import build_mcp_server
+from specleft.validator import load_specs_directory
 from tests.helpers.specs import create_feature_specs
 
 
@@ -162,8 +164,18 @@ def test_status_payload_verbose_shape(
     )
 
     payload = build_mcp_status_payload(verbose=True)
+    config = load_specs_directory(Path(".specleft/specs"))
+    entries = build_status_entries(config, Path("tests"))
+    expected = build_status_json(
+        entries,
+        include_execution_time=False,
+        verbose=True,
+    )
+    assert isinstance(expected, dict)
 
-    assert payload["initialised"] is True
-    assert payload["summary"]["features"] == 1
-    assert "by_priority" in payload
-    assert payload["features"][0]["feature_id"] == "feature-auth"
+    payload_without_timestamp = dict(payload)
+    expected_without_timestamp = dict(expected)
+    payload_without_timestamp.pop("timestamp", None)
+    expected_without_timestamp.pop("timestamp", None)
+
+    assert payload_without_timestamp == expected_without_timestamp
