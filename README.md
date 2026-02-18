@@ -1,3 +1,5 @@
+![SpecLeft social preview](.github/specleft-social-preview.png)
+
 # SpecLeft — Planning-First CLI for Python
 
 **A planning buffer for AI coding agents — externalize intent before writing code.**
