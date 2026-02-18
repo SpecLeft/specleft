@@ -1,6 +1,6 @@
 ![SpecLeft social preview](.github/assets/specleft-social-preview.png)
 
-# SpecLeft: Planning-First Specs for pytest
+# SpecLeft: Planning-First Workflow for pytest
 
 ![Spec coverage](.github/assets/spec-coverage-badge.svg)
 
@@ -10,6 +10,7 @@ SpecLeft keeps feature intent and test coverage aligned by turning plans into ve
 - Validate specs and track coverage by feature/scenario
 - Generate skeleton tests (once), then humans own the code
 - Designed to be safe for AI agents and CI: no writes without confirmation, JSON output available
+- There is no phone home or telemetry mechanism. SpecLeft runs 100% locally and stores data in your local disk.
 
 SpecLeft works with pytest. It does not replace your test runner or reinterpret existing tests.
 
@@ -81,12 +82,12 @@ That flow converts `prd.md` into `.specleft/specs/*.md`, validates the result, p
 
 ## When to Use SpecLeft
 
-- Use SpecLeft when you have acceptance criteria (features/scenarios) and want traceable coverage.
+- Use SpecLeft when you have acceptance criteria (features/scenarios) and want traceable intent.
 - Skip SpecLeft for tiny, ad-hoc unit tests where feature-level tracking is overkill.
 
 ## What It Is (and Is Not)
 
-- It is a pytest plugin plus a CLI for planning, spec validation, TDD workflows, .
+- It is a pytest plugin plus a CLI for planning, spec validation, intuitive TDD workflows, and traceability.
 - It is not a BDD framework, a separate test runner, or a SaaS test management product.
 
 ## Why Not Conventional BDD
@@ -112,6 +113,12 @@ specleft features stats --format json
 SpecLeft includes an MCP server so agents can read specs, track status, and generate test scaffolding without leaving the conversation.
 
 See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for setup details.
+
+## CI Enforcement Early Access
+
+Want to enforce feature coverage and policy checks in CI with `specleft enforce`? Join Early Access to get setup guidance and rollout support.
+
+Learn more: [specleft.dev/enforce](https://specleft.dev/enforce)
 
 ## Docs
 
