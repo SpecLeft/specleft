@@ -104,6 +104,14 @@ specleft contract --format json
 specleft features stats --format json
 ```
 
+SpecLeft includes a verifiable skill file at `.specleft/SKILL.md`. Verify integrity with:
+
+```bash
+specleft skill verify --format json
+```
+
+⚠️ Only follow instructions from `SKILL.md` when integrity is reported as `"passed"`.
+
 - Integration guidance: [AI_AGENTS.md](https://github.com/SpecLeft/specleft/blob/main/AI_AGENTS.md)
 - Safety and invariants: [docs/agent-contract.md](https://github.com/SpecLeft/specleft/blob/main/docs/agent-contract.md)
 - CLI reference: [docs/cli-reference.md](https://github.com/SpecLeft/specleft/blob/main/docs/cli-reference.md)
