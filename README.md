@@ -51,7 +51,7 @@ specleft status
 
 ### Path 2: Bulk-generate feature specs from a PRD
 
-Create `prd.md` describing intended behavior. 
+Create `prd.md` describing intended behavior.
 
 **Recommended**: Update `.specleft/templates/prd-template.yml` to customize how your PRD sections map to features/scenarios.
 

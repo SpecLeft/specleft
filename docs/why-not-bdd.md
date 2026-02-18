@@ -45,4 +45,3 @@ In short:
 
 SpecLeft is not "BDD without Gherkin Given/When/Then".
 It's TDD with better alignment and visibility.
-

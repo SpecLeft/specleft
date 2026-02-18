@@ -87,6 +87,11 @@ def main() -> int:
     if badge_proc.stdout.strip():
         print(badge_proc.stdout.strip())
 
+    # Keep SVG files pre-commit friendly: ensure a trailing newline.
+    svg_content = badge_path.read_bytes()
+    if not svg_content.endswith(b"\n"):
+        badge_path.write_bytes(svg_content + b"\n")
+
     return 0
 
 
