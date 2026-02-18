@@ -38,6 +38,7 @@ Options:
   --dir PATH            Path to features directory (default: features)
   -t, --tests-dir PATH  Path to tests directory (default: tests)
   --format [table|json] Output format (default: table)
+```
 
 ### `specleft features add`
 
@@ -79,7 +80,6 @@ Options:
   --add-test [stub|skeleton]  Generate a test stub or skeleton
   --preview-test          Print the generated test content
 ```
-```
 
 ## Contract
 
@@ -104,6 +104,56 @@ specleft contract test [OPTIONS]
 Options:
   --format [table|json] Output format (default: table)
   --verbose             Show detailed check results
+```
+
+## Doctor
+
+### `specleft doctor`
+
+Verify SpecLeft installation and environment.
+
+```bash
+specleft doctor [OPTIONS]
+
+Options:
+  --format [table|json]  Output format (default: table)
+  --verbose              Show detailed diagnostic information
+  --verify-skill         Verify .specleft/SKILL.md checksum and template freshness
+  --pretty               Pretty-print JSON output
+```
+
+## Skill
+
+### `specleft skill`
+
+Manage SpecLeft skill files.
+
+```bash
+specleft skill --help
+```
+
+### `specleft skill verify`
+
+Verify SKILL.md integrity and freshness.
+
+```bash
+specleft skill verify [OPTIONS]
+
+Options:
+  --format [table|json]  Output format (default: table)
+  --pretty               Pretty-print JSON output
+```
+
+### `specleft skill update`
+
+Regenerate SKILL.md and checksum from the current SpecLeft version.
+
+```bash
+specleft skill update [OPTIONS]
+
+Options:
+  --format [table|json]  Output format (default: table)
+  --pretty               Pretty-print JSON output
 ```
 
 ## Init
