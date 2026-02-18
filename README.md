@@ -2,6 +2,8 @@
 
 # SpecLeft: Planning-First Specs for pytest
 
+[![Spec coverage](https://raw.githubusercontent.com/SpecLeft/specleft/main/spec-coverage-badge.svg)](https://github.com/SpecLeft/specleft)
+
 SpecLeft keeps feature intent and test coverage aligned by turning plans into version-controlled specs, then generating pytest test skeletons from those specs.
 
 - Write feature specs in Markdown: `.specleft/specs/*.md`

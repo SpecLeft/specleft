@@ -10,3 +10,11 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: specleft-coverage-badge
+        name: Update SpecLeft coverage badge
+        entry: python3 scripts/update_spec_coverage_badge.py
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -285,7 +285,7 @@ def coverage(
             sys.exit(1)
         percent = metrics.overall.percent
         message = "n/a" if percent is None else f"{percent:.0f}%"
-        svg = render_badge_svg("coverage", message, badge_color(percent))
+        svg = render_badge_svg("Spec Coverage", message, badge_color(percent))
         Path(output_path).write_text(svg)
         click.echo(f"Badge written to {output_path}")
     else:
