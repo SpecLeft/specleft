@@ -1,8 +1,8 @@
-![SpecLeft social preview](https://raw.githubusercontent.com/SpecLeft/specleft/main/.github/specleft-social-preview.png)
+![SpecLeft social preview](https://raw.githubusercontent.com/SpecLeft/specleft/main/.github/assets/specleft-social-preview.png)
 
 # SpecLeft: Planning-First Specs for pytest
 
-[![Spec coverage](https://raw.githubusercontent.com/SpecLeft/specleft/main/spec-coverage-badge.svg)](https://github.com/SpecLeft/specleft)
+![Spec coverage](https://raw.githubusercontent.com/SpecLeft/specleft/main/.github/assets/spec-coverage-badge.svg)
 
 SpecLeft keeps feature intent and test coverage aligned by turning plans into version-controlled specs, then generating pytest test skeletons from those specs.
 

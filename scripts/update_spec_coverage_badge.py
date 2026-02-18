@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BADGE_PATH = REPO_ROOT / "spec-coverage-badge.svg"
+DEFAULT_BADGE_PATH = REPO_ROOT / ".github" / "assets" / "spec-coverage-badge.svg"
 
 
 def _resolve_specleft_bin() -> str | None:
@@ -67,6 +67,7 @@ def main() -> int:
         return 1
 
     badge_path = Path(os.environ.get("SPECLEFT_BADGE_OUTPUT", str(DEFAULT_BADGE_PATH)))
+    badge_path.parent.mkdir(parents=True, exist_ok=True)
     badge_cmd = [
         specleft_bin,
         "coverage",
@@ -91,4 +92,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
