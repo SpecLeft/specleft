@@ -29,9 +29,14 @@ def _resource_json(result: list[Any]) -> dict[str, object]:
 
 
 @pytest.mark.asyncio
+@specleft(
+    feature_id="feature-mcp-server",
+    scenario_id="expose-exactly-three-resources-and-one-tool",
+)
 async def test_server_lists_three_resources(mcp_client: Any) -> None:
     async with mcp_client:
         resources = await mcp_client.list_resources()
+        tools = await mcp_client.list_tools()
 
     uris = {str(resource.uri) for resource in resources}
     assert uris == {
@@ -39,6 +44,8 @@ async def test_server_lists_three_resources(mcp_client: Any) -> None:
         "specleft://guide",
         "specleft://status",
     }
+    assert len(tools) == 1
+    assert tools[0].name == "specleft_init"
 
 
 @pytest.mark.asyncio
@@ -51,6 +58,10 @@ async def test_server_lists_one_tool(mcp_client: Any) -> None:
 
 
 @pytest.mark.asyncio
+@specleft(
+    feature_id="feature-mcp-server",
+    scenario_id="contract-and-guide-resources-return-machine-readable-json",
+)
 async def test_contract_and_guide_resources_are_json(mcp_client: Any) -> None:
     async with mcp_client:
         contract_result = await mcp_client.read_resource("specleft://contract")
@@ -71,6 +82,28 @@ async def test_contract_and_guide_resources_are_json(mcp_client: Any) -> None:
     assert security["no_telemetry"] is True
     assert guide_payload["workflow"]
     assert "skill_file" in guide_payload
+
+
+@pytest.mark.asyncio
+@specleft(
+    feature_id="feature-mcp-server",
+    scenario_id="status-resource-signals-uninitialised-project",
+)
+async def test_status_resource_signals_uninitialised_project(
+    mcp_client: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    async with mcp_client:
+        status_result = await mcp_client.read_resource("specleft://status")
+
+    status_payload = _resource_json(status_result)
+
+    assert status_payload["initialised"] is False
+    assert status_payload["features"] == 0
+    assert status_payload["scenarios"] == 0
 
 
 @pytest.mark.asyncio
@@ -141,6 +174,10 @@ async def test_init_tool_dry_run_writes_nothing(
 
 
 @pytest.mark.asyncio
+@specleft(
+    feature_id="feature-mcp-server",
+    scenario_id="specleft-init-bootstraps-project-safely",
+)
 async def test_init_tool_is_idempotent(
     mcp_client: Any,
     tmp_path: Path,
@@ -157,6 +194,10 @@ async def test_init_tool_is_idempotent(
 
     assert first_payload["success"] is True
     assert second_payload["success"] is True
+    assert "health" in first_payload
+    assert (tmp_path / ".specleft" / "specs").is_dir()
+    assert (tmp_path / ".specleft" / "policies").is_dir()
+    assert (tmp_path / ".specleft" / "SKILL.md").is_file()
 
 
 def test_status_payload_verbose_shape(
