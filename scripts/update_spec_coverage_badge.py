@@ -16,7 +16,12 @@ DEFAULT_BADGE_PATH = REPO_ROOT / ".github" / "assets" / "spec-coverage-badge.svg
 def _resolve_specleft_bin() -> str | None:
     override = os.environ.get("SPECLEFT_BIN")
     if override:
-        return override
+        override_path = Path(override)
+        if override_path.exists():
+            return str(override_path)
+        resolved_override = shutil.which(override)
+        if resolved_override:
+            return resolved_override
 
     venv_bin = REPO_ROOT / ".venv" / "bin" / "specleft"
     if venv_bin.exists():
@@ -33,10 +38,9 @@ def main() -> int:
     specleft_bin = _resolve_specleft_bin()
     if not specleft_bin:
         print(
-            "specleft not found. Install it (e.g. `pip install -e '.[dev]'`) or set SPECLEFT_BIN.",
-            file=sys.stderr,
+            "SKIP: specleft not found; skipping badge update.",
         )
-        return 1
+        return 0
 
     coverage_cmd = [
         specleft_bin,
