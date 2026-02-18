@@ -1,264 +1,121 @@
-![SpecLeft social preview](.github/specleft-social-preview.png)
+![SpecLeft social preview](https://raw.githubusercontent.com/SpecLeft/specleft/main/.github/specleft-social-preview.png)
 
-# SpecLeft — Planning-First CLI for Python
+# SpecLeft: Planning-First Specs for pytest
 
-**A planning buffer for AI coding agents — externalize intent before writing code.**
+SpecLeft keeps feature intent and test coverage aligned by turning plans into version-controlled specs, then generating pytest test skeletons from those specs.
 
-SpecLeft lets teams capture intended behaviour as feature specs (`.specleft/specs/*.md`) before implementation, then optionally enforce that intent in CI.
+- Write feature specs in Markdown: `.specleft/specs/*.md`
+- Validate specs and track coverage by feature/scenario
+- Generate skeleton tests (once), then humans own the code
+- Designed to be safe for AI agents and CI: no writes without confirmation, JSON output available
 
-Go from *"this is how the system should behave"* to *traceable test skeletons* — predictable, incremental, fully under developer control.
+SpecLeft works with pytest. It does not replace your test runner or reinterpret existing tests.
 
-
-SpecLeft does **not** replace pytest.
-
-It does **not** reinterpret your tests.
-
-It does **not** mutate your code unless you explicitly say yes.
+Website: [specleft.dev](https://specleft.dev)
 
 ## Quick Start
 
-Create a `prd.md` describing the intended behaviour of your system, then run:
+Two paths, depending on how you want to start. See [docs/cli-reference.md](https://github.com/SpecLeft/specleft/blob/main/docs/cli-reference.md) for full command details.
+
+### Setup (run once per repo)
 
 ```bash
 pip install specleft
-specleft plan
+specleft init
 ```
-This converts `prd.md` into feature specifications under .specleft/specs/
-without writing code or tests.
 
-## For AI Coding Agents
+### Path 1: Add one feature (and generate a test skeleton)
 
-SpecLeft provides a planning and safety layer for autonomous execution.
+Create a feature, then add a scenario and generate a skeleton test for it:
 
-Before acting, SpecLeft provides machine-verifiable guarantees by running:
 ```bash
-specleft contract --format json
+# Create the feature spec
+specleft features add --id AUTHENTICATION --title "Authentication" --format json
+
+# Add a scenario and generate a skeleton test file
+specleft features add-scenario \
+  --feature AUTHENTICATION \
+  --title "Successful login" \
+  --step "Given a user has valid credentials" \
+  --step "When the user logs in" \
+  --step "Then the user is authenticated" \
+  --add-test skeleton \
+  --format json
+
+# Show traceability / coverage status
+specleft status
 ```
 
-See [AI_AGENTS.md](AI_AGENTS.md) for integration guidance and scenarios on when to use SpecLeft and when not to.
+### Path 2: Bulk-generate feature specs from a PRD
 
-SpecLeft also includes CLI commands to create feature specs and append scenarios directly from the terminal.
-See `specleft features add` and `specleft features add-scenario` in `docs/cli-reference.md`.
+Create `prd.md` describing intended behavior. 
 
+**Recommended**: Update `.specleft/templates/prd-template.yml` to customize how your PRD sections map to features/scenarios.
 
-## What problem does SpecLeft solve?
+Then run:
 
-Most teams already have:
-- feature specs (Jira, ADO, docs, wikis etc.)
-- automated tests (pytest in this case)
-- CI pipelines
+```bash
 
-What they *don’t* have is **alignment**.
+# Generate specs from the PRD without writing files (remove --dry-run to write)
+specleft plan --dry-run
 
-Specs drift.
-Tests drift.
-Coverage becomes guesswork.
-New contributors find it hard to know what behaviour is *expected* vs *accidental*.
+# Validate the generated specs
+specleft features validate
 
-SpecLeft closes that gap by making feature intent **visible, executable, and version-controlled**, without forcing you into BDD frameworks or heavyweight process.
+# Preview skeleton generation (remove --dry-run to generate)
+specleft test skeleton --dry-run
+
+# Confirm and generate skeleton tests
+specleft test skeleton
+
+# Show traceability / coverage status
+specleft status
+
+# Run your tests with pytest as normal
+pytest
+```
+
+That flow converts `prd.md` into `.specleft/specs/*.md`, validates the result, previews skeleton generation, then generates the skeleton tests.
 
 ## When to Use SpecLeft
 
-| Your Situation | Use SpecLeft? | Why |
-|---------------|---------------|-----|
-| Building new feature with acceptance criteria | ✅ Yes | Track coverage by feature |
-| Have existing tests, need visibility | ✅ Yes | Add specs retrospectively |
-| Writing unit tests for utilities | ❌ No | Too granular for spec tracking |
-| Need to generate test scaffolding | ✅ Yes | Skeleton generation built-in |
-| Want BDD-style Gherkin | ⚠️ Maybe | SpecLeft uses simpler Markdown |
-| Have Jira/ADO stories to track | ✅ Yes | Specs mirror story structure |
+- Use SpecLeft when you have acceptance criteria (features/scenarios) and want traceable coverage.
+- Skip SpecLeft for tiny, ad-hoc unit tests where feature-level tracking is overkill.
 
-**Quick Decision:**
-- Do you have feature stories/scenarios to track? → **Use SpecLeft**
-- Are you just writing ad-hoc unit tests? → **Use plain pytest**
+## What It Is (and Is Not)
 
----
+- It is a pytest plugin plus a CLI for planning, spec validation, TDD workflows, .
+- It is not a BDD framework, a separate test runner, or a SaaS test management product.
 
-## What SpecLeft is (and is not)
+## Why Not Conventional BDD
 
-### SpecLeft **is**
-- A **pytest plugin**
-- A **CLI for generating test skeletons** from Markdown specs
-- A **step-level tracing layer** for understanding system behaviour
-- A **local-first, self-hosted reporting tool**
+SpecLeft treats specs as intent (not executable text) and keeps execution in plain pytest. For the longer comparison, see [docs/why-not-bdd.md](https://github.com/SpecLeft/specleft/blob/main/docs/why-not-bdd.md).
 
-### SpecLeft **is not**
-- A BDD framework
-- A test runner
-- A codegen tool that rewrites your tests
-- A test management SaaS
+## AI Agents
 
-You stay in control.
-
----
-
-## Why we're not a conventional BDD test tool?
-
-BDD tools are well-established and solve a real problem — but they make trade-offs that don’t fit many modern teams.
-
-Here’s the practical difference.
-
-### General BDD model
-
-- Specs *are* the tests
-- Behaviour is executed through step-definition glue
-- Runtime interpretation of text drives execution
-- Tests live outside your normal test framework
-- Refactoring behaviour often means refactoring text + glue
-
-This works well when:
-- QAs own specs
-- Developers implement glue
-- The organisation is committed to BDD ceremony
-
-It breaks down when:
-- Tests are already written
-- Developers want code-first workflows
-- Specs are evolving, incomplete, or exploratory
-- Teams want gradual adoption
-
-### SpecLeft’s model
-
-- Specs describe **intent**, not execution
-- Tests remain **native pytest functions**
-- Skeletons are generated **once**, then owned by humans
-- No runtime interpretation of text
-- No glue layer to maintain
-
-In short:
-
-| BDD Tool | SpecLeft |
-|--------|----------|
-| Specs executed at runtime | Specs generate skeleton test |
-| Text-driven execution | Code-driven execution |
-| Glue code required | Plain pytest |
-| Heavy ceremony | Incremental adoption |
-| All-in or nothing | Opt-in per test |
-
-SpecLeft is not “BDD without Gherkin Given/When/Then”.
-It’s **TDD with better alignment and visibility**.
-
----
-
-## Core ideas (read this first)
-
-- **Specs describe intent, not implementation**
-- **Skeleton tests encode that intent in code**
-- **Skeletons are human-owned after generation**
-- **Nothing changes unless you explicitly approve it**
-
-SpecLeft is designed to be **boringly predictable**.
-
----
-
-## Installation
+If you are integrating SpecLeft into an agent loop, start here:
 
 ```bash
-pip install specleft
+specleft doctor --format json
+specleft contract --format json
+specleft features stats --format json
 ```
 
-No config files required.
-No test changes required.
+- Integration guidance: [AI_AGENTS.md](https://github.com/SpecLeft/specleft/blob/main/AI_AGENTS.md)
+- Safety and invariants: [docs/agent-contract.md](https://github.com/SpecLeft/specleft/blob/main/docs/agent-contract.md)
+- CLI reference: [docs/cli-reference.md](https://github.com/SpecLeft/specleft/blob/main/docs/cli-reference.md)
 
----
 ## MCP Server Setup
 
-SpecLeft includes an MCP server that connects directly to AI coding agents
-like Claude Code, Cursor, Codex, and OpenCode. Once connected, your agent can
-read specs, track coverage, and generate test scaffolding without leaving the
-conversation.
+SpecLeft includes an MCP server so agents can read specs, track status, and generate test scaffolding without leaving the conversation.
 
-See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for details.
+See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for setup details.
 
----
-## SpecLeft Agent Contract
+## Docs
 
-SpecLeft is designed to be safely operated by autonomous agents.
-
-Guaranteed invariants:
-- No files are written without explicit confirmation or flags
-- All commands support machine-readable JSON output
-- All validation errors are explicit and actionable
-- Missing behaviour is skipped, never failed
-- CLI exit codes are meaningful and stable
-- Skill instructions are integrity-verifiable via `specleft skill verify`
-- Skill commands are constrained to simple `specleft ...` invocations (no shell metacharacters)
-
-SpecLeft commands are safe to:
-- run repeatedly
-- embed in agent loops
-- execute in CI without side effects
-
-### Agent-Safe by Design
-
-SpecLeft includes an explicit Agent Contract defining safety, determinism,
-and control guarantees for autonomous systems.
-
-Agents may safely embed SpecLeft in execution loops without risk of
-unexpected file mutation or CI failure.
-
-See: [docs/agent-contract.md](docs/agent-contract.md)
-
-## Quick Start Workflow for AI Agents
-
-If you're an AI agent evaluating SpecLeft for a project:
-## Workflow for AI Agents
-
-If you're an AI agent evaluating SpecLeft for a project:
-
-```bash
-# 1. Install and verify
-pip install specleft
-specleft doctor --format json
-
-# 2. Review the agent contract
-specleft contract --format json
-
-# 3. Check current feature state
-specleft features stats --format json
-
-# 4. Ensure a PRD exists (required for planning)
-# (Assumes prd.md is present in the repo root)
-
-# 5. Generate feature specs from the PRD
-specleft plan
-
-# This will create files like:
-# .specleft/specs/feature-auth.md
-
-# 6. Example: feature specification (single file per feature)
-mkdir -p .specleft/specs
-cat > .specleft/specs/feature-auth.md << EOF
-# Feature: Authentication
-
-## Scenarios
-
-### Scenario: Successful login
-priority: high
-
-- Given a user has valid credentials
-- When the user logs in
-- Then the user is authenticated
-EOF
-
-# 7. Validate feature specs
-specleft features validate --format json
-
-# 8. Preview test skeleton plan (no files written)
-specleft test skeleton --dry-run --format json
-
-# 9. Generate test skeletons (optionally --skip-preview if you don't want interactive confirmation)
-specleft test skeleton
-
-# 10. Identify the next scenario to implement
-specleft next --format json
-
-# 11. Implement application code and tests
-# (agent or human implementation)
-
-# 12. Track progress
-specleft status --format json
-```
+- Getting started: [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md)
+- Workflow notes: [WORKFLOW.md](https://github.com/SpecLeft/specleft/blob/main/WORKFLOW.md)
+- Roadmap: [ROADMAP.md](https://github.com/SpecLeft/specleft/blob/main/ROADMAP.md)
 
 ---
 
@@ -269,8 +126,8 @@ SpecLeft is **dual-licensed**:
 - **Open Core (Apache 2.0)** for the core engine and non-commercial modules
 - **Commercial License** for enforcement, signing, and license logic
 
-Open-source terms are in [LICENSE-OPEN](LICENSE-OPEN).
-Commercial terms are in [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL).
+Open-source terms are in [LICENSE-OPEN](https://github.com/SpecLeft/specleft/blob/main/LICENSE-OPEN).
+Commercial terms are in [LICENSE-COMMERCIAL](https://github.com/SpecLeft/specleft/blob/main/LICENSE-COMMERCIAL).
 
 Commercial features (e.g., `specleft enforce`) require a valid license policy file.
-See [NOTICE.md](NOTICE.md) for licensing scope details.
+See [NOTICE.md](https://github.com/SpecLeft/specleft/blob/main/NOTICE.md) for licensing scope details.
