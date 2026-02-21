@@ -1,0 +1,31 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.SpecLeft/specleft",
+  "title": "SpecLeft",
+  "description": "Track and enforce Python feature coverage with verifiable safety guarantees. Generates pytest test scaffolding from markdown specifications, monitors implementation progress, and blocks PRs that violate coverage policies. Agent-optimised: 3 resources, 1 tool, offline-only, no telemetry, no API keys required.",
+  "version": "0.3.0",
+  "websiteUrl": "https://specleft.dev",
+  "repository": {
+    "url": "https://github.com/SpecLeft/specleft",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "specleft",
+      "version": "0.3.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": []
+    }
+  ]
+}

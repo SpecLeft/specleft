@@ -9,4 +9,6 @@ from specleft.version import SPECLEFT_VERSION
 
 CLI_VERSION = SPECLEFT_VERSION
 CONTRACT_VERSION = "1.1"
-CONTRACT_DOC_PATH = "docs/agent-contract.md"
+CONTRACT_DOC_PATH = (
+    "https://github.com/SpecLeft/specleft/blob/main/docs/agent-contract.md"
+)
