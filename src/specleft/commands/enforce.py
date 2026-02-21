@@ -219,7 +219,12 @@ def _augment_violations_with_fix_commands(
 
 
 @click.command("enforce")
-@click.argument("policy_file", type=click.Path(exists=False), default=None)
+@click.argument(
+    "policy_file",
+    type=click.Path(exists=False),
+    required=False,
+    default=None,
+)
 @click.option(
     "--format",
     "fmt",
