@@ -119,11 +119,13 @@ specleft skill verify --format json
 
 ## MCP Server Setup
 
-SpecLeft includes an MCP server so agents can read specs, track status, and generate test scaffolding without leaving the conversation.
+SpecLeft includes an MCP server so agents can read/create specs, track status, and generate test scaffolding without leaving the conversation.
 
 See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for setup details.
 
 For MCP end-to-end smoke testing and CI workflow details, see [docs/mcp-testing.md](https://github.com/SpecLeft/specleft/blob/main/docs/mcp-testing.md).
+
+<!-- mcp-name: io.github.SpecLeft/specleft -->
 
 ## CI Enforcement Early Access
 
