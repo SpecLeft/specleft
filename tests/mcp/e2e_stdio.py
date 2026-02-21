@@ -194,9 +194,15 @@ def main() -> int:
                 for item in resources
                 if isinstance(item, dict) and isinstance(item.get("uri"), str)
             }
-            expected_uris = {"specleft://contract", "specleft://guide", "specleft://status"}
+            expected_uris = {
+                "specleft://contract",
+                "specleft://guide",
+                "specleft://status",
+            }
             if uris != expected_uris:
-                failures.append(f"resources/list returned {sorted(uris)} expected {sorted(expected_uris)}")
+                failures.append(
+                    f"resources/list returned {sorted(uris)} expected {sorted(expected_uris)}"
+                )
             else:
                 print("[PASS] resources/list returns 3 expected resources")
 
@@ -208,15 +214,25 @@ def main() -> int:
             tools = response.payload["result"].get("tools", [])
             if len(tools) != 1:
                 failures.append(f"tools/list returned {len(tools)} tools expected 1")
-            elif not isinstance(tools[0], dict) or tools[0].get("name") != "specleft_init":
+            elif (
+                not isinstance(tools[0], dict)
+                or tools[0].get("name") != "specleft_init"
+            ):
                 failures.append(f"tools/list returned unexpected tool payload: {tools}")
             else:
                 print("[PASS] tools/list returns specleft_init")
 
-        _send_request(proc, method="resources/read", msg_id=4, params={"uri": "specleft://contract"})
+        _send_request(
+            proc,
+            method="resources/read",
+            msg_id=4,
+            params={"uri": "specleft://contract"},
+        )
         response = _read_response_for_id(proc, msg_id=4)
         if response is None or "result" not in response.payload:
-            failures.append("resources/read for specleft://contract did not return a valid result")
+            failures.append(
+                "resources/read for specleft://contract did not return a valid result"
+            )
         else:
             contents = response.payload["result"].get("contents", [])
             first_item = contents[0] if contents else {}
