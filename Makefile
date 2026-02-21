@@ -24,5 +24,5 @@ badge:
 
 test-mcp-e2e: ## Run MCP stdio E2E against an installed wheel in a clean container
 	python -m build
-	docker build -f test-mcp.Dockerfile -t specleft-mcp-e2e .
+	docker build -f mcp/test-mcp.Dockerfile -t specleft-mcp-e2e .
 	docker run --rm specleft-mcp-e2e

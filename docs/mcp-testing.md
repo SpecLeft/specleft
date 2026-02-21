@@ -22,7 +22,7 @@ make test-mcp-e2e
 This target:
 
 1. Builds wheel artifacts (`python -m build`)
-2. Builds a clean container from `test-mcp.Dockerfile`
+2. Builds a clean container from `mcp/test-mcp.Dockerfile`
 3. Installs the wheel with MCP extras (`[mcp]`)
 4. Runs `tests/mcp/e2e_stdio.py`
 
