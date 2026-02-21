@@ -3,6 +3,7 @@
 # SpecLeft: Planning-First Workflow for pytest
 
 ![Spec coverage](.github/assets/spec-coverage-badge.svg)
+[![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/servers/io.github.specleft/specleft)
 
 SpecLeft keeps feature intent and test coverage aligned by turning plans into version-controlled specs, then generating pytest test skeletons from those specs.
 
@@ -121,6 +122,8 @@ specleft skill verify --format json
 SpecLeft includes an MCP server so agents can read specs, track status, and generate test scaffolding without leaving the conversation.
 
 See [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md) for setup details.
+
+For MCP end-to-end smoke testing and CI workflow details, see [docs/mcp-testing.md](https://github.com/SpecLeft/specleft/blob/main/docs/mcp-testing.md).
 
 ## CI Enforcement Early Access
 

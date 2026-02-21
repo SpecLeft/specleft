@@ -233,3 +233,5 @@ prd.md
 .licenses/policy.yml
 bandit-report.json
 PLAN.md
+.mcpregistry_github_token
+.mcpregistry_registry_token

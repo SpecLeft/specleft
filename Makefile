@@ -2,7 +2,7 @@ SHELL := /bin/sh
 
 BADGE_OUTPUT ?= .github/assets/spec-coverage-badge.svg
 
-.PHONY: test pre-commit lint lint-fix badge
+.PHONY: test pre-commit lint lint-fix badge test-mcp-e2e
 
 test:
 	pytest tests/ -v -rs
@@ -21,3 +21,8 @@ lint-fix:
 
 badge:
 	SPECLEFT_BADGE_OUTPUT="$(BADGE_OUTPUT)" python3 scripts/update_spec_coverage_badge.py
+
+test-mcp-e2e: ## Run MCP stdio E2E against an installed wheel in a clean container
+	python -m build
+	docker build -f test-mcp.Dockerfile -t specleft-mcp-e2e .
+	docker run --rm specleft-mcp-e2e
