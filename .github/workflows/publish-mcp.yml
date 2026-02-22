@@ -58,10 +58,9 @@ jobs:
 
       - name: Install mcp-publisher
         run: |
-          CLI_VERSION="$(curl -fsSL https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r '.tag_name' | sed 's/^v//')"
           OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
           ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
-          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v${CLI_VERSION}/mcp-publisher_${CLI_VERSION}_${OS}_${ARCH}.tar.gz" | tar xz mcp-publisher
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_${OS}_${ARCH}.tar.gz" | tar xz mcp-publisher
 
       - name: Sync server.json version fields
         env:
