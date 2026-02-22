@@ -3,6 +3,12 @@ name: Publish MCP Server
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.3.0). Leave blank to use server.json version."
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -18,8 +24,15 @@ jobs:
       - name: Derive release version
         id: version
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          VERSION="${TAG#v}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="$(jq -r '.version' server.json)"
+          fi
+
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Publishing MCP metadata for version: ${VERSION}"
 
