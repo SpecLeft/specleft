@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.SpecLeft/specleft",
+  "name": "io.github.specleft/specleft",
   "title": "SpecLeft",
-  "description": "Track and enforce Python feature coverage with verifiable safety guarantees. Generates pytest test scaffolding from markdown specifications, monitors implementation progress, and blocks PRs that violate coverage policies. Agent-optimised: 3 resources, 1 tool, offline-only, no telemetry, no API keys required.",
+  "description": "Python intent tracing MCP: map specs to pytest tests, monitor implementation progress, offline-only.",
   "version": "0.3.0",
   "websiteUrl": "https://specleft.dev",
   "repository": {

@@ -1,0 +1,80 @@
+name: Publish MCP Server
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.3.0). Leave blank to use server.json version."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-mcp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Derive release version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="$(jq -r '.version' server.json)"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Publishing MCP metadata for version: ${VERSION}"
+
+      - name: Wait for PyPI package availability
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          URL="https://pypi.org/pypi/specleft/${VERSION}/json"
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS "$URL" >/dev/null; then
+              echo "PyPI release available: specleft==${VERSION}"
+              exit 0
+            fi
+
+            echo "PyPI release not available yet (attempt ${attempt}/30). Retrying in 20s..."
+            sleep 20
+          done
+
+          echo "Timed out waiting for specleft==${VERSION} on PyPI"
+          exit 1
+
+      - name: Install mcp-publisher
+        run: |
+          CLI_VERSION="$(curl -fsSL https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r '.tag_name' | sed 's/^v//')"
+          OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v${CLI_VERSION}/mcp-publisher_${CLI_VERSION}_${OS}_${ARCH}.tar.gz" | tar xz mcp-publisher
+
+      - name: Sync server.json version fields
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          jq --arg v "$VERSION" '.version = $v | .packages = (.packages | map(.version = $v))' server.json > server.tmp
+          mv server.tmp server.json
+
+      - name: Validate server.json
+        run: ./mcp-publisher publish --dry-run
+
+      - name: Authenticate to MCP Registry (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
