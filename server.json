@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.specleft/specleft",
+  "name": "io.github.SpecLeft/specleft",
   "title": "SpecLeft",
   "description": "Python intent tracing MCP: map specs to pytest tests, monitor implementation progress, offline-only.",
   "version": "0.3.0",
