@@ -65,7 +65,7 @@ Repository = "https://github.com/SpecLeft/specleft"
 
 [project.optional-dependencies]
 mcp = [
-    "fastmcp<3",
+    "fastmcp<4",
 ]
 dev = [
     "pytest-cov",
