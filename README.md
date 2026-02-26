@@ -88,8 +88,13 @@ That flow converts `prd.md` into `.specleft/specs/*.md`, validates the result, p
 
 ## What It Is (and Is Not)
 
-- It is a pytest plugin plus a CLI for planning, spec validation, intuitive TDD workflows, and traceability.
-- It is not a BDD framework, a separate test runner, or a SaaS test management product.
+### It is
+- A test plugin and a CLI for planning, spec validation, intuitive TDD workflows, and traceability.
+
+### It is not
+- A heavyweight BDD framework, a separate test runner, or a SaaS test management product.
+- A static code linting/analysis framework
+- A security analysis tool
 
 ## Why Not Conventional BDD
 
@@ -97,7 +102,9 @@ SpecLeft treats specs as intent (not executable text) and keeps execution in pla
 
 ## AI Agents
 
-If you are integrating SpecLeft into an agent loop, start here:
+If you are integrating SpecLeft into an agent loop, it's recommended to install the MCP server (see in section below).
+
+Otherwise begin with:
 
 ```bash
 specleft doctor --format json
@@ -138,4 +145,3 @@ For MCP end-to-end smoke testing and CI workflow details, see [docs/mcp-testing.
 ## License
 
 SpecLeft is licensed under [Apache License 2.0](https://github.com/SpecLeft/specleft/blob/main/LICENSE).
-See [NOTICE.md](https://github.com/SpecLeft/specleft/blob/main/NOTICE.md) for attribution details.
