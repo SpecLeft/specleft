@@ -1,6 +1,6 @@
 ![SpecLeft social preview](.github/assets/specleft-social-preview.png)
 
-# SpecLeft: Planning-First Workflow for pytest
+# SpecLeft: Spec Driven Workflow for Agents
 
 ![Spec coverage](.github/assets/spec-coverage-badge.svg)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/servers/io.github.specleft/specleft)
@@ -13,7 +13,7 @@ SpecLeft keeps feature intent and test coverage aligned by turning plans into ve
 - Designed to be safe for AI agents and CI: no writes without confirmation, JSON output available
 - There is no phone home or telemetry mechanism. SpecLeft runs 100% locally and stores data in your local disk.
 
-SpecLeft works with pytest. It does not replace your test runner or reinterpret existing tests.
+SpecLeft currently works with **Python** and **pytest**. It does not replace your test runner or reinterpret existing tests.
 
 Website: [specleft.dev](https://specleft.dev)
 
