@@ -261,7 +261,7 @@ Examples:
 ## Testing Guidelines
 
 ### Manual Testing
-- For new features, we strongly encourage manually testing the functionality to ensure it works as intended. 
+- For new features, we strongly encourage manually testing the functionality to ensure it works as intended.
 - We want to pass a human eye on what we build to ensure it meets the needs of users and agents.
 - This way we will visually see how the CLI commands work, especially in terms of performance.
 

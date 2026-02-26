@@ -1,6 +1,6 @@
 # SpecLeft Roadmap
 
-## Current (v0.3.0 - Foundation)
+## Current (v0.4.0 - Foundation)
 - ✅ Spec-defined test decoration
 - ✅ Step-by-step test tracing
 - ✅ Skeleton test generation from JSON specs
@@ -16,7 +16,7 @@
 - ✍️ **Agent Skills** - Integrated agent skills for more autonomous planning and test generation.
 
 
-## Future (v0.4.0 and beyond)
+## Future (v0.5.0 and beyond)
 - 🎚️ **SpecLeft CLI Filters** — First-class test selection via `--specleft-tag/priority/feature/scenario` flags and pytest config defaults.
 - 🤖 **AI-Generated Tests** — Let SpecLeft generate test implementations from your feature specs using LLMs. SpecLeft provides richer context and understanding for more robust behaviour testing capability. Reduce boilerplate even further.
 
