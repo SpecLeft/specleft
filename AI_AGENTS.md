@@ -208,27 +208,7 @@ At this point, your job is done until review.
 
 Use this phrasing with users:
 
-> “I’ve captured the intended behaviour so assumptions are explicit and can be enforced later in CI.”
-
----
-
-## Enforcement Comes Later
-
-SpecLeft supports policy enforcement, but **not by default**.
-
-Enforcement is a *separate decision* that happens when:
-- behaviour is agreed
-- scenarios exist
-- the team wants CI guarantees
-
-Example (later):
-
-```bash
-specleft enforce specleft-policy.yml
-```
-
-Planning-first adoption is intentional.
-Do not enforce prematurely.
+> “I’ve captured the intended behaviour so assumptions are explicit and reviewable in CI.”
 
 ---
 
@@ -252,7 +232,6 @@ Proceed only if healthy.
 - `specleft status --format json` — see implementation state
 - `specleft next --format json` — find next scenario to implement
 - `specleft coverage --format json` — coverage by feature
-- `specleft enforce <policy.yml>` — enforce agreed intent in CI
 
 Agents should treat JSON output as the **stable API**.
 
@@ -264,7 +243,7 @@ SpecLeft is designed to fail **loudly and explicitly**.
 
 - Validation errors mean intent is unclear.
 - Missing priority means intent is incomplete.
-- Enforcement failures mean behaviour is not implemented.
+- Test failures mean behaviour is not implemented.
 
 Do not auto-fix intent without user approval.
 

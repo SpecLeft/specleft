@@ -120,20 +120,6 @@ def get_skill_content() -> str:
             `specleft doctor --verify-skill --format json`
             Adds skill integrity status to standard environment diagnostics.
 
-            ## Enforcement
-
-            ### Enforce policy
-            `specleft enforce [POLICY_FILE] --format json [--dir PATH] [--tests PATH] [--ignore-feature-id ID]`
-            Default policy: `.specleft/policies/policy.yml`.
-            Exit codes: 0 = satisfied, 1 = violated, 2 = license issue.
-
-            ## License
-
-            ### License status
-            `specleft license status [--file PATH]`
-            Show license status and validated policy metadata.
-            Default: `.specleft/policies/policy.yml`.
-
             ## Guide
 
             ### Show workflow guide

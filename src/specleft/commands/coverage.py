@@ -209,7 +209,9 @@ def _print_coverage_table(entries: list[ScenarioStatusEntry]) -> None:
         data = metrics.by_execution_time.get(execution_time.value, CoverageTally())
         click.echo(_summary_row(execution_time.value, data))
     click.echo("━" * 58)
-    click.echo("To enforce intent coverage in CI, see: https://specleft.dev/enforce")
+    click.echo(
+        "For CI guidance, see: https://github.com/SpecLeft/specleft/tree/main/docs"
+    )
 
 
 @click.command("coverage")

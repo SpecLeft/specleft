@@ -11,11 +11,9 @@ from specleft.commands import (
     contract,
     coverage,
     doctor,
-    enforce,
     features,
     guide,
     init,
-    license_group,
     mcp,
     next_command,
     plan,
@@ -50,8 +48,6 @@ cli.add_command(plan)
 cli.add_command(coverage)
 cli.add_command(init)
 cli.add_command(contract)
-cli.add_command(enforce)
-cli.add_command(license_group)
 cli.add_command(skill_group)
 cli.add_command(guide)
 cli.add_command(mcp)

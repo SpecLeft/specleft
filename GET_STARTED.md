@@ -365,7 +365,6 @@ This creates `.specleft/specs/example-feature.md` with a sample structure — us
 
 - Add priorities to scenarios (`priority: critical`, `high`, `medium`, `low`)
 - Use `specleft next` to find the next scenario to implement
-- Set up CI enforcement with `specleft enforce`
 - See [AI_AGENTS.md](AI_AGENTS.md) for AI coding agent workflows
 
 ---

@@ -127,12 +127,6 @@ For MCP end-to-end smoke testing and CI workflow details, see [docs/mcp-testing.
 
 <!-- mcp-name: io.github.SpecLeft/specleft -->
 
-## CI Enforcement Early Access
-
-Want to enforce feature coverage and policy checks in CI with `specleft enforce`? Join Early Access to get setup guidance and rollout support.
-
-Learn more: [specleft.dev/enforce](https://specleft.dev/enforce)
-
 ## Docs
 
 - Getting started: [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md)
@@ -143,13 +137,5 @@ Learn more: [specleft.dev/enforce](https://specleft.dev/enforce)
 
 ## License
 
-SpecLeft is **dual-licensed**:
-
-- **Open Core (Apache 2.0)** for the core engine and non-commercial modules
-- **Commercial License** for enforcement, signing, and license logic
-
-Open-source terms are in [LICENSE-OPEN](https://github.com/SpecLeft/specleft/blob/main/LICENSE-OPEN).
-Commercial terms are in [LICENSE-COMMERCIAL](https://github.com/SpecLeft/specleft/blob/main/LICENSE-COMMERCIAL).
-
-Commercial features (e.g., `specleft enforce`) require a valid license policy file.
-See [NOTICE.md](https://github.com/SpecLeft/specleft/blob/main/NOTICE.md) for licensing scope details.
+SpecLeft is licensed under [Apache License 2.0](https://github.com/SpecLeft/specleft/blob/main/LICENSE).
+See [NOTICE.md](https://github.com/SpecLeft/specleft/blob/main/NOTICE.md) for attribution details.
