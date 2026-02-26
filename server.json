@@ -3,7 +3,7 @@
   "name": "io.github.SpecLeft/specleft",
   "title": "SpecLeft",
   "description": "Python intent tracing MCP: map specs to pytest tests, monitor implementation progress, offline-only.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "websiteUrl": "https://specleft.dev",
   "repository": {
     "url": "https://github.com/SpecLeft/specleft",
@@ -14,7 +14,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "specleft",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
