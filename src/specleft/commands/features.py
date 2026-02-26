@@ -751,7 +751,9 @@ def features_stats(
     else:
         click.echo("  Cannot calculate coverage without specs.")
     click.echo("")
-    click.echo("To enforce intent coverage in CI, see: https://specleft.dev/enforce")
+    click.echo(
+        "For CI guidance, see: https://github.com/SpecLeft/specleft/tree/main/docs"
+    )
 
 
 @features.command("add")

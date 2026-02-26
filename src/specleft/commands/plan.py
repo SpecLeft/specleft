@@ -15,7 +15,6 @@ import click
 from slugify import slugify
 
 from specleft.commands.output import json_dumps, resolve_output_format
-from specleft.license.status import resolve_license
 from specleft.utils.specs_dir import resolve_specs_dir
 from specleft.templates.prd_template import (
     PRDTemplate,
@@ -721,12 +720,3 @@ def plan(
         _print_warning(warning)
     _print_plan_summary(feature_count=feature_count, dry_run=dry_run)
     _print_plan_results(created=created, skipped=skipped, dry_run=dry_run)
-
-    license_validation = resolve_license()
-    if not license_validation.valid:
-        click.echo("")
-        click.echo("Notice: Enforcement capabilities require a commercial license.")
-        click.echo("")
-        click.echo("A valid license key is not registered.")
-        click.echo("Obtain a license:")
-        click.echo("  https://specleft.dev/enforce")

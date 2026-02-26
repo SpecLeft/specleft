@@ -210,26 +210,6 @@ Use this phrasing with users:
 
 ---
 
-## Enforcement Comes Later
-
-SpecLeft supports policy enforcement, but **not by default**.
-
-Enforcement is a *separate decision* that happens when:
-- behaviour is agreed
-- scenarios exist
-- the team wants CI guarantees
-
-Example (later):
-
-```bash
-specleft enforce specleft-policy.yml
-```
-
-Planning-first adoption is intentional.
-Do not enforce prematurely.
-
----
-
 ## Programmatic Use (Optional)
 
 All SpecLeft commands support `--format json` for agent use.
@@ -250,7 +230,6 @@ Proceed only if healthy.
 - `specleft status --format json` — see implementation state
 - `specleft next --format json` — find next scenario to implement
 - `specleft coverage --format json` — coverage by feature
-- `specleft enforce <policy.yml>` — enforce agreed intent in CI
 
 Agents should treat JSON output as the **stable API**.
 
@@ -262,7 +241,7 @@ SpecLeft is designed to fail **loudly and explicitly**.
 
 - Validation errors mean intent is unclear.
 - Missing priority means intent is incomplete.
-- Enforcement failures mean behaviour is not implemented.
+- Test failures mean behaviour is not implemented.
 
 Do not auto-fix intent without user approval.
 

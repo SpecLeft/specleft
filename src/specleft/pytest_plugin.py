@@ -459,7 +459,5 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     print("\nView Report with 'specleft test report --open-browser'")
     print()
     print("SpecLeft currently runs in report-only mode.")
-    print("")
-    print("To enforce declared behaviour in CI, see:\nhttps://specleft.dev/enforce")
 
     print(f"{line}\n")

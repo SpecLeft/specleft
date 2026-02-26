@@ -37,19 +37,6 @@ from fixtures.feature_4 import (
     feature_4_unimplemented,
 )
 
-# Feature 5: Policy Enforcement
-from fixtures.feature_5 import (
-    feature_5_invalid_signature,
-    feature_5_policy_satisfied,
-    feature_5_policy_violation,
-)
-
-# Feature 6: CI Experience & Messaging
-from fixtures.feature_6 import (
-    feature_6_ci_failure,
-    feature_6_doc_links,
-)
-
 # Feature 7: Autonomous Agent Test Execution
 from fixtures.feature_7 import (
     feature_7_agent_implements,
@@ -85,13 +72,6 @@ __all__ = [
     "feature_4_unimplemented",
     "feature_4_implemented",
     "feature_4_multi_feature_filter",
-    # Feature 5
-    "feature_5_policy_violation",
-    "feature_5_policy_satisfied",
-    "feature_5_invalid_signature",
-    # Feature 6
-    "feature_6_ci_failure",
-    "feature_6_doc_links",
     # Feature 7
     "feature_7_next_scenario",
     "feature_7_skeleton",

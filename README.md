@@ -1,6 +1,6 @@
 ![SpecLeft social preview](.github/assets/specleft-social-preview.png)
 
-# SpecLeft: Planning-First Workflow for pytest
+# SpecLeft: Spec Driven Workflow for Agents
 
 ![Spec coverage](.github/assets/spec-coverage-badge.svg)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/servers/io.github.specleft/specleft)
@@ -13,7 +13,7 @@ SpecLeft keeps feature intent and test coverage aligned by turning plans into ve
 - Designed to be safe for AI agents and CI: no writes without confirmation, JSON output available
 - There is no phone home or telemetry mechanism. SpecLeft runs 100% locally and stores data in your local disk.
 
-SpecLeft works with pytest. It does not replace your test runner or reinterpret existing tests.
+SpecLeft currently works with **Python** and **pytest**. It does not replace your test runner or reinterpret existing tests.
 
 Website: [specleft.dev](https://specleft.dev)
 
@@ -88,8 +88,13 @@ That flow converts `prd.md` into `.specleft/specs/*.md`, validates the result, p
 
 ## What It Is (and Is Not)
 
-- It is a pytest plugin plus a CLI for planning, spec validation, intuitive TDD workflows, and traceability.
-- It is not a BDD framework, a separate test runner, or a SaaS test management product.
+### It is
+- A test plugin and a CLI for planning, spec validation, intuitive TDD workflows, and traceability.
+
+### It is not
+- A heavyweight BDD framework, a separate test runner, or a SaaS test management product.
+- A static code linting/analysis framework
+- A security analysis tool
 
 ## Why Not Conventional BDD
 
@@ -97,7 +102,9 @@ SpecLeft treats specs as intent (not executable text) and keeps execution in pla
 
 ## AI Agents
 
-If you are integrating SpecLeft into an agent loop, start here:
+If you are integrating SpecLeft into an agent loop, it's recommended to install the MCP server (see in section below).
+
+Otherwise begin with:
 
 ```bash
 specleft doctor --format json
@@ -127,12 +134,6 @@ For MCP end-to-end smoke testing and CI workflow details, see [docs/mcp-testing.
 
 <!-- mcp-name: io.github.SpecLeft/specleft -->
 
-## CI Enforcement Early Access
-
-Want to enforce feature coverage and policy checks in CI with `specleft enforce`? Join Early Access to get setup guidance and rollout support.
-
-Learn more: [specleft.dev/enforce](https://specleft.dev/enforce)
-
 ## Docs
 
 - Getting started: [GET_STARTED.md](https://github.com/SpecLeft/specleft/blob/main/GET_STARTED.md)
@@ -143,13 +144,4 @@ Learn more: [specleft.dev/enforce](https://specleft.dev/enforce)
 
 ## License
 
-SpecLeft is **dual-licensed**:
-
-- **Open Core (Apache 2.0)** for the core engine and non-commercial modules
-- **Commercial License** for enforcement, signing, and license logic
-
-Open-source terms are in [LICENSE-OPEN](https://github.com/SpecLeft/specleft/blob/main/LICENSE-OPEN).
-Commercial terms are in [LICENSE-COMMERCIAL](https://github.com/SpecLeft/specleft/blob/main/LICENSE-COMMERCIAL).
-
-Commercial features (e.g., `specleft enforce`) require a valid license policy file.
-See [NOTICE.md](https://github.com/SpecLeft/specleft/blob/main/NOTICE.md) for licensing scope details.
+SpecLeft is licensed under [Apache License 2.0](https://github.com/SpecLeft/specleft/blob/main/LICENSE).

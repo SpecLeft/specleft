@@ -150,15 +150,7 @@ def _print_init_dry_run(directories: list[Path], files: list[tuple[Path, str]]) 
 def _print_license_notice() -> None:
     click.echo("Welcome to SpecLeft (v0.2.x)")
     click.echo("")
-    click.echo("Core technology is licensed under Apache 2.0.")
-    click.echo("Commercial features (e.g., `specleft enforce`) require a valid")
-    click.echo("commercial license policy.yml.")
-    click.echo("")
-    click.echo("To register a license:")
-    click.echo("  store the policy file in .specleft/policies/")
-    click.echo("")
-    click.echo("For details:")
-    click.echo("  https://specleft.dev/enforce")
+    click.echo("SpecLeft is licensed under Apache 2.0.")
 
 
 def _apply_init_plan(

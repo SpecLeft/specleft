@@ -7,7 +7,7 @@ specleft = ["py.typed", "templates/*.jinja2"]
 
 [project]
 name = "specleft"
-version = "0.3.0"
+version = "0.4.0"
 description = "A planning-first CLI for AI coding agents to externalize intent before writing code, with optional CI enforcement for Python projects."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,6 +18,7 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: Apache Software License",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Topic :: Software Development :: Build Tools",
@@ -33,7 +34,6 @@ dependencies = [
     "python-frontmatter>=1.0.0",
     "python-slugify>=8.0.0",
     "pyyaml>=6.0.0",
-    "cryptography>=41.0.0",
 ]
 keywords=[
     "ai",
@@ -166,10 +166,6 @@ disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
 module = "frontmatter"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "specleft_signing.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

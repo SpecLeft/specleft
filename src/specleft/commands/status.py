@@ -487,5 +487,5 @@ def status(
             show_only = "implemented"
         print_status_table(entries, show_only=show_only)
         click.echo(
-            "To enforce intent coverage in CI, see: https://specleft.dev/enforce"
+            "For CI guidance, see: https://github.com/SpecLeft/specleft/tree/main/docs"
         )

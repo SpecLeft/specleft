@@ -41,12 +41,17 @@ Thank you for your interest in contributing to SpecLeft SDK! This document provi
    pytest --version
    ```
 
+## Developing with coding agents
+
+1. Follow as much of the WORKFLOW.md as possible for development.
+2. Features have to be tested manually to ensure they work as intended.
+
 ## Running Tests
 
 ### Run All Tests
 
 ```bash
-pytest
+make test
 ```
 
 ### Run Tests with Coverage
@@ -109,6 +114,14 @@ specleft_scenario = []
 
 ## Code Style Guidelines
 
+### Linting Shortcut
+
+Use Make commands to run lint
+```bash
+> make lint
+> make lint-fix
+```
+
 ### Formatting
 
 We use **Black** for code formatting with default settings:
@@ -141,13 +154,7 @@ We use **MyPy** for static type checking:
 mypy src/
 ```
 
-### Linting Shortcut
 
-Use Make commands to run lint
-```bash
-> make lint
-> make lint-fix
-```
 
 ### Code Style Summary
 
@@ -253,6 +260,11 @@ Examples:
 
 ## Testing Guidelines
 
+### Manual Testing
+- For new features, we strongly encourage manually testing the functionality to ensure it works as intended.
+- We want to pass a human eye on what we build to ensure it meets the needs of users and agents.
+- This way we will visually see how the CLI commands work, especially in terms of performance.
+
 ### Writing Tests
 
 - Place tests in the `tests/` directory
@@ -261,7 +273,7 @@ Examples:
 - Use descriptive test names that explain what is being tested
 - Follow the Arrange-Act-Assert (AAA) pattern
 
-### Test Example
+### Behaviour Test Example
 
 ```python
 def test_specleft_decorator_stores_metadata():
@@ -279,16 +291,19 @@ def test_specleft_decorator_stores_metadata():
 
 ### Test Coverage
 
-- Aim for at least 80% code coverage
+- Aim for at least 90% code coverage
 - All public APIs should have tests
 - Include tests for edge cases and error conditions
+
+### Feature Coverage
+
+- Always verify that spec coverage is 100% with `specleft status`
 
 ## Documentation
 
 - Update the README.md for user-facing changes
 - Add docstrings to all public functions and classes
 - Include examples in docstrings where helpful
-- Update PROGRESS.md when completing implementation phases
 
 ## Questions?
 
