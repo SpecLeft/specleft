@@ -145,6 +145,23 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `TypeScriptRouteMiner` executes
 **Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
 
+### Story 12: Git history mining
+**Scenario:** As a discovery pipeline, I need language-agnostic intent signals from recent commits.
+**Given** a git repository and `ctx.config.max_git_commits`
+**When** `GitHistoryMiner` runs
+**Then** it executes `git log --no-merges` and emits `DiscoveredItem(kind=GIT_COMMIT)` entries for non-noise commits with changed source files.
+
+**Scenario:** As a miner maintainer, I need typed and filtered commit metadata.
+**Given** commits with conventional prefixes and changed files
+**When** items are emitted
+**Then** metadata validates against `GitCommitMeta` with short hash, subject, body, changed files, `conventional_type`, and deduplicated `file_prefixes`.
+**And** `chore:`, `ci:`, `build:`, `docs:`, `style:`, and `test:` commits are skipped.
+
+**Scenario:** As a pipeline operator, I need resilient behavior outside git repositories.
+**Given** a non-git directory or missing `git` binary
+**When** `GitHistoryMiner` executes
+**Then** it returns `MinerResult(error_kind=NOT_INSTALLED, items=[])` without raising.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -193,3 +210,10 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Route metadata validates against `ApiRouteMeta` for both Express and Next.js outputs.
 - `app/api/users/[id]/route.ts` exports like `DELETE` map to `/api/users/{id}` with `is_file_based_route=True`.
 - Next.js route files with multiple HTTP exports emit one API route item per export.
+- `GitHistoryMiner` is language-agnostic (`languages = frozenset()`) and always runs regardless of detected languages.
+- `GitHistoryMiner` executes `git log` with `--no-merges` and `-n {ctx.config.max_git_commits}`.
+- Commits with prefixes `chore:`, `ci:`, `build:`, `docs:`, `style:`, and `test:` are excluded from emitted items.
+- Only commits with at least one changed source file (`.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`) are emitted.
+- Git commit metadata validates against `GitCommitMeta`, including short hash and parsed `conventional_type`.
+- All git commit items have `kind=GIT_COMMIT`, `language=None`, `file_path=None`, and `confidence=0.5`.
+- Running discovery on a non-git directory produces a miner error with `error_kind=NOT_INSTALLED` and no exception.

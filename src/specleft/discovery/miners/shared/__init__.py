@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-__all__ = ["DocstringMiner", "ReadmeOverviewMiner"]
+__all__ = ["DocstringMiner", "GitHistoryMiner", "ReadmeOverviewMiner"]
 
 
 def __getattr__(name: str) -> object:
@@ -13,6 +13,10 @@ def __getattr__(name: str) -> object:
         from specleft.discovery.miners.shared.docstrings import DocstringMiner
 
         return DocstringMiner
+    if name == "GitHistoryMiner":
+        from specleft.discovery.miners.shared.git_history import GitHistoryMiner
+
+        return GitHistoryMiner
     if name == "ReadmeOverviewMiner":
         from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
 
