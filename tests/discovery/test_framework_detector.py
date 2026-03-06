@@ -71,3 +71,19 @@ def test_framework_detector_detects_specleft_repo_pytest_only() -> None:
     frameworks = FrameworkDetector().detect(root, index)
 
     assert frameworks == {SupportedLanguage.PYTHON: ["pytest"]}
+
+
+def test_framework_detector_supports_injected_policies(tmp_path: Path) -> None:
+    class _CustomPolicy:
+        language = SupportedLanguage.PYTHON
+
+        def detect(self, ctx: object) -> list[str]:
+            _ = ctx
+            return ["custom-framework"]
+
+    index = FileIndex(tmp_path)
+    detector = FrameworkDetector(policies=(_CustomPolicy(),))
+
+    frameworks = detector.detect(tmp_path, index)
+
+    assert frameworks == {SupportedLanguage.PYTHON: ["custom-framework"]}
