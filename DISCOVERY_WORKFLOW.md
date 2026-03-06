@@ -104,15 +104,15 @@ This `COMMENT_ID` is used in all subsequent comment updates. Keep it for the dur
 Use `gh issue develop` to create a branch with automatic issue linkage:
 
 ```bash
-gh issue develop <NUMBER> --repo SpecLeft/specleft --name <NUMBER>-<short-description> --base feature/discovery-layer
+gh issue develop <NUMBER> --repo SpecLeft/specleft --name feature/discovery-layer/<NUMBER>-<short-description> --base feature/discovery-layer
 ```
 
-Branch naming convention: `<issue-number>-<kebab-case-description>`
+Branch naming convention: `feature/discovery-layer/<issue-number>-<kebab-case-description>`
 
 Examples:
-- `92-add-plan-template-support`
-- `85-skeleton-bug`
-- `68-flexible-prd-parsing`
+- `feature/discovery-layer/92-add-plan-template-support`
+- `feature/discovery-layer/85-skeleton-bug`
+- `feature/discovery-layer/68-flexible-prd-parsing`
 
 ---
 
@@ -120,7 +120,7 @@ Examples:
 
 ```bash
 git fetch origin
-git checkout <NUMBER>-<short-description>
+git checkout feature/discovery-layer/<NUMBER>-<short-description>
 ```
 
 ---
