@@ -16,6 +16,7 @@ from specleft.discovery.file_index import FileIndex
 from specleft.discovery.framework_detector import FrameworkDetector
 from specleft.discovery.language_detect import detect_project_languages
 from specleft.discovery.language_registry import LanguageRegistry
+from specleft.discovery.miners import DocstringMiner
 from specleft.discovery.models import (
     DiscoveryReport,
     DiscoveredItem,
@@ -242,4 +243,4 @@ class _ReadmeMiner:
 
 
 def _default_miners() -> list[BaseMiner]:
-    return [_ReadmeMiner()]
+    return [_ReadmeMiner(), DocstringMiner()]
