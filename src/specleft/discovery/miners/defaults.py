@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from specleft.discovery.miners.python.tests import PythonTestMiner
 from specleft.discovery.miners.shared.docstrings import DocstringMiner
 from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
+from specleft.discovery.miners.typescript.tests import TypeScriptTestMiner
 
 if TYPE_CHECKING:
     from specleft.discovery.pipeline import BaseMiner
@@ -17,4 +18,9 @@ if TYPE_CHECKING:
 
 def default_miners() -> list[BaseMiner]:
     """Return default miners in deterministic execution order."""
-    return [ReadmeOverviewMiner(), PythonTestMiner(), DocstringMiner()]
+    return [
+        ReadmeOverviewMiner(),
+        PythonTestMiner(),
+        TypeScriptTestMiner(),
+        DocstringMiner(),
+    ]

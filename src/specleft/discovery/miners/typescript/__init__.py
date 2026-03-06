@@ -4,5 +4,6 @@
 """TypeScript/JavaScript-specific discovery miners."""
 
 from specleft.discovery.miners.typescript.jsdoc import extract_jsdoc_items
+from specleft.discovery.miners.typescript.tests import TypeScriptTestMiner
 
-__all__ = ["extract_jsdoc_items"]
+__all__ = ["TypeScriptTestMiner", "extract_jsdoc_items"]
