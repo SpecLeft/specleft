@@ -35,10 +35,20 @@ def test_detect_language_skips_unsupported_extension() -> None:
     assert LanguageRegistry().detect_language(Path("script.rb")) is None
 
 
+@pytest.mark.parametrize(
+    ("filename", "expected_language"),
+    [
+        ("sample.py", SupportedLanguage.PYTHON),
+        ("sample.ts", SupportedLanguage.TYPESCRIPT),
+    ],
+)
 def test_parse_uses_parse_source_and_returns_detected_language(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    filename: str,
+    expected_language: SupportedLanguage,
 ) -> None:
-    path = tmp_path / "sample.py"
+    path = tmp_path / filename
     path.write_text("x = 1")
 
     registry = LanguageRegistry()
@@ -52,7 +62,7 @@ def test_parse_uses_parse_source_and_returns_detected_language(
     assert result is not None
     root_node, language = result
     assert root_node == "fake-root"
-    assert language == SupportedLanguage.PYTHON
+    assert language == expected_language
 
 
 def test_parse_returns_none_for_unsupported_extension(tmp_path: Path) -> None:
@@ -74,6 +84,22 @@ def test_parse_returns_none_on_parse_error(
         raise RuntimeError("boom")
 
     monkeypatch.setattr(registry, "parse_source", broken)
+    assert registry.parse(path) is None
+
+
+def test_parse_returns_none_on_corrupt_content(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    path = tmp_path / "corrupt.py"
+    path.write_bytes(b"\x80\x81\x82")
+
+    registry = LanguageRegistry()
+
+    class FakeParser:
+        def parse(self, _source: bytes) -> SimpleNamespace:
+            return SimpleNamespace(root_node=SimpleNamespace(has_error=True))
+
+    monkeypatch.setattr(registry, "_parser_for", lambda _language: FakeParser())
     assert registry.parse(path) is None
 
 

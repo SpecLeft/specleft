@@ -25,9 +25,7 @@ def test_detect_project_languages_uses_ratio_threshold(tmp_path: Path) -> None:
         SupportedLanguage.PYTHON,
         SupportedLanguage.TYPESCRIPT,
     }
-    assert set(detect_project_languages(index, threshold=0.7)) == {
-        SupportedLanguage.PYTHON
-    }
+    assert set(detect_project_languages(index, threshold=0.7)) == set()
 
 
 def test_detect_project_languages_empty_index_returns_empty(tmp_path: Path) -> None:

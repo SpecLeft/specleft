@@ -65,7 +65,11 @@ class LanguageRegistry:
         except Exception:
             return None
 
-        return tree.root_node
+        root_node = tree.root_node
+        if getattr(root_node, "has_error", False):
+            return None
+
+        return root_node
 
     def _parser_for(self, language: SupportedLanguage) -> Any | None:
         parser = self._parser_cache.get(language)

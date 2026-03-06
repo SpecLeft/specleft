@@ -31,11 +31,15 @@ Add shared discovery infrastructure for Issue #125: centralized parser abstracti
 **Scenario:** As downstream planning logic, I need a low-cost language signal.
 **Given** a populated `FileIndex`
 **When** calling `detect_project_languages(index)`
-**Then** it returns detected languages above the ratio threshold.
+**Then** it returns detected languages above the ratio threshold, computed against total indexed files.
 
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
+- `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
+- `LanguageRegistry().parse(path_to_ts_file)` returns `(node, SupportedLanguage.TYPESCRIPT)` for valid TypeScript input.
+- Corrupt file content returns `None` without raising.
 - Grammar/parser handling is cached and does not recreate parser objects per call.
 - `FileIndex` builds once per root and exposes query helpers used by miners.
+- `detect_project_languages()` thresholds are applied against total indexed files, not only supported-language files.
 - Tests cover registry parsing, caching behavior, index filtering, and language detection thresholding.
 - Feature spec is updated to document the new discovery layer behavior for issue #125.
