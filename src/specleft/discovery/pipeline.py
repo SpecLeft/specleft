@@ -16,11 +16,9 @@ from specleft.discovery.file_index import FileIndex
 from specleft.discovery.framework_detector import FrameworkDetector
 from specleft.discovery.language_detect import detect_project_languages
 from specleft.discovery.language_registry import LanguageRegistry
+from specleft.discovery.miners import default_miners
 from specleft.discovery.models import (
     DiscoveryReport,
-    DiscoveredItem,
-    DocstringMeta,
-    ItemKind,
     MinerErrorKind,
     MinerResult,
     SupportedLanguage,
@@ -185,61 +183,5 @@ def _normalize_languages(
     return normalized
 
 
-class _ReadmeMiner:
-    """Minimal built-in miner used as default pipeline baseline."""
-
-    miner_id = uuid.UUID("2f87e7a5-a362-4adc-a005-84457b6abc04")
-    name = "readme_overview"
-    languages: frozenset[SupportedLanguage] = frozenset()
-
-    def mine(self, ctx: MinerContext) -> MinerResult:
-        readme_paths = (
-            Path("README.md"),
-            Path("README.rst"),
-            Path("README.txt"),
-        )
-
-        items: list[DiscoveredItem] = []
-        for rel_path in readme_paths:
-            abs_path = ctx.root / rel_path
-            if not abs_path.is_file():
-                continue
-
-            try:
-                raw_text = abs_path.read_text(encoding="utf-8")
-            except OSError:
-                continue
-            except UnicodeDecodeError:
-                continue
-
-            first_line = next(
-                (line.strip() for line in raw_text.splitlines() if line.strip()),
-                "Project overview",
-            )
-            item = DiscoveredItem(
-                kind=ItemKind.DOCSTRING,
-                name="project_overview",
-                file_path=rel_path,
-                line_number=1,
-                language=None,
-                raw_text=first_line,
-                metadata=DocstringMeta(
-                    target_kind="module",
-                    target_name="README",
-                    text=first_line,
-                ).model_dump(),
-                confidence=0.3,
-            )
-            items.append(item)
-            break
-
-        return MinerResult(
-            miner_id=self.miner_id,
-            miner_name=self.name,
-            items=items,
-            duration_ms=0,
-        )
-
-
 def _default_miners() -> list[BaseMiner]:
-    return [_ReadmeMiner()]
+    return default_miners()
