@@ -1,7 +1,7 @@
-# Feature Spec: Discovery language registry and file indexing
+# Feature Spec: Discovery pipeline foundations
 
 ## Purpose
-Add shared discovery infrastructure for Issue #125: centralized parser abstraction and one-pass filesystem indexing.
+Add shared discovery infrastructure for Issues #125 and #126: centralized parser abstraction, one-pass filesystem indexing, framework/config detection, and pipeline orchestration.
 
 ## User Stories
 
@@ -33,6 +33,35 @@ Add shared discovery infrastructure for Issue #125: centralized parser abstracti
 **When** calling `detect_project_languages(index)`
 **Then** it returns detected languages above the ratio threshold, computed against total indexed files.
 
+### Story 4: Discovery configuration and framework detection
+**Scenario:** As a pipeline maintainer, I need project-local discovery settings.
+**Given** a repository root with `[tool.specleft.discovery]` in `pyproject.toml`
+**When** I load `DiscoveryConfig.from_pyproject(root)`
+**Then** it should return configured values with safe defaults for missing/invalid fields.
+
+**Scenario:** As a discovery pipeline, I need framework signals shared across miners.
+**Given** a repository with `pytest` configuration and matching test files
+**When** I call `FrameworkDetector().detect(root, file_index)`
+**Then** it should return `{SupportedLanguage.PYTHON: ["pytest"]}`.
+
+### Story 5: Orchestrated miner execution
+**Scenario:** As a discovery pipeline, I need deterministic and resilient miner execution.
+**Given** a set of registered miners
+**When** one miner raises an exception
+**Then** the pipeline records the error in that miner result and continues running the remaining miners.
+
+**Scenario:** As a pipeline consumer, I need correct filtering semantics.
+**Given** detected project languages and miner language scopes
+**When** a miner has no overlap with detected languages
+**Then** it is skipped silently.
+**And** language-agnostic miners (`languages = frozenset()`) always run.
+
+### Story 6: Default pipeline wiring
+**Scenario:** As a command entrypoint (`specleft discover` / `specleft start`), I need one constructor that wires everything.
+**Given** a project root
+**When** I call `build_default_pipeline(root).run()`
+**Then** a `DiscoveryReport` is returned with run duration, detected languages, miner results, and total item counts.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -41,5 +70,17 @@ Add shared discovery infrastructure for Issue #125: centralized parser abstracti
 - Grammar/parser handling is cached and does not recreate parser objects per call.
 - `FileIndex` builds once per root and exposes query helpers used by miners.
 - `detect_project_languages()` thresholds are applied against total indexed files, not only supported-language files.
-- Tests cover registry parsing, caching behavior, index filtering, and language detection thresholding.
-- Feature spec is updated to document the new discovery layer behavior for issue #125.
+- `DiscoveryConfig.from_pyproject(root)` loads custom settings from `[tool.specleft.discovery]`.
+- `DiscoveryConfig.from_pyproject(root)` returns defaults when the section is missing.
+- `FrameworkDetector.detect()` returns `{PYTHON: ["pytest"]}` on the SpecLeft repo.
+- `FrameworkDetector` is called once per pipeline run and the result is shared through one `MinerContext`.
+- `MinerContext` is constructed once and reused for all miner calls in that run.
+- Per-miner exceptions are captured into `MinerResult.error`/`error_kind` without stopping the run.
+- `DiscoveryReport.total_items` excludes items from miners that errored.
+- Miners with no language overlap are skipped; language-agnostic miners always run.
+- `register()` raises `ValueError` for duplicate `miner_id` UUIDs.
+- `MinerResult.miner_id` and `miner_name` in output are populated from the miner instance.
+- `build_default_pipeline(root).run()` returns a valid `DiscoveryReport` even when all registered miners fail.
+- Integration on the SpecLeft repository produces `report.total_items > 0`.
+- Tests cover config parsing, framework detection, pipeline registration/filtering/error isolation, and default pipeline integration.
+- Feature spec is updated to document the discovery layer behavior introduced in issues #125 and #126.
