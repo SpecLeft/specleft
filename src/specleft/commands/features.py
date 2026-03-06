@@ -815,7 +815,7 @@ def features_add(
     _ensure_interactive(interactive)
 
     if interactive:
-        title_input = click.prompt("Feature title", type=str).strip()
+        title_input = click.prompt("Feature title").strip()
         default_feature_id = generate_feature_id(title_input)
         feature_id_input = click.prompt(
             "Feature ID",
@@ -1036,8 +1036,8 @@ def features_add_scenario(
     _ensure_interactive(interactive)
 
     if interactive:
-        feature_input = click.prompt("Feature ID", type=str).strip()
-        title_input = click.prompt("Scenario title", type=str).strip()
+        feature_input = click.prompt("Feature ID").strip()
+        title_input = click.prompt("Scenario title").strip()
         default_scenario_id = generate_scenario_id(title_input)
         scenario_id_input = click.prompt(
             "Scenario ID",
