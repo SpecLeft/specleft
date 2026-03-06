@@ -8,6 +8,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import specleft.discovery.miners.shared.git_history as git_history_module
 from specleft.discovery.config import DiscoveryConfig
 from specleft.discovery.context import MinerContext
 from specleft.discovery.file_index import FileIndex
@@ -167,3 +168,31 @@ def test_git_history_miner_returns_not_installed_error_for_non_repo(
     assert result.items == []
     assert result.error is not None
     assert result.error_kind == MinerErrorKind.NOT_INSTALLED
+
+
+def test_git_history_miner_returns_parse_error_for_malformed_log_output(
+    tmp_path: Path, monkeypatch
+) -> None:
+    malformed_stdout = "\n".join(
+        [
+            "a" * 40,
+            "feat: malformed stream",
+            "body line without separator",
+        ]
+    )
+    process = subprocess.CompletedProcess(
+        args=["git"],
+        returncode=0,
+        stdout=malformed_stdout,
+        stderr="",
+    )
+
+    monkeypatch.setattr(git_history_module, "_run_git_log", lambda *_: process)
+
+    result = GitHistoryMiner().mine(_context(tmp_path))
+
+    assert result.items == []
+    assert result.error_kind == MinerErrorKind.PARSE_ERROR
+    assert result.error is not None
+    assert "missing '---END---' marker" in result.error
+    assert "commit aaaaaaa" in result.error

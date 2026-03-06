@@ -37,6 +37,10 @@ class _CommitRecord:
     changed_files: list[str]
 
 
+class _GitLogParseError(ValueError):
+    """Raised when `git log` output cannot be parsed safely."""
+
+
 class GitHistoryMiner:
     """Extract discovery signals from recent git commit history."""
 
@@ -64,7 +68,18 @@ class GitHistoryMiner:
                 duration_ms=elapsed_ms(started),
             )
 
-        items = _items_from_log(process.stdout)
+        try:
+            items = _items_from_log(process.stdout)
+        except _GitLogParseError as exc:
+            return MinerResult(
+                miner_id=self.miner_id,
+                miner_name=self.name,
+                items=[],
+                error=str(exc),
+                error_kind=MinerErrorKind.PARSE_ERROR,
+                duration_ms=elapsed_ms(started),
+            )
+
         return MinerResult(
             miner_id=self.miner_id,
             miner_name=self.name,
@@ -139,8 +154,17 @@ def _parse_records(log_output: str) -> list[_CommitRecord]:
     records: list[_CommitRecord] = []
     cursor = 0
     total_lines = len(lines)
+    safety_budget = total_lines + 1
 
     while cursor < total_lines:
+        if safety_budget <= 0:
+            raise _GitLogParseError(
+                "Git history parser stopped for safety: unable to make progress while "
+                "reading commit records. Please rerun and report if this persists."
+            )
+        safety_budget -= 1
+        iteration_start = cursor
+
         while cursor < total_lines and not _is_full_hash(lines[cursor]):
             cursor += 1
         if cursor >= total_lines:
@@ -149,17 +173,29 @@ def _parse_records(log_output: str) -> list[_CommitRecord]:
         commit_hash = lines[cursor].strip()
         cursor += 1
         if cursor >= total_lines:
-            break
+            raise _GitLogParseError(
+                "Git history parser found an incomplete record after commit "
+                f"{commit_hash[:7]}: missing subject line."
+            )
 
         subject = lines[cursor].strip()
+        if not subject:
+            raise _GitLogParseError(
+                "Git history parser found an empty commit subject for "
+                f"{commit_hash[:7]}."
+            )
         cursor += 1
 
         body_lines: list[str] = []
         while cursor < total_lines and lines[cursor].strip() != _SEPARATOR:
             body_lines.append(lines[cursor].rstrip())
             cursor += 1
-        if cursor < total_lines and lines[cursor].strip() == _SEPARATOR:
-            cursor += 1
+        if cursor >= total_lines:
+            raise _GitLogParseError(
+                "Git history parser found malformed `git log` output: missing "
+                f"'{_SEPARATOR}' marker for commit {commit_hash[:7]}."
+            )
+        cursor += 1
 
         changed_files: list[str] = []
         while cursor < total_lines and not _is_full_hash(lines[cursor]):
@@ -177,6 +213,12 @@ def _parse_records(log_output: str) -> list[_CommitRecord]:
                 changed_files=changed_files,
             )
         )
+
+        if cursor <= iteration_start:
+            raise _GitLogParseError(
+                "Git history parser stopped for safety: parser made no progress "
+                f"near line {iteration_start + 1}. Please rerun and report if this persists."
+            )
 
     return records
 
