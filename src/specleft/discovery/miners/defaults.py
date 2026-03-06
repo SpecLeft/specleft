@@ -11,6 +11,7 @@ from specleft.discovery.miners.python.routes import PythonRouteMiner
 from specleft.discovery.miners.python.tests import PythonTestMiner
 from specleft.discovery.miners.shared.docstrings import DocstringMiner
 from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
+from specleft.discovery.miners.typescript.routes import TypeScriptRouteMiner
 from specleft.discovery.miners.typescript.tests import TypeScriptTestMiner
 
 if TYPE_CHECKING:
@@ -24,5 +25,6 @@ def default_miners() -> list[BaseMiner]:
         PythonTestMiner(),
         PythonRouteMiner(),
         TypeScriptTestMiner(),
+        TypeScriptRouteMiner(),
         DocstringMiner(),
     ]

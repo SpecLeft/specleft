@@ -1,9 +1,17 @@
-// Sample API module for discovery tests
+// Sample Express API module for discovery tests
 
-export function getUser(userId: number): {id: number} {
-  return { id: userId };
+import express from "express";
+
+const app = express();
+const router = express.Router();
+
+router.get("/health", healthHandler);
+app.post("/users", createUserHandler);
+
+function healthHandler() {
+  return { ok: true };
 }
 
-export function createUser(payload: {name: string}): {name: string} {
-  return payload;
+function createUserHandler() {
+  return { created: true };
 }

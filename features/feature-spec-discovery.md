@@ -128,6 +128,23 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `PythonRouteMiner` runs with framework `django`
 **Then** both `path()` and `re_path()` entries are emitted as API route items.
 
+### Story 11: TypeScript/JavaScript API route mining
+**Scenario:** As a discovery pipeline, I need to extract Express routes from TS/JS sources.
+**Given** TypeScript/JavaScript files selected from `ctx.file_index` and framework signal `express`
+**When** `TypeScriptRouteMiner` runs
+**Then** calls like `router.get("/health", handler)` emit `DiscoveredItem(kind=API_ROUTE)` with `http_method="GET"` and `path="/health"`.
+
+**Scenario:** As a miner maintainer, I need Next.js App Router support.
+**Given** `app/**/route.ts` or `app/**/route.js` files with named exports like `export async function DELETE(...)`
+**When** `TypeScriptRouteMiner` runs with framework signal `nextjs`
+**Then** each HTTP export emits a separate API route item with inferred path (e.g. `app/api/users/[id]/route.ts` -> `/api/users/{id}`)
+**And** metadata sets `is_file_based_route=True`.
+
+**Scenario:** As a pipeline operator, I need resilient parse handling.
+**Given** one malformed TS/JS route file and one valid route file
+**When** `TypeScriptRouteMiner` executes
+**Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -169,3 +186,10 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Route metadata validates against `ApiRouteMeta`, including `response_model` for FastAPI and list-form `http_method` for Flask `methods=[...]`.
 - Django `urlpatterns` entries using both `path()` and `re_path()` produce API route items.
 - Missing Flask `methods` defaults to `["GET"]`.
+- `TypeScriptRouteMiner` reads candidate files from `ctx.file_index.files_by_language(...)` and `ctx.file_index.files_matching("route.ts", "route.js")` and does not walk the filesystem directly.
+- `TypeScriptRouteMiner` uses precomputed frameworks from `ctx.frameworks[SupportedLanguage.TYPESCRIPT]` / `ctx.frameworks[SupportedLanguage.JAVASCRIPT]` without re-parsing `package.json`.
+- Express calls like `router.get("/health", handler)` emit API route items with method `GET`, path `/health`, and `framework="express"`.
+- `.ts` files emit `language=SupportedLanguage.TYPESCRIPT`; `.js` files emit `language=SupportedLanguage.JAVASCRIPT`.
+- Route metadata validates against `ApiRouteMeta` for both Express and Next.js outputs.
+- `app/api/users/[id]/route.ts` exports like `DELETE` map to `/api/users/{id}` with `is_file_based_route=True`.
+- Next.js route files with multiple HTTP exports emit one API route item per export.
