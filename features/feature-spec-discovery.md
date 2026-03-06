@@ -78,6 +78,22 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** the content is trivial (10 chars or fewer)
 **Then** it is skipped and not emitted as a discovery item.
 
+### Story 8: Python test-function mining
+**Scenario:** As a discovery pipeline, I need to extract executable Python test signals.
+**Given** Python test files selected from `FileIndex`
+**When** `PythonTestMiner` runs
+**Then** it emits `DiscoveredItem(kind=TEST_FUNCTION)` entries for top-level `test_` functions and `test_` methods under `Test*` classes.
+
+**Scenario:** As a miner maintainer, I need framework and metadata fidelity.
+**Given** framework detection from `ctx.frameworks[SupportedLanguage.PYTHON]`
+**When** test items are emitted
+**Then** metadata validates against `TestFunctionMeta`, including decorator names, docstring flags, class context, and parametrization detection.
+
+**Scenario:** As a pipeline operator, I need resilient parse handling.
+**Given** one malformed Python test file and one valid file
+**When** `PythonTestMiner` executes
+**Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -104,3 +120,7 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - TypeScript/JavaScript JSDoc comments immediately preceding declarations are emitted with the correct `SupportedLanguage`.
 - Test files are excluded from docstring mining and configured `source_dirs` scope is respected.
 - Trivial `__init__` docstrings (<=10 chars) are skipped.
+- `PythonTestMiner` reads candidate files from `ctx.file_index.files_matching("test_*.py", "*_test.py")` and does not walk the filesystem directly.
+- `PythonTestMiner` uses precomputed frameworks from `ctx.frameworks[SupportedLanguage.PYTHON]` rather than re-detecting frameworks.
+- Python test metadata validates against `TestFunctionMeta`, including `is_parametrized` and `class_name` values.
+- Parse failures in individual test files set `MinerResult.error_kind=PARSE_ERROR` without aborting extraction from remaining files.

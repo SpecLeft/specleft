@@ -4,6 +4,13 @@
 """Discovery miner implementations."""
 
 from specleft.discovery.miners.defaults import default_miners
-from specleft.discovery.miners.shared import DocstringMiner, ReadmeOverviewMiner
+from specleft.discovery.miners.python.tests import PythonTestMiner
+from specleft.discovery.miners.shared.docstrings import DocstringMiner
+from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
 
-__all__ = ["DocstringMiner", "ReadmeOverviewMiner", "default_miners"]
+__all__ = [
+    "DocstringMiner",
+    "PythonTestMiner",
+    "ReadmeOverviewMiner",
+    "default_miners",
+]

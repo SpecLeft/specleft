@@ -7,7 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from specleft.discovery.miners.shared import DocstringMiner, ReadmeOverviewMiner
+from specleft.discovery.miners.python.tests import PythonTestMiner
+from specleft.discovery.miners.shared.docstrings import DocstringMiner
+from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
 
 if TYPE_CHECKING:
     from specleft.discovery.pipeline import BaseMiner
@@ -15,4 +17,4 @@ if TYPE_CHECKING:
 
 def default_miners() -> list[BaseMiner]:
     """Return default miners in deterministic execution order."""
-    return [ReadmeOverviewMiner(), DocstringMiner()]
+    return [ReadmeOverviewMiner(), PythonTestMiner(), DocstringMiner()]
