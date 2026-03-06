@@ -94,6 +94,22 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `PythonTestMiner` executes
 **Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
 
+### Story 9: TypeScript/JavaScript test-function mining
+**Scenario:** As a discovery pipeline, I need to extract Jest/Vitest test signals from TS/JS test files.
+**Given** TypeScript/JavaScript test files selected from `FileIndex`
+**When** `TypeScriptTestMiner` runs
+**Then** it emits `DiscoveredItem(kind=TEST_FUNCTION)` entries for `it(...)` and `test(...)` calls, including nested calls inside `describe(...)` blocks.
+
+**Scenario:** As a miner maintainer, I need describe context and todo fidelity.
+**Given** a nested `describe("Auth", () => { it.todo("pending test") })` block
+**When** test items are emitted
+**Then** metadata validates against `TestFunctionMeta` with `class_name="Auth"`, `call_style="it"`, and `has_todo=True`.
+
+**Scenario:** As a pipeline operator, I need resilient parse handling.
+**Given** one malformed TypeScript/JavaScript test file and one valid file
+**When** `TypeScriptTestMiner` executes
+**Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -124,3 +140,8 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - `PythonTestMiner` uses precomputed frameworks from `ctx.frameworks[SupportedLanguage.PYTHON]` rather than re-detecting frameworks.
 - Python test metadata validates against `TestFunctionMeta`, including `is_parametrized` and `class_name` values.
 - Parse failures in individual test files set `MinerResult.error_kind=PARSE_ERROR` without aborting extraction from remaining files.
+- `TypeScriptTestMiner` reads candidate files from `ctx.file_index.files_matching("*.test.ts", "*.spec.ts", "*.test.js", "*.spec.js", "*.test.tsx", "*.spec.tsx")` and does not walk the filesystem directly.
+- `TypeScriptTestMiner` uses precomputed frameworks from `ctx.frameworks[SupportedLanguage.TYPESCRIPT]` / `ctx.frameworks[SupportedLanguage.JAVASCRIPT]` instead of re-detecting frameworks.
+- TypeScript/JavaScript test metadata validates against `TestFunctionMeta`, including `call_style`, `has_todo`, and describe-block `class_name`.
+- `.ts` test files emit `language=SupportedLanguage.TYPESCRIPT`; `.js` files emit `language=SupportedLanguage.JAVASCRIPT`.
+- Confidence scoring is `0.9` for known framework + `.spec.` filename and `0.7` otherwise.
