@@ -4,5 +4,6 @@
 """Shared miners used by multiple discovery workflows."""
 
 from specleft.discovery.miners.shared.docstrings import DocstringMiner
+from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
 
-__all__ = ["DocstringMiner"]
+__all__ = ["DocstringMiner", "ReadmeOverviewMiner"]
