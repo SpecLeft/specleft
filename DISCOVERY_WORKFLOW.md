@@ -3,7 +3,7 @@
 Step-by-step workflow for AI coding agents working from the SpecLeft Discovery Kanban board.
 Designed for autonomous execution with full traceability back to the originating issue.
 
-Note: 
+Note:
 1. You have permission to execute `gh` commands outside of the sandbox.
 2. Implementation must be done in highest prioirty order as defined by the SpecLeft Discovery Layer project board.
 3. There are two iterations to complete for this project. Complete all issues in iteration 1 before moving to iteration 2.
@@ -221,8 +221,10 @@ Follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md):
 Chain the commands to save tool calls:
 
 ```bash
-make lint-fix && make lint && make test
+make lint-fix && make lint && make test && make pre-commit
 ```
+
+Before moving to Step 10, verify all three checks pass end-to-end; do not raise a PR otherwise.
 
 **Do not proceed to Step 10 if any step fails.** Fix issues first and re-run.
 
@@ -369,6 +371,7 @@ gh pr create \
 ## Testing
 - \`make test\` -- all tests passing
 - \`make lint\` -- all checks passing
+- \`make pre-commit\` -- all hooks passing
 
 ## Related Issues
 Closes #<NUMBER>"
