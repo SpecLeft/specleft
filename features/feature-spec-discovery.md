@@ -62,6 +62,22 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** I call `build_default_pipeline(root).run()`
 **Then** a `DiscoveryReport` is returned with run duration, detected languages, miner results, and total item counts.
 
+### Story 7: Shared docstring and JSDoc mining
+**Scenario:** As a discovery pipeline, I need intent-rich text signals from source code comments.
+**Given** configured source directories and a shared miner context
+**When** `DocstringMiner` runs
+**Then** it extracts Python module/class/function docstrings and TypeScript/JavaScript JSDoc comments into `DiscoveredItem(kind=DOCSTRING)` entries with typed `DocstringMeta`.
+
+**Scenario:** As a pipeline maintainer, I need predictable mining scope and exclusions.
+**Given** `source_dirs` in `DiscoveryConfig`
+**When** `DocstringMiner` scans files
+**Then** it reads only `ctx.file_index.files_under(*ctx.config.source_dirs)` and excludes test files (`test_*.py`, `*.test.ts`, etc.).
+
+**Scenario:** As a spec generation pipeline, I need clean signal quality.
+**Given** Python `__init__` docstrings
+**When** the content is trivial (10 chars or fewer)
+**Then** it is skipped and not emitted as a discovery item.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -84,3 +100,7 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Integration on the SpecLeft repository produces `report.total_items > 0`.
 - Tests cover config parsing, framework detection, pipeline registration/filtering/error isolation, and default pipeline integration.
 - Feature spec is updated to document the discovery layer behavior introduced in issues #125 and #126.
+- `DocstringMiner` emits module/class/function Python docstrings with `DocstringMeta` and `confidence=0.8`.
+- TypeScript/JavaScript JSDoc comments immediately preceding declarations are emitted with the correct `SupportedLanguage`.
+- Test files are excluded from docstring mining and configured `source_dirs` scope is respected.
+- Trivial `__init__` docstrings (<=10 chars) are skipped.
