@@ -110,6 +110,24 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `TypeScriptTestMiner` executes
 **Then** it reports `MinerErrorKind.PARSE_ERROR` for parse failures and still returns items from valid files.
 
+### Story 10: Python API route mining
+**Scenario:** As a discovery pipeline, I need to extract Python API routes across major frameworks.
+**Given** Python files selected from `ctx.file_index.files_by_language(SupportedLanguage.PYTHON)`
+**When** `PythonRouteMiner` runs with `ctx.frameworks[SupportedLanguage.PYTHON] = ["fastapi"]`
+**Then** it emits `DiscoveredItem(kind=API_ROUTE)` entries for decorated handlers with methods and paths.
+**And** FastAPI `response_model` is captured in `ApiRouteMeta`.
+
+**Scenario:** As a miner maintainer, I need Flask metadata fidelity.
+**Given** a Flask route `@bp.route("/items", methods=["GET", "POST"])` and `@app.route("/health")`
+**When** `PythonRouteMiner` emits items
+**Then** metadata validates against `ApiRouteMeta` with `http_method=["GET", "POST"]` for the first route
+**And** missing `methods` defaults to `["GET"]`.
+
+**Scenario:** As a discovery pipeline, I need Django URL pattern support.
+**Given** a module with `urlpatterns = [path(...), re_path(...)]`
+**When** `PythonRouteMiner` runs with framework `django`
+**Then** both `path()` and `re_path()` entries are emitted as API route items.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -145,3 +163,9 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - TypeScript/JavaScript test metadata validates against `TestFunctionMeta`, including `call_style`, `has_todo`, and describe-block `class_name`.
 - `.ts` test files emit `language=SupportedLanguage.TYPESCRIPT`; `.js` files emit `language=SupportedLanguage.JAVASCRIPT`.
 - Confidence scoring is `0.9` for known framework + `.spec.` filename and `0.7` otherwise.
+- `PythonRouteMiner` reads candidate files from `ctx.file_index.files_by_language(SupportedLanguage.PYTHON)` and does not walk the filesystem directly.
+- `PythonRouteMiner` uses precomputed Python frameworks from `ctx.frameworks[SupportedLanguage.PYTHON]` and does not re-parse manifests.
+- FastAPI fixtures with `GET`, `POST`, and `PATCH` decorators produce three API route items with correct methods and paths.
+- Route metadata validates against `ApiRouteMeta`, including `response_model` for FastAPI and list-form `http_method` for Flask `methods=[...]`.
+- Django `urlpatterns` entries using both `path()` and `re_path()` produce API route items.
+- Missing Flask `methods` defaults to `["GET"]`.

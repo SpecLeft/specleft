@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from specleft.discovery.miners.python.routes import PythonRouteMiner
 from specleft.discovery.miners.python.tests import PythonTestMiner
 from specleft.discovery.miners.shared.docstrings import DocstringMiner
 from specleft.discovery.miners.shared.readme import ReadmeOverviewMiner
@@ -21,6 +22,7 @@ def default_miners() -> list[BaseMiner]:
     return [
         ReadmeOverviewMiner(),
         PythonTestMiner(),
+        PythonRouteMiner(),
         TypeScriptTestMiner(),
         DocstringMiner(),
     ]
