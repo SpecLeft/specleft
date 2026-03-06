@@ -148,9 +148,12 @@ def test_discovery_report_serializes_uuid_and_paths() -> None:
     )
 
     dumped = report.model_dump()
-    assert dumped["miner_results"][0]["miner_id"] == "a7b21db5-0d22-41be-9902-7c725e63892e"
-    assert dumped["project_root"] == "/tmp"
-    assert dumped["miner_results"][0]["items"][0]["file_path"] == "/tmp/test.py"
+    assert (
+        str(dumped["miner_results"][0]["miner_id"])
+        == "a7b21db5-0d22-41be-9902-7c725e63892e"
+    )
+    assert str(dumped["project_root"]) == "/tmp"
+    assert str(dumped["miner_results"][0]["items"][0]["file_path"]) == "/tmp/test.py"
 
 
 def test_discovery_report_cached_items_are_reusable() -> None:

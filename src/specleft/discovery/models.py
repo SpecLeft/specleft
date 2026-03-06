@@ -109,7 +109,7 @@ class DiscoveredItem(BaseModel):
     confidence: float
 
     @model_validator(mode="after")
-    def validate_metadata_keys(self) -> "DiscoveredItem":
+    def validate_metadata_keys(self) -> DiscoveredItem:
         model_cls = METADATA_MODELS.get(self.kind)
         if model_cls is not None:
             model_cls.model_validate(self.metadata)
@@ -145,7 +145,12 @@ class DiscoveryReport(BaseModel):
     @cached_property
     def all_items(self) -> list[DiscoveredItem]:
         """Flatten items across all successful miner results."""
-        return [item for result in self.miner_results if result.error is None for item in result.items]
+        return [
+            item
+            for result in self.miner_results
+            if result.error is None
+            for item in result.items
+        ]
 
     @cached_property
     def items_by_kind(self) -> dict[ItemKind, list[DiscoveredItem]]:
