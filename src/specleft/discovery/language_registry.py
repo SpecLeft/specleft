@@ -81,10 +81,10 @@ class LanguageRegistry:
             return None
 
         try:
-            from tree_sitter import Parser  # type: ignore[import-untyped]
+            from tree_sitter import Parser
 
             parser = Parser()
-            parser.set_language(language_obj)
+            parser.language = language_obj
             self._parser_cache[language] = parser
             return parser
         except Exception:
@@ -96,14 +96,14 @@ class LanguageRegistry:
 
         if language == SupportedLanguage.PYTHON:
             try:
-                import tree_sitter_python  # type: ignore[import-not-found]
+                import tree_sitter_python
 
                 language_obj = tree_sitter_python.language()
             except Exception:
                 return None
         elif language in (SupportedLanguage.TYPESCRIPT, SupportedLanguage.JAVASCRIPT):
             try:
-                import tree_sitter_typescript  # type: ignore[import-not-found]
+                import tree_sitter_typescript
 
                 if language == SupportedLanguage.TYPESCRIPT:
                     language_obj = tree_sitter_typescript.language_typescript()

@@ -4,5 +4,6 @@
 """Python-specific discovery miners."""
 
 from specleft.discovery.miners.python.docstrings import extract_python_items
+from specleft.discovery.miners.python.tests import PythonTestMiner
 
-__all__ = ["extract_python_items"]
+__all__ = ["PythonTestMiner", "extract_python_items"]

@@ -146,7 +146,7 @@ def resolve_toml_loader() -> Any | None:
         return tomllib
     except ModuleNotFoundError:
         try:
-            import tomli  # type: ignore[import-not-found]
+            import tomli
 
             return tomli
         except ModuleNotFoundError:
