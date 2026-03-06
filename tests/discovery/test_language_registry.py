@@ -137,3 +137,32 @@ def test_parser_and_language_are_cached(monkeypatch: pytest.MonkeyPatch) -> None
     assert first is second
     assert first is parser
     assert calls["language"] == 1
+
+
+def test_javascript_uses_javascript_grammar_loader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    registry = LanguageRegistry()
+    calls: dict[str, int] = {"ts": 0, "js": 0}
+
+    def fake_ts_loader() -> str:
+        calls["ts"] += 1
+        return "ts-language"
+
+    def fake_js_loader() -> str:
+        calls["js"] += 1
+        return "js-language"
+
+    fake_typescript_module = SimpleNamespace(
+        language_typescript=fake_ts_loader,
+        language_javascript=fake_js_loader,
+    )
+    monkeypatch.setitem(sys.modules, "tree_sitter_typescript", fake_typescript_module)
+
+    js_language = registry._language_for(SupportedLanguage.JAVASCRIPT)
+    ts_language = registry._language_for(SupportedLanguage.TYPESCRIPT)
+
+    assert js_language == "js-language"
+    assert ts_language == "ts-language"
+    assert calls["js"] == 1
+    assert calls["ts"] == 1

@@ -105,7 +105,17 @@ class LanguageRegistry:
             try:
                 import tree_sitter_typescript  # type: ignore[import-not-found]
 
-                language_obj = tree_sitter_typescript.language_typescript()
+                if language == SupportedLanguage.TYPESCRIPT:
+                    language_obj = tree_sitter_typescript.language_typescript()
+                else:
+                    language_loader = getattr(
+                        tree_sitter_typescript,
+                        "language_javascript",
+                        None,
+                    )
+                    if language_loader is None:
+                        return None
+                    language_obj = language_loader()
             except Exception:
                 return None
         else:
