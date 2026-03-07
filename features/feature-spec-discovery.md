@@ -162,6 +162,23 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `GitHistoryMiner` executes
 **Then** it returns `MinerResult(error_kind=NOT_INSTALLED, items=[])` without raising.
 
+### Story 13: Phase 2 feature grouping
+**Scenario:** As a discovery pipeline, I need deterministic grouping for auth tests.
+**Given** 10 discovered test-function items from `tests/auth/`
+**When** `group_items(items)` is called
+**Then** all 10 items land in a single `DraftFeature` cluster.
+
+**Scenario:** As a discovery pipeline, I need route-prefix grouping.
+**Given** route items for `GET /payments/*`, `POST /payments`, and `GET /users/*`
+**When** `group_items(items)` is called
+**Then** payment routes group separately from user routes.
+
+**Scenario:** As a maintainer, I need complete and type-safe grouping.
+**Given** mixed discovered items (tests, routes, docstrings, git commits)
+**When** `group_items(items)` is called
+**Then** every `DiscoveredItem` appears in exactly one `DraftFeature`.
+**And** grouping uses `item.typed_meta()` for API and git metadata access.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -217,3 +234,9 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Git commit metadata validates against `GitCommitMeta`, including short hash and parsed `conventional_type`.
 - All git commit items have `kind=GIT_COMMIT`, `language=None`, `file_path=None`, and `confidence=0.5`.
 - Running discovery on a non-git directory produces a miner error with `error_kind=NOT_INSTALLED` and no exception.
+- `group_items()` clusters 10 items from `tests/auth/` into one feature.
+- API routes under `/payments` group separately from `/users`.
+- Every input `DiscoveredItem` is assigned exactly once to a feature (`source_items`).
+- Git commit items are merged into nearest matching feature via `GitCommitMeta.file_prefixes`.
+- Grouping uses `item.typed_meta()` for API and git metadata access.
+- Single-item groups are valid outputs.
