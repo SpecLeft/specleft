@@ -9,6 +9,7 @@ from specleft.discovery.framework_detector import FrameworkDetector
 from specleft.discovery.language_detect import detect_project_languages
 from specleft.discovery.language_registry import SUPPORTED_EXTENSIONS, LanguageRegistry
 from specleft.discovery.grouping import group_items
+from specleft.discovery.spec_writer import generate_draft_specs
 from specleft.discovery.pipeline import (
     BaseMiner,
     DiscoveryPipeline,

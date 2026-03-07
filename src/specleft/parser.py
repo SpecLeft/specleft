@@ -58,7 +58,11 @@ class SpecParser:
         features: list[FeatureSpec] = []
 
         for feature_path in sorted(features_dir.iterdir()):
-            if feature_path.is_dir() and not feature_path.name.startswith("."):
+            if (
+                feature_path.is_dir()
+                and not feature_path.name.startswith(".")
+                and not feature_path.name.startswith("_")
+            ):
                 feature = self._parse_feature_dir(feature_path)
                 if feature:
                     features.append(feature)

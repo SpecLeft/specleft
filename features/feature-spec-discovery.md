@@ -179,6 +179,30 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **Then** every `DiscoveredItem` appears in exactly one `DraftFeature`.
 **And** grouping uses `item.typed_meta()` for API and git metadata access.
 
+### Story 14: Draft spec markdown generation and parser-safe staging
+**Scenario:** As a discovery command, I need dry-run-safe draft spec generation.
+**Given** grouped `DraftFeature` objects and an output dir
+**When** `generate_draft_specs(..., dry_run=True)` is called
+**Then** it returns the expected output file paths without writing files.
+
+**Scenario:** As a discovery pipeline, I need parser-compatible markdown output.
+**Given** a `DraftFeature` with `DraftScenario.steps` as `SpecStep` models
+**When** `generate_draft_specs(...)` writes markdown
+**Then** each scenario is rendered with exactly three `Given/When/Then` bullet steps from the existing `SpecStep` objects.
+**And** promoted files parse successfully with `SpecParser` / `SpecsConfig.from_directory`.
+
+**Scenario:** As a maintainer, I need safe overwrite controls.
+**Given** an existing draft markdown file in the output directory
+**When** `overwrite=False` (default)
+**Then** the file is skipped and left unchanged.
+**And when** `overwrite=True`
+**Then** the existing file is replaced.
+
+**Scenario:** As a parser consumer, I need `_discovered` isolation.
+**Given** `.specleft/specs/_discovered/` contains draft markdown files
+**When** `SpecsConfig.from_directory(".specleft/specs")` parses specs
+**Then** `_discovered` is skipped because directories prefixed with `_` are ignored during recursion.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -240,3 +264,13 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Git commit items are merged into nearest matching feature via `GitCommitMeta.file_prefixes`.
 - Grouping uses `item.typed_meta()` for API and git metadata access.
 - Single-item groups are valid outputs.
+- `generate_draft_specs(..., dry_run=True)` returns expected file paths and does not create/write files.
+- `generate_draft_specs(...)` writes markdown with a generated-feature note and scenario source comments when source location exists.
+- Scenario step rendering is direct from `SpecStep` objects and does not perform string-to-step parsing.
+- Written/promotion-ready markdown parses successfully via `SpecParser` with zero validation errors.
+- Each generated scenario includes exactly 3 steps (Given, When, Then).
+- Generated feature and scenario IDs validate against `validate_feature_id()` and `validate_scenario_id()`.
+- Existing files are skipped when `overwrite=False`.
+- Existing files are replaced when `overwrite=True`.
+- Parser recursion skips all underscore-prefixed directories (for example, `.specleft/specs/_discovered/`).
+- `SpecsConfig.from_directory(".specleft/specs")` excludes files from `_discovered/`.
