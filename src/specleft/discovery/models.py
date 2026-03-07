@@ -85,6 +85,8 @@ METADATA_MODELS: dict[ItemKind, type[BaseModel]] = {
     ItemKind.GIT_COMMIT: GitCommitMeta,
 }
 
+DEFAULT_DISCOVERY_OUTPUT_DIR = Path(".specleft/specs/_discovered")
+
 
 class MinerErrorKind(str, Enum):
     """Categories for structured miner errors."""
@@ -184,5 +186,5 @@ class DraftSpec(BaseModel):
     """Container for generated draft specs."""
 
     features: list[DraftFeature]
-    output_dir: Path
+    output_dir: Path = DEFAULT_DISCOVERY_OUTPUT_DIR
     generated_at: str
