@@ -194,3 +194,44 @@ def test_login_success():
             assert "priority" in scenario
             assert "tags" in scenario
             assert "steps" in scenario
+
+    def test_status_uses_convention_match_when_decorator_is_missing(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="user-authentication",
+                scenario_id="valid-credentials",
+            )
+            Path("tests").mkdir(parents=True, exist_ok=True)
+            Path("tests/test_user_authentication.py").write_text("""
+def test_valid_credentials():
+    pass
+""")
+
+            result = runner.invoke(cli, ["status", "--format", "json", "--verbose"])
+            assert result.exit_code == 0
+            payload = json.loads(result.output)
+            scenario = payload["features"][0]["scenarios"][0]
+            assert scenario["status"] == "implemented"
+            assert scenario["match_kind"] == "convention"
+            assert scenario["test_file"] == "tests/test_user_authentication.py"
+
+    def test_status_table_marks_convention_matches(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            create_single_file_feature_spec(
+                Path("."),
+                feature_id="user-authentication",
+                scenario_id="valid-credentials",
+            )
+            Path("tests").mkdir(parents=True, exist_ok=True)
+            Path("tests/test_user_authentication.py").write_text("""
+def test_valid_credentials():
+    pass
+""")
+
+            result = runner.invoke(cli, ["status", "--format", "table"])
+            assert result.exit_code == 0
+            assert "✓ (convention)" in result.output
+            assert "valid-credentials" in result.output
