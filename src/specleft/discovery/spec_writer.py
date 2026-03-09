@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from specleft.discovery.models import DraftFeature, DraftScenario
+from specleft.discovery.traceability import TraceabilityLink
 from specleft.schema import SpecStep
 from specleft.utils.feature_writer import (
     generate_feature_id,
@@ -27,11 +28,13 @@ def generate_draft_specs(
     output_dir: Path,
     dry_run: bool = False,
     overwrite: bool = False,
+    traceability_links: list[TraceabilityLink] | None = None,
 ) -> list[Path]:
     """Write draft specs and return written paths (or would-be paths in dry-run)."""
     if not dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
 
+    traceability_index = _index_traceability_links(traceability_links or [])
     output_paths: list[Path] = []
     for feature in draft_features:
         feature_id = _resolve_feature_id(feature)
@@ -44,7 +47,9 @@ def generate_draft_specs(
         if dry_run:
             continue
 
-        feature_path.write_text(_render_feature(feature))
+        feature_path.write_text(
+            _render_feature(feature, feature_id, traceability_index)
+        )
 
     return output_paths
 
@@ -69,7 +74,11 @@ def _resolve_scenario_id(scenario: DraftScenario) -> str:
     return scenario_id
 
 
-def _render_feature(feature: DraftFeature) -> str:
+def _render_feature(
+    feature: DraftFeature,
+    feature_id: str,
+    traceability_index: dict[tuple[str, str], list[TraceabilityLink]],
+) -> str:
     lines: list[str] = [
         f"# Feature: {feature.name}",
         _GENERATED_NOTE,
@@ -89,6 +98,11 @@ def _render_feature(feature: DraftFeature) -> str:
                 "",
             ]
         )
+
+        feature_key = feature_id.lower().replace("_", "-")
+        scenario_links = traceability_index.get((feature_key, scenario_id), [])
+        if scenario_links:
+            lines.extend(_render_linked_tests_frontmatter(scenario_links))
 
         source_line = _source_line(scenario)
         if source_line is not None:
@@ -125,3 +139,38 @@ def _source_line(scenario: DraftScenario) -> str | None:
 
 def _format_steps(steps: list[SpecStep]) -> list[str]:
     return [f"- {step.type.value.capitalize()} {step.description}" for step in steps]
+
+
+def _index_traceability_links(
+    links: list[TraceabilityLink],
+) -> dict[tuple[str, str], list[TraceabilityLink]]:
+    indexed: dict[tuple[str, str], list[TraceabilityLink]] = {}
+    for link in links:
+        feature_key = link.spec_file.stem.strip().lower().replace("_", "-")
+        scenario_key = link.scenario_id.strip().lower()
+        if not feature_key or not scenario_key:
+            continue
+        indexed.setdefault((feature_key, scenario_key), []).append(link)
+    return indexed
+
+
+def _render_linked_tests_frontmatter(links: list[TraceabilityLink]) -> list[str]:
+    ordered = sorted(
+        links,
+        key=lambda link: (
+            -link.confidence,
+            link.test_file.as_posix(),
+            link.test_function,
+        ),
+    )
+    lines = ["---", "linked_tests:"]
+    for link in ordered:
+        lines.extend(
+            [
+                f"  - file: {link.test_file.as_posix()}",
+                f"    function: {link.test_function}",
+                f"    confidence: {link.confidence:.1f}",
+            ]
+        )
+    lines.extend(["---", ""])
+    return lines

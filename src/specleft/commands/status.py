@@ -17,6 +17,13 @@ from specleft.commands.formatters import get_priority_value
 from specleft.commands.input_validation import validate_id_parameter
 from specleft.commands.output import json_dumps, resolve_output_format
 from specleft.commands.types import ScenarioStatus, ScenarioStatusEntry, StatusSummary
+from specleft.discovery.models import (
+    DiscoveredItem,
+    ItemKind,
+    SupportedLanguage,
+    TestFunctionMeta,
+)
+from specleft.discovery.traceability import TraceabilityLink, infer_traceability
 from specleft.schema import SpecsConfig
 from specleft.utils.messaging import print_support_footer
 from specleft.utils.specs_dir import resolve_specs_dir
@@ -56,6 +63,93 @@ def _index_specleft_tests(tests_dir: Path) -> dict[str, dict[str, object]]:
             }
 
     return scenario_map
+
+
+def _discover_python_test_functions_for_traceability(
+    tests_dir: Path,
+) -> list[DiscoveredItem]:
+    items: list[DiscoveredItem] = []
+    metadata = TestFunctionMeta(framework="unknown").model_dump()
+
+    for file_path in _iter_py_files(tests_dir):
+        try:
+            content = file_path.read_text()
+        except OSError:
+            continue
+
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            continue
+
+        for function_node in _iter_test_nodes(tree):
+            relative_path = _to_relative(file_path)
+            items.append(
+                DiscoveredItem(
+                    kind=ItemKind.TEST_FUNCTION,
+                    name=function_node.name,
+                    file_path=relative_path,
+                    line_number=getattr(function_node, "lineno", None),
+                    language=SupportedLanguage.PYTHON,
+                    raw_text=None,
+                    metadata=metadata,
+                    confidence=0.6,
+                )
+            )
+
+    return items
+
+
+def _iter_test_nodes(tree: ast.Module) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
+    test_nodes: list[ast.FunctionDef | ast.AsyncFunctionDef] = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            if node.name.startswith("test_"):
+                test_nodes.append(node)
+            continue
+
+        if not isinstance(node, ast.ClassDef) or not node.name.startswith("Test"):
+            continue
+
+        for member in node.body:
+            if isinstance(member, ast.FunctionDef | ast.AsyncFunctionDef) and (
+                member.name.startswith("test_")
+            ):
+                test_nodes.append(member)
+
+    return test_nodes
+
+
+def _to_relative(file_path: Path) -> Path:
+    try:
+        return file_path.relative_to(Path.cwd())
+    except ValueError:
+        return file_path
+
+
+def _build_convention_index(
+    links: list[TraceabilityLink],
+) -> dict[tuple[str, str], TraceabilityLink]:
+    index: dict[tuple[str, str], TraceabilityLink] = {}
+    for link in links:
+        key = (link.spec_file.as_posix(), link.scenario_id)
+        current = index.get(key)
+        if current is None or link.confidence > current.confidence:
+            index[key] = link
+    return index
+
+
+def _traceability_spec_file(feature: object) -> Path:
+    source_file = getattr(feature, "source_file", None)
+    if isinstance(source_file, Path):
+        return source_file
+
+    source_dir = getattr(feature, "source_dir", None)
+    if isinstance(source_dir, Path):
+        return source_dir / "_feature.md"
+
+    feature_id = str(getattr(feature, "feature_id", "feature"))
+    return Path(f"{feature_id}.md")
 
 
 def _build_status_table_rows(entries: list[ScenarioStatusEntry]) -> list[str]:
@@ -110,6 +204,12 @@ def build_status_entries(
     story_id: str | None = None,
 ) -> list[ScenarioStatusEntry]:
     scenario_map = _index_specleft_tests(tests_dir)
+    convention_index = _build_convention_index(
+        infer_traceability(
+            _discover_python_test_functions_for_traceability(tests_dir),
+            config,
+        )
+    )
     entries: list[ScenarioStatusEntry] = []
 
     for feature in config.features:
@@ -127,12 +227,29 @@ def build_status_entries(
                     tests_dir, feature.feature_id, story.story_id
                 )
 
+            traceability_spec_file = _traceability_spec_file(feature)
             for scenario in story.scenarios:
                 info = scenario_map.get(scenario.scenario_id)
-                status = _determine_scenario_status(
-                    test_file_path=str(test_file),
-                    test_info=info,
-                )
+                if info is None:
+                    convention_link = convention_index.get(
+                        (traceability_spec_file.as_posix(), scenario.scenario_id)
+                    )
+                else:
+                    convention_link = None
+
+                if convention_link is not None:
+                    status = ScenarioStatus(
+                        status="implemented",
+                        test_file=convention_link.test_file.as_posix(),
+                        test_function=convention_link.test_function,
+                        reason=None,
+                        match_kind="convention",
+                    )
+                else:
+                    status = _determine_scenario_status(
+                        test_file_path=str(test_file),
+                        test_info=info,
+                    )
                 entries.append(
                     ScenarioStatusEntry(
                         feature=feature,
@@ -143,6 +260,7 @@ def build_status_entries(
                         test_function=status.test_function
                         or scenario.test_function_name,
                         reason=status.reason,
+                        match_kind=status.match_kind,
                     )
                 )
 
@@ -223,6 +341,8 @@ def build_status_json(
                 status_info["execution_time"] = entry.scenario.execution_time.value
             if entry.reason:
                 status_info["reason"] = entry.reason
+            if entry.match_kind:
+                status_info["match_kind"] = entry.match_kind
             scenario_status[entry.scenario.scenario_id] = status_info
 
         # Get all scenarios from entries (flattened from stories)
@@ -302,7 +422,8 @@ def print_status_table(
             if entry.status != "implemented":
                 continue
             path = f"{entry.feature.feature_id}/{entry.story.story_id}/{entry.scenario.scenario_id}"
-            click.echo(f"✓ {path}")
+            marker = "✓ (convention)" if entry.match_kind == "convention" else "✓"
+            click.echo(f"{marker} {path}")
             click.echo(f"  → {entry.test_file}::{entry.test_function}")
             click.echo("")
 
@@ -343,6 +464,8 @@ def print_status_table(
         # Show scenarios directly (flattened from stories)
         for entry in feature_entries:
             marker = "✓" if entry.status == "implemented" else "⚠"
+            if entry.status == "implemented" and entry.match_kind == "convention":
+                marker = "✓ (convention)"
             path = f"{entry.test_file}::{entry.test_function}"
             suffix = "" if entry.status == "implemented" else " (skipped)"
             click.echo(f"  {marker} {entry.scenario.scenario_id:<25} {path}{suffix}")

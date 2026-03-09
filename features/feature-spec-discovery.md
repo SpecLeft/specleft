@@ -203,6 +203,25 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `SpecsConfig.from_directory(".specleft/specs")` parses specs
 **Then** `_discovered` is skipped because directories prefixed with `_` are ignored during recursion.
 
+### Story 15: Convention-based traceability fallback
+**Scenario:** As a status consumer, I need convention matching when decorators are absent.
+**Given** `.specleft/specs/user-authentication.md` contains scenario `valid-credentials`
+**And** a test file `tests/test_user_authentication.py` defines `test_valid_credentials`
+**When** `specleft status` evaluates implementation coverage
+**Then** the scenario is marked implemented via convention matching
+**And** table output shows `✓ (convention)` for that scenario.
+
+**Scenario:** As a traceability engine, I need false-positive protection.
+**Given** `.specleft/specs/user-authentication.md` exists
+**And** a test file `tests/test_payment.py` contains similarly named test functions
+**When** `infer_traceability(discovered, specs)` is called
+**Then** no link is produced because filename matching must succeed first.
+
+**Scenario:** As a discovery writer, I need inferred links embedded in draft specs.
+**Given** inferred `TraceabilityLink` records for a matched scenario
+**When** `generate_draft_specs(..., traceability_links=links)` writes markdown
+**Then** the scenario block includes a `linked_tests` frontmatter section with file, function, and confidence values.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -274,3 +293,9 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - Existing files are replaced when `overwrite=True`.
 - Parser recursion skips all underscore-prefixed directories (for example, `.specleft/specs/_discovered/`).
 - `SpecsConfig.from_directory(".specleft/specs")` excludes files from `_discovered/`.
+- `infer_traceability(discovered, specs)` links `tests/test_user_authentication.py::test_valid_credentials` to `user-authentication.md` scenario `valid-credentials`.
+- `infer_traceability(...)` does not link `tests/test_payment.py` to `user-authentication.md`.
+- `infer_traceability(...)` accepts pre-loaded `SpecsConfig` and returns `[]` when no features exist.
+- `specleft status` marks convention-linked scenarios as implemented with `match_kind="convention"` in verbose JSON output.
+- `specleft status --format table` displays `✓ (convention)` for convention-linked scenarios.
+- `generate_draft_specs(..., traceability_links=...)` emits `linked_tests` frontmatter for matched scenarios.

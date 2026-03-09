@@ -70,6 +70,7 @@ class ScenarioStatus:
     test_file: str | None
     test_function: str | None
     reason: str | None
+    match_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -83,6 +84,7 @@ class ScenarioStatusEntry:
     test_file: str
     test_function: str
     reason: str | None
+    match_kind: str | None = None
 
 
 @dataclass(frozen=True)

@@ -20,6 +20,7 @@ from specleft.discovery.models import (
     SupportedLanguage,
 )
 from specleft.discovery.spec_writer import generate_draft_specs
+from specleft.discovery.traceability import TraceabilityLink
 from specleft.parser import SpecParser
 from specleft.schema import SpecStep, SpecsConfig, StepType
 from specleft.utils.feature_writer import validate_feature_id, validate_scenario_id
@@ -105,6 +106,31 @@ def test_generate_draft_specs_writes_parser_compatible_markdown(tmp_path: Path) 
     scenario_ids = re.findall(r"^### Scenario:\s*([a-z0-9-]+)$", content, re.MULTILINE)
     for scenario_id in scenario_ids:
         validate_scenario_id(scenario_id)
+
+
+def test_generate_draft_specs_writes_linked_tests_frontmatter(tmp_path: Path) -> None:
+    output_dir = tmp_path / ".specleft" / "specs" / "_discovered"
+    feature = _draft_feature()
+    links = [
+        TraceabilityLink(
+            test_file=Path("tests/test_user_authentication.py"),
+            test_function="test_valid_credentials",
+            spec_file=tmp_path / ".specleft" / "specs" / "user-authentication.md",
+            scenario_id="valid-credentials",
+            match_kind="both",
+            confidence=0.9,
+        )
+    ]
+
+    written_paths = generate_draft_specs(
+        [feature], output_dir, traceability_links=links
+    )
+    content = written_paths[0].read_text()
+
+    assert "linked_tests:" in content
+    assert "file: tests/test_user_authentication.py" in content
+    assert "function: test_valid_credentials" in content
+    assert "confidence: 0.9" in content
 
 
 def test_existing_file_is_not_overwritten_by_default(tmp_path: Path) -> None:
