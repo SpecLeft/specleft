@@ -81,6 +81,12 @@ Builds an HTML report from `.specleft/results/`.
 `--analyze` inspects PRD structure without writing files.
 `--template` uses a YAML section-matching template.
 
+## Discovery
+
+`specleft discover --format json [PROJECT_ROOT] [--dry-run] [--language python|typescript] [--output-dir PATH] [--specs-dir PATH]`
+
+`specleft discover promote --format json [--all] [FEATURE_ID...] [--specs-dir PATH] [--overwrite] [--dry-run]`
+
 ## Contract
 
 ### Show contract
