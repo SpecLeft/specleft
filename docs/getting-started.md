@@ -14,6 +14,15 @@ mkdir -p .specleft/specs/calculator/addition
 
 Create `.specleft/specs/calculator/_feature.md`, `.specleft/specs/calculator/addition/_story.md`, and a scenario file like `.specleft/specs/calculator/addition/basic_addition.md`.
 
+## Discover Specs From Existing Code
+
+```bash
+specleft discover
+specleft discover promote --all
+```
+
+`specleft discover` stages generated drafts in `.specleft/specs/_discovered/` so they can be reviewed before promotion.
+
 ## Generate Tests
 
 ```bash
