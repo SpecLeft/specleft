@@ -59,36 +59,15 @@ specleft features add-scenario \
 specleft status
 ```
 
-### Path 2: Bulk-generate feature specs from a PRD
+### Path 2: Discover specs from existing code
 
-Create `prd.md` describing intended behavior.
-
-**Recommended**: Update `.specleft/templates/prd-template.yml` to customize how your PRD sections map to features/scenarios.
-
-Then run:
+For brownfield projects, discover and stage draft specs from existing tests/routes/docstrings:
 
 ```bash
-
-# Generate specs from the PRD without writing files (remove --dry-run to write)
-specleft plan --dry-run
-
-# Validate the generated specs
-specleft features validate
-
-# Preview skeleton generation (remove --dry-run to generate)
-specleft test skeleton --dry-run
-
-# Confirm and generate skeleton tests
-specleft test skeleton
-
-# Show traceability / coverage status
+specleft discover
+specleft discover promote --all
 specleft status
-
-# Run your tests with pytest as normal
-pytest
 ```
-
-That flow converts `prd.md` into `.specleft/specs/*.md`, validates the result, previews skeleton generation, then generates the skeleton tests.
 
 ## When to Use SpecLeft
 
@@ -120,6 +99,7 @@ specleft start --format json
 specleft doctor --format json
 specleft contract --format json
 specleft features stats --format json
+specleft discover --format json
 ```
 
 SpecLeft includes a verifiable skill file at `.specleft/SKILL.md`. Verify integrity with:

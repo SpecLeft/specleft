@@ -195,6 +195,25 @@ promote them automatically to active specs.
 
 To generate and write specs directly, use `specleft discover`.
 
+## Discover
+
+### `specleft discover`
+
+Run the full discovery pipeline and stage generated draft specs.
+
+```bash
+specleft discover [OPTIONS] [PROJECT_ROOT]
+
+Options:
+  --format [table|json]    Output format (default: auto-detect TTY)
+  --dry-run                Preview without writing files
+  --output-dir PATH        Override staging dir (default: .specleft/specs/_discovered/)
+  --language [python|typescript]
+                           Limit languages (repeatable)
+  --specs-dir PATH         Existing specs dir for traceability matching
+  --pretty                 Pretty-print JSON output
+```
+
 Table output example:
 
 ```text
@@ -211,6 +230,20 @@ Your project vs your specs:
 │ user-authentication      │ 12 tests  │ none        │
 │ payment-processing       │ 8 tests   │ 6 specs     │
 └──────────────────────────┴───────────┴─────────────┘
+  ✓ Python (pytest) — 142 test functions
+  ✓ API routes      — 24 routes
+  ✓ Docstrings      — 67 items
+  ✓ Git history     — 200 commits
+
+Generating draft specs...
+
+  Feature                  Scenarios  Written to
+  ───────────────────────  ─────────  ──────────────────────────────────────
+  user-authentication      8          .specleft/specs/_discovered/user-authentication.md
+  payment-processing       5          .specleft/specs/_discovered/payment-processing.md
+
+  14 features, 47 scenarios written to .specleft/specs/_discovered
+  Review drafts, then promote with: specleft discover promote
 ```
 
 JSON output schema:
@@ -242,8 +275,38 @@ JSON output schema:
     }
   ],
   "saved": false,
+  "features": [
+    {
+      "feature_id": "user-authentication",
+      "name": "User Authentication",
+      "scenario_count": 8,
+      "output_file": ".specleft/specs/_discovered/user-authentication.md",
+      "confidence": 0.8
+    }
+  ],
+  "total_features": 14,
+  "total_scenarios": 47,
+  "output_dir": ".specleft/specs/_discovered",
+  "dry_run": false,
+  "written": [".specleft/specs/_discovered/user-authentication.md"],
   "errors": []
 }
+```
+
+### `specleft discover promote`
+
+Promote draft specs into the active specs directory. Draft files remain in staging.
+
+```bash
+specleft discover promote [OPTIONS] [FEATURE_ID...]
+
+Options:
+  --all              Promote every staged draft file
+  --specs-dir PATH   Destination specs dir (default: resolve_specs_dir())
+  --overwrite        Replace existing files at destination
+  --dry-run          Preview without writing files
+  --format [table|json]
+  --pretty
 ```
 
 ## Status

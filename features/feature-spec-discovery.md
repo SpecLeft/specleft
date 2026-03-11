@@ -235,6 +235,29 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** `generate_draft_specs(..., traceability_links=links)` writes markdown
 **Then** the scenario block includes a `linked_tests` frontmatter section with file, function, and confidence values.
 
+### Story 16: Discover command and draft promotion flow
+**Scenario:** As a user onboarding from an existing codebase, I need one command to run discovery and stage draft specs.
+**Given** a repository with supported source files and tests
+**When** I run `specleft discover`
+**Then** discovery runs end-to-end and writes draft specs to `.specleft/specs/_discovered/`.
+
+**Scenario:** As an automation client, I need structured machine-readable output.
+**Given** discovery succeeds or miners report partial failures
+**When** I run `specleft discover --format json`
+**Then** the command exits successfully and outputs valid JSON with features, totals, output dir, dry-run state, and `errors`.
+
+**Scenario:** As a user reviewing generated drafts, I need a safe promotion step.
+**Given** staged files exist in `.specleft/specs/_discovered/`
+**When** I run `specleft discover promote --all`
+**Then** all draft files are copied to the active specs directory.
+**And** the files remain in `_discovered/` after promotion.
+
+**Scenario:** As a user promoting incrementally, I need targeted and non-destructive behavior.
+**Given** staged draft files and existing active specs
+**When** I run `specleft discover promote user-authentication`
+**Then** only that feature file is copied.
+**And** existing destination files are skipped unless `--overwrite` is passed.
+
 ## Acceptance Criteria
 - Language abstraction returns `SupportedLanguage` members for `.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `None` otherwise.
 - `LanguageRegistry().parse(path_to_py_file)` returns `(node, SupportedLanguage.PYTHON)` for valid Python input.
@@ -316,3 +339,8 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - `specleft start --format json` returns `project`, `discovery`, `comparison`, `saved`, and `errors`.
 - `specleft start --save` writes draft markdown files to `.specleft/specs/_discovered/`.
 - `specleft start` without `--save` performs a read-only discovery run.
+- `specleft discover --dry-run` does not write files and reports planned outputs.
+- `specleft discover --format json` exits `0` with valid JSON output even when miners report errors.
+- `specleft discover` writes drafts to `.specleft/specs/_discovered/` by default and supports `--output-dir` override.
+- `specleft discover promote --all` copies staged drafts to active specs while keeping staged drafts intact.
+- `specleft discover promote <feature-id>` copies only the requested draft and skips existing files unless `--overwrite`.

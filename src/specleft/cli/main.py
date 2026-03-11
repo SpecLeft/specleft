@@ -10,6 +10,7 @@ import click
 from specleft.commands import (
     contract,
     coverage,
+    discover,
     doctor,
     features,
     guide,
@@ -49,6 +50,7 @@ cli.add_command(plan)
 cli.add_command(coverage)
 cli.add_command(init)
 cli.add_command(contract)
+cli.add_command(discover)
 cli.add_command(skill_group)
 cli.add_command(guide)
 cli.add_command(mcp)

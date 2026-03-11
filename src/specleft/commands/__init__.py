@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from specleft.commands.contract import contract
 from specleft.commands.coverage import coverage
+from specleft.commands.discover import discover
 from specleft.commands.doctor import doctor
 from specleft.commands.features import features
 from specleft.commands.guide import guide
@@ -22,6 +23,7 @@ from specleft.commands.test import test
 __all__ = [
     "contract",
     "coverage",
+    "discover",
     "doctor",
     "features",
     "guide",
