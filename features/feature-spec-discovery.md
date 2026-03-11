@@ -62,6 +62,19 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 **When** I call `build_default_pipeline(root).run()`
 **Then** a `DiscoveryReport` is returned with run duration, detected languages, miner results, and total item counts.
 
+### Story 6.1: Start command onboarding flow
+**Scenario:** As a new user with existing code, I need a single command to discover specs without writing by default.
+**Given** a valid Python project
+**When** I run `specleft start`
+**Then** it performs health check, project detection, discovery, and side-by-side code-vs-spec comparison.
+**And** no files are written to `.specleft/specs/_discovered/` unless `--save` is passed.
+
+**Scenario:** As a pipeline consumer, I need resilient startup output.
+**Given** a discovery run where the git miner fails (for example, non-git directory)
+**When** I run `specleft start --format json`
+**Then** the command exits successfully
+**And** miner failures are included in `errors[]`.
+
 ### Story 7: Shared docstring and JSDoc mining
 **Scenario:** As a discovery pipeline, I need intent-rich text signals from source code comments.
 **Given** configured source directories and a shared miner context
@@ -299,3 +312,7 @@ Add shared discovery infrastructure for Issues #125 and #126: centralized parser
 - `specleft status` marks convention-linked scenarios as implemented with `match_kind="convention"` in verbose JSON output.
 - `specleft status --format table` displays `✓ (convention)` for convention-linked scenarios.
 - `generate_draft_specs(..., traceability_links=...)` emits `linked_tests` frontmatter for matched scenarios.
+- `specleft start` exits 0 on a healthy Python project and returns table/json output.
+- `specleft start --format json` returns `project`, `discovery`, `comparison`, `saved`, and `errors`.
+- `specleft start --save` writes draft markdown files to `.specleft/specs/_discovered/`.
+- `specleft start` without `--save` performs a read-only discovery run.

@@ -28,6 +28,15 @@ pip install specleft
 specleft init
 ```
 
+### Path 0: New to SpecLeft? Start here
+
+Scans your codebase, discovers features from existing code, and shows a side-by-side report of code vs specs.
+
+```bash
+cd my-project
+specleft start
+```
+
 ### Path 1: Add one feature (and generate a test skeleton)
 
 Create a feature, then add a scenario and generate a skeleton test for it:
@@ -107,6 +116,7 @@ If you are integrating SpecLeft into an agent loop, it's recommended to install 
 Otherwise begin with:
 
 ```bash
+specleft start --format json
 specleft doctor --format json
 specleft contract --format json
 specleft features stats --format json

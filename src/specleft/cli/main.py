@@ -18,6 +18,7 @@ from specleft.commands import (
     next_command,
     plan,
     skill_group,
+    start,
     status,
     test,
 )
@@ -51,6 +52,7 @@ cli.add_command(contract)
 cli.add_command(skill_group)
 cli.add_command(guide)
 cli.add_command(mcp)
+cli.add_command(start)
 
 
 __all__ = ["cli"]

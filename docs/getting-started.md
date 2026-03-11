@@ -1,12 +1,21 @@
 # SpecLeft Getting Started
 
+## Quickstart (existing codebase)
+
+```bash
+specleft start
+```
+
+If you already have code, `specleft start` is faster. It discovers specs from
+your existing tests, routes, and docstrings.
+
 ## Install
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## Create Specs
+## Create Specs (greenfield alternative)
 
 ```bash
 mkdir -p .specleft/specs/calculator/addition

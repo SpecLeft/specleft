@@ -5,6 +5,7 @@
 All commands below run in compact mode.
 
 ## Workflow
+0. specleft start --format json
 1. specleft next --limit 1
 2. Implement test logic
 3. specleft features validate
@@ -26,6 +27,11 @@ All commands below run in compact mode.
 ---
 
 ## Features
+
+## Discovery
+
+### Start discovery report
+`specleft start --format json [PROJECT_ROOT] [--save] [--specs-dir PATH]`
 
 ### Validate specs
 `specleft features validate --format json [--dir PATH] [--strict]`

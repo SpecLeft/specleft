@@ -173,6 +173,79 @@ Options:
   --format [table|json] Output format (default: table)
 ```
 
+## Start
+
+### `specleft start`
+
+Discovery-first entrypoint for existing codebases. Runs health checks, scans code,
+discovers features, and compares discovered scenarios against existing specs.
+
+```bash
+specleft start [OPTIONS] [PROJECT_ROOT]
+
+Options:
+  --format [table|json]  Output format (default: auto-detect TTY)
+  --save                 Write draft specs to .specleft/specs/_discovered/
+  --specs-dir PATH       Existing specs dir to compare against
+  --pretty               Pretty-print JSON output
+```
+
+`--save` stages drafts in `.specleft/specs/_discovered/` only. It does not
+promote them automatically to active specs.
+
+To generate and write specs directly, use `specleft discover`.
+
+Table output example:
+
+```text
+Scanning project...
+✓ Detected: Python (pytest), 847 files, 142 test functions
+
+Discovering features...
+✓ Found 14 features, 47 scenarios
+
+Your project vs your specs:
+┌──────────────────────────┬───────────┬─────────────┐
+│ Feature                  │ Code      │ Specs       │
+├──────────────────────────┼───────────┼─────────────┤
+│ user-authentication      │ 12 tests  │ none        │
+│ payment-processing       │ 8 tests   │ 6 specs     │
+└──────────────────────────┴───────────┴─────────────┘
+```
+
+JSON output schema:
+
+```json
+{
+  "project": {
+    "root": "/path/to/project",
+    "languages": ["python"],
+    "test_frameworks": ["pytest"],
+    "files_scanned": 847
+  },
+  "discovery": {
+    "features": 14,
+    "scenarios": 47,
+    "items_by_kind": {
+      "test_function": 142,
+      "api_route": 24,
+      "docstring": 67,
+      "git_commit": 200
+    }
+  },
+  "comparison": [
+    {
+      "feature_id": "user-authentication",
+      "name": "User Authentication",
+      "code_scenarios": 12,
+      "spec_scenarios": 0
+    }
+  ],
+  "saved": false,
+  "errors": []
+}
+```
+
 ## Status
 
 ### `specleft status`
