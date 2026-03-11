@@ -16,6 +16,7 @@ from specleft.commands.mcp import mcp
 from specleft.commands.next import next_command
 from specleft.commands.plan import plan
 from specleft.commands.skill import skill_group
+from specleft.commands.start import start
 from specleft.commands.status import status
 from specleft.commands.test import test
 
@@ -31,6 +32,7 @@ __all__ = [
     "next_command",
     "plan",
     "skill_group",
+    "start",
     "status",
     "test",
 ]
